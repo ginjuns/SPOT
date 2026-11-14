@@ -9,7 +9,7 @@ psycopg[binary]
 psycopg-pool
 pgvector
 onnxruntime
-tokenizers
+sentencepiece
 huggingface_hub
 numpy
 groq

@@ -71,7 +71,7 @@ psycopg[binary]
 psycopg-pool
 pgvector
 onnxruntime
-tokenizers
+sentencepiece
 huggingface_hub
 numpy
 groq
@@ -541,7 +541,7 @@ MAX_DISTANCE=0.35          # 의미 검색 거리 기준 (테스트로 조정)
 - GitHub 저장소를 Render에 연결하면 `Dockerfile`로 이미지를 만들어 실행한다. GitHub에 올릴(push) 때마다 자동으로 다시 배포된다.
 - Render는 `PORT` 환경변수로 포트를 알려 준다. `Dockerfile`은 `uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}`으로 실행한다 (내 컴퓨터에서는 7860).
 - 임베딩 모델은 이미지 빌드 시 미리 내려받아 첫 요청이 느려지지 않게 한다. 실행 중에는 `HF_HUB_OFFLINE=1`로 이미지 안의 모델만 쓴다.
-- 무료 서비스는 메모리가 512MB다. 그래서 임베딩은 `torch` 없이 `onnxruntime` + 양자화 모델로 돌리고, `EMBEDDING_THREADS=1`로 둔다.
+- 무료 서비스는 메모리가 512MB다. 그래서 임베딩은 `torch` 없이 `onnxruntime` + 양자화 모델로 돌리고, `EMBEDDING_THREADS=1`로 둔다. 토크나이저는 `tokenizers` 대신 `sentencepiece`를 쓴다 (`tokenizers`는 낱말 사전만 270MB를 써서 서버가 죽었다. 바꾼 뒤 서버 전체 약 270MB, 모델을 불러오는 순간 최대 약 360MB로 측정).
 - 무료 서비스는 15분쯤 접속이 없으면 잠들고, 다시 깨어나는 데 1분쯤 걸린다. 시연 전에 미리 접속해 둔다 (README에 적기).
 - 컨테이너는 root가 아닌 사용자(UID 1000)로 실행한다. 모델 캐시 폴더(`HF_HOME`)는 그 사용자가 쓸 수 있는 곳으로 정한다.
 - 상태 확인 경로(Health Check Path)는 `/api/health`로 한다.

@@ -16,7 +16,8 @@
 - [x] 2주차 2단계: Groq 연결(`llm.py`), 질문 분석(`analyzer.py`, `prompts/analyze.txt`, `data/keywords.json`)
 - [x] 2주차 3단계: 되묻기 흐름 (`POST /api/chat`, 답변 생성은 3주차)
 - [x] 2주차 4단계: 개인정보 가리기 (`privacy.py`) + 테스트
-- [ ] 2주차 5단계: 시나리오 질문 30개 (`data/scenarios.json`)
+- [x] 2주차 5단계: 시나리오 질문 30개 (`data/scenarios.json`)
+- [ ] 2주차 6단계: 검색 평가 스크립트 (`scripts/eval_scenarios.py --no-llm`)
 
 ## 준비물 (모두 무료)
 
