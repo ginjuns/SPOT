@@ -9,9 +9,14 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import config, db
-from app.routers import meta, policy, search
+from app.routers import chat, meta, policy, search
 
 logger = logging.getLogger("benefit")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(levelname)s:     %(message)s"))
+    logger.addHandler(_handler)
 
 
 @asynccontextmanager
@@ -45,6 +50,7 @@ async def server_error(request, exc):
     )
 
 
+app.include_router(chat.router)
 app.include_router(search.router)
 app.include_router(policy.router)
 app.include_router(meta.router)

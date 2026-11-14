@@ -14,7 +14,9 @@
 - [x] 1주차 7단계: Render 첫 배포 (`/api/health` 확인 완료)
 - [x] 2주차 1단계: 임베딩(`embedder.py`), 조건 필터 + 의미 검색(`retriever.py`의 `search_semantic`)
 - [x] 2주차 2단계: Groq 연결(`llm.py`), 질문 분석(`analyzer.py`, `prompts/analyze.txt`, `data/keywords.json`)
-- [ ] 2주차 3단계: 되묻기 흐름 (`POST /api/chat`)
+- [x] 2주차 3단계: 되묻기 흐름 (`POST /api/chat`, 답변 생성은 3주차)
+- [x] 2주차 4단계: 개인정보 가리기 (`privacy.py`) + 테스트
+- [ ] 2주차 5단계: 시나리오 질문 30개 (`data/scenarios.json`)
 
 ## 준비물 (모두 무료)
 
