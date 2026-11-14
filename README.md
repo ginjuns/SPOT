@@ -13,7 +13,8 @@
 - [x] 1주차 6단계: 조회 API (`/api/search`, `/api/policy/{id}`, `/api/policies`, `/api/options`, `/api/regions`, `/api/health`)
 - [x] 1주차 7단계: Render 첫 배포 (`/api/health` 확인 완료)
 - [x] 2주차 1단계: 임베딩(`embedder.py`), 조건 필터 + 의미 검색(`retriever.py`의 `search_semantic`)
-- [ ] 2주차 2단계: Groq 연결(`llm.py`), 질문 분석(`analyzer.py`)
+- [x] 2주차 2단계: Groq 연결(`llm.py`), 질문 분석(`analyzer.py`, `prompts/analyze.txt`, `data/keywords.json`)
+- [ ] 2주차 3단계: 되묻기 흐름 (`POST /api/chat`)
 
 ## 준비물 (모두 무료)
 

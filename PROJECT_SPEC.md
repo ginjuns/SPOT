@@ -81,9 +81,9 @@ pytest
 ```
 
 ### 모델 관련 주의
-- **Groq 모델명**은 바뀔 수 있다. 기본값은 `llama-3.3-70b-versatile`로 두되, 환경변수로 바꿀 수 있게 한다. 한국어 품질은 2주차에 시나리오 테스트로 비교해서 정한다. `TODO(확인)`: Groq 콘솔에서 현재 제공 모델 확인.
-- **Groq 무료 한도는 모델마다 다르다.** 큰 모델(70b)은 하루 토큰 한도가 작아서(하루 약 10만 토큰 수준으로 알려짐) 질문 수십 건이면 바닥날 수 있다. `TODO(확인)`: Groq 콘솔의 Limits 화면에서 모델별 분당·하루 요청 수와 토큰 수 확인. 그래서 아래처럼 토큰을 아낀다.
-  - 질문 분석은 한도가 넉넉한 작은 모델(`GROQ_MODEL_ANALYZE`, 기본값 `llama-3.1-8b-instant`)을 쓴다. 답변 생성만 큰 모델을 쓴다.
+- **Groq 모델명**은 바뀔 수 있다. 2026-11-14에 모델 목록 API로 확인하니 llama 계열은 더 이상 제공되지 않아서, 기본값을 답변용 `openai/gpt-oss-120b`, 분석용 `openai/gpt-oss-20b`로 바꿨다 (환경변수로 바꿀 수 있다). 두 모델은 답하기 전에 생각 단계를 거치므로 `GROQ_REASONING_EFFORT=low`로 토큰과 시간을 아낀다. 한국어 품질은 2주차에 시나리오 테스트로 비교해서 정한다.
+- **Groq 무료 한도는 모델마다 다르다.** 큰 모델은 하루 토큰 한도가 작아서 질문 수십 건이면 바닥날 수 있다. 분석용 작은 모델도 1분에 8번쯤 연달아 부르면 실패하는 것을 확인했다(이때는 규칙 기반 분석으로 넘어간다). `TODO(확인)`: Groq 콘솔의 Limits 화면에서 모델별 분당·하루 요청 수와 토큰 수 확인. 그래서 아래처럼 토큰을 아낀다.
+  - 질문 분석은 한도가 넉넉한 작은 모델(`GROQ_MODEL_ANALYZE`, 기본값 `openai/gpt-oss-20b`)을 쓴다. 답변 생성만 큰 모델을 쓴다.
   - 버튼으로 조건만 고른 뒤 다시 호출할 때는 질문 분석을 **다시 하지 않는다** ([8-1](#8-1-질문-분석-servicesanalyzerpy-promptsanalyzetxt) 참고).
   - 답변 생성에 넣는 후보 정책 글은 길이를 자른다 ([8-3](#8-3-답변-생성-servicesanswererpy-promptsanswertxt) 참고).
 - **multilingual-e5** 모델은 입력 앞에 접두어를 붙여야 성능이 나온다.
@@ -391,7 +391,7 @@ CREATE TABLE IF NOT EXISTS region (
 ```json
 {
   "need": "의료비",            // 분야: 의료비, 생활비, 주거, 일자리, 돌봄, 교육, 출산·육아, 장애, 기타
-  "age_group": "75plus",       // 질문에 나이 정보가 있을 때만, 없으면 null
+  "age_group": "75plus",       // 질문에 나이 정보가 있을 때만, 없으면 null. LLM에는 나이 숫자(age, age_decade)로 받고 나이대는 코드가 정한다. "70대"처럼 두 나이대에 걸치면 null
   "gender": null,
   "region_text": "서울 강남구", // 지역 언급이 있을 때만, 서버가 region_code로 변환
   "household": "single",
@@ -525,8 +525,9 @@ LLM에 보내기 **전에** 아래 패턴을 `[가림]`으로 바꾸고, 응답�
 DATA_GO_KR_API_KEY=        # 공공데이터포털 인증키 (수집 스크립트용)
 DATABASE_URL=              # Neon 연결 문자열 (끝에 ?sslmode=require)
 GROQ_API_KEY=              # Groq API 키
-GROQ_MODEL=llama-3.3-70b-versatile          # 답변 생성용
-GROQ_MODEL_ANALYZE=llama-3.1-8b-instant     # 질문 분석용 (한도가 넉넉한 작은 모델)
+GROQ_MODEL=openai/gpt-oss-120b              # 답변 생성용
+GROQ_MODEL_ANALYZE=openai/gpt-oss-20b       # 질문 분석용 (한도가 넉넉한 작은 모델)
+GROQ_REASONING_EFFORT=low                   # 생각 단계를 짧게 (이 옵션이 없는 모델이면 비워 둔다)
 EMBEDDING_MODEL=Xenova/multilingual-e5-small   # multilingual-e5-small 의 ONNX 판
 EMBEDDING_MODEL_FILE=onnx/model_quantized.onnx # 용량을 줄인(양자화) 모델 파일
 EMBEDDING_THREADS=1        # 서버는 1. 내 PC에서 수집할 때는 코어 수만큼
