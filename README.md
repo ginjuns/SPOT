@@ -19,7 +19,8 @@
 - [x] 2주차 5단계: 시나리오 질문 30개 (`data/scenarios.json`)
 - [x] 2주차 6단계: 검색 평가 스크립트 (`scripts/eval_scenarios.py --no-llm`) — 30개 중 26개(87%), 거리 기준값 0.15로 결정
 - [x] 2주차 7단계: 공통 CSS, 버튼 조회 화면(`search.html`), 정책 상세 화면(`policy.html`)
-- [ ] 3주차 1단계: 답변 생성(`answerer.py`), fallback 처리, 사용량 제한(`rate_limit.py`)
+- [x] 3주차 1단계: 답변 생성(`answerer.py`), fallback 처리, 사용량 제한(`rate_limit.py`)
+- [ ] 3주차 2단계: 나머지 화면 (시작, 채팅, 공유, 주민센터에서 보여주기, 큰 글씨·고대비 모드)
 
 ## 준비물 (모두 무료)
 

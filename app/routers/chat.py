@@ -1,15 +1,14 @@
-"""POST /api/chat — 질문 분석 → 되묻기 또는 후보 정책 목록.
+"""POST /api/chat — 질문 분석 → 되묻기 → 검색 → 답변 생성.
 
 서버는 대화를 저장하지 않는다. 이전 대화와 정해진 조건은 브라우저가 매번 같이 보낸다.
-(답변 생성과 사용량 제한은 3주차에 추가)
 """
 import logging
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.models import ChatRequest
-from app.services import analyzer, privacy, retriever
+from app.services import analyzer, answerer, llm, privacy, rate_limit, retriever
 
 router = APIRouter(prefix="/api")
 logger = logging.getLogger("benefit")
@@ -29,6 +28,8 @@ NONE_TEXT = (
     "가까운 주민센터나 보건복지상담센터(국번 없이 129)에 물어보시면 도움을 받을 수 있어요."
 )
 REGION_HINT = "사시는 지역을 알려 주시면 지역 지원도 찾아 드려요."
+FALLBACK_TEXT = "지금은 AI 답변이 어려워요. 버튼으로 찾아 볼까요?"
+USER_LIMIT_TEXT = "오늘 질문 횟수를 다 쓰셨어요. 버튼으로 찾기는 계속 쓸 수 있어요."
 
 
 def merge_conditions(sent, analysis):
@@ -45,28 +46,28 @@ def merge_conditions(sent, analysis):
     return merged
 
 
-def result_text(need, count, has_region, masked):
-    if need and need != "기타":
-        # 끝 글자에 받침이 있으면 "과", 없으면 "와" (돌봄과, 의료비와)
-        has_final = (ord(need[-1]) - 0xAC00) % 28 != 0
-        topic = f"{need}{'과' if has_final else '와'} 관련해"
-    else:
-        topic = "말씀하신 내용과 관련해"
-    parts = [f"{topic} 확인해 볼 만한 지원 {count}건을 찾았어요. 자격은 신청하는 곳에서 최종 확인해 주세요."]
-    if not has_region:
-        parts.append(REGION_HINT)
-    if masked:
-        parts.append(privacy.NOTICE)
-    return " ".join(parts)
+def fallback(text, conditions=None):
+    """AI 답변이 안 될 때: 화면은 버튼 조회로 안내한다. 조건은 버튼 조회에 이어 쓰라고 돌려준다."""
+    response = {"type": "fallback", "text": text}
+    if conditions:
+        response["conditions"] = conditions
+    return response
 
 
-def handle(req):
+def handle(req, client_key):
     message = req.message.strip()
     if len(message) > MESSAGE_LIMIT:
         raise HTTPException(400, "조금만 짧게 말씀해 주세요.")
     sent = req.conditions.model_dump()
-    masked = False
+    if not message and not sent.get("search_text"):
+        raise HTTPException(400, "궁금한 점을 말씀해 주세요.")
 
+    limit = rate_limit.check(client_key, is_question=bool(message))
+    if limit != rate_limit.OK:
+        text = USER_LIMIT_TEXT if limit == rate_limit.USER_LIMIT else FALLBACK_TEXT
+        return fallback(text, {k: sent.get(k) for k in ("age_group", "gender", "region_code", "household")})
+
+    masked = False
     if message:
         message, masked = privacy.mask(message)
         history = [
@@ -74,41 +75,50 @@ def handle(req):
             for h in req.history[-HISTORY_LIMIT:]
         ]
         conditions = merge_conditions(sent, analyzer.analyze(message, history))
-    elif sent.get("search_text"):
+    else:
         # 버튼으로 조건만 고른 호출: 분석(LLM)을 건너뛰고 바로 검색한다.
         conditions = sent
-    else:
-        raise HTTPException(400, "궁금한 점을 말씀해 주세요.")
+    notice = " " + privacy.NOTICE if masked else ""
 
     missing = tuple(
         name for name, key in (("age_group", "age_group"), ("region", "region_code"))
         if not conditions.get(key)
     )
     if missing and not req.asked:
-        text = ASK_TEXT[missing] + (" " + privacy.NOTICE if masked else "")
-        return {"type": "ask", "text": text, "ask": list(missing), "conditions": conditions}
+        return {"type": "ask", "text": ASK_TEXT[missing] + notice, "ask": list(missing), "conditions": conditions}
 
-    rows = retriever.search_semantic(
+    candidates = retriever.search_semantic(
         conditions["search_text"],
         age_group=conditions["age_group"],
         gender=conditions["gender"],
         region_code=conditions["region_code"],
         household=conditions["household"],
     )
-    if not rows:
-        return {"type": "none", "text": NONE_TEXT, "conditions": conditions}
-    return {
-        "type": "result",
-        "text": result_text(conditions["need"], len(rows), bool(conditions["region_code"]), masked),
-        "policies": [retriever.to_card(r) for r in rows],
-        "conditions": conditions,
-    }
+    if not candidates:
+        return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}
+
+    try:
+        answer = answerer.answer(conditions["search_text"], conditions, candidates)
+    except llm.LLMError:
+        return fallback(FALLBACK_TEXT, conditions)
+    if not answer["picks"]:
+        return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}
+
+    # 카드 내용은 DB 값 그대로. LLM이 쓴 것은 한 줄 요약(one_line)뿐이다.
+    by_id = {c["id"]: c for c in candidates}
+    policies = [
+        {**retriever.to_card(by_id[p["id"]]), "one_line": p["one_line"]} for p in answer["picks"]
+    ]
+    text = answer["text"]
+    if not conditions["region_code"]:
+        text += " " + REGION_HINT
+    return {"type": "result", "text": text + notice, "policies": policies, "conditions": conditions}
 
 
 @router.post("/chat")
-def chat(req: ChatRequest):
+def chat(req: ChatRequest, request: Request):
     started = time.perf_counter()
-    response = handle(req)
+    response = handle(req, rate_limit.client_key(request))
     # 질문 내용은 남기지 않는다. 결과 유형과 걸린 시간만 남긴다.
     logger.info("chat %s %dms", response["type"], (time.perf_counter() - started) * 1000)
     return response
