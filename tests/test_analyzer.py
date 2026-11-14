@@ -91,4 +91,11 @@ def test_analyze_uses_llm_result(monkeypatch):
         "need": "주거", "age": 27, "region_text": "부산", "search_text": "청년 월세 지원"})
     out = analyzer.analyze("부산 사는 27살인데 월세가 부담돼요")
     assert out["source"] == "llm" and out["age_group"] == "19_34"
-    assert out["region_code"] == code("부산광역시") and out["search_text"] == "청년 월세 지원"
+    assert out["region_code"] == code("부산광역시")
+    # 검색 문장은 다듬은 문장 뒤에 원래 질문을 붙인다
+    assert out["search_text"] == "청년 월세 지원. 부산 사는 27살인데 월세가 부담돼요"
+
+
+def test_with_question_does_not_repeat_the_same_text():
+    assert analyzer.with_question("월세가 부담돼요", "월세가  부담돼요") == "월세가 부담돼요"
+    assert analyzer.with_question(None, "월세가 부담돼요") == "월세가 부담돼요"

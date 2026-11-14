@@ -17,7 +17,8 @@
 - [x] 2주차 3단계: 되묻기 흐름 (`POST /api/chat`, 답변 생성은 3주차)
 - [x] 2주차 4단계: 개인정보 가리기 (`privacy.py`) + 테스트
 - [x] 2주차 5단계: 시나리오 질문 30개 (`data/scenarios.json`)
-- [ ] 2주차 6단계: 검색 평가 스크립트 (`scripts/eval_scenarios.py --no-llm`)
+- [x] 2주차 6단계: 검색 평가 스크립트 (`scripts/eval_scenarios.py --no-llm`) — 30개 중 26개(87%), 거리 기준값 0.15로 결정
+- [ ] 2주차 7단계: 공통 CSS, 버튼 조회 화면(`search.html`), 정책 상세 화면(`policy.html`)
 
 ## 준비물 (모두 무료)
 
@@ -75,6 +76,18 @@ python scripts/load_regions.py
 
 - GitHub에 올릴(push) 때마다 자동으로 다시 배포됩니다.
 - 무료 서비스는 15분쯤 접속이 없으면 잠들고, 깨어나는 데 1분쯤 걸립니다. **시연 전에 미리 접속해 둡니다.**
+
+## 검색 평가
+
+```powershell
+# Groq를 쓰지 않고 검색만 평가 (몇 번이든 돌려도 됨)
+python scripts/eval_scenarios.py --no-llm
+
+# 실제 채팅처럼 질문 분석(작은 모델)을 거쳐서 평가 (5분쯤 걸림, Groq 한도 사용)
+python scripts/eval_scenarios.py --no-llm --analyze
+```
+
+시나리오 30개(`data/scenarios.json`)의 기대 정책이 후보 8개 안에 드는 비율과 거리 분포를 보여 줍니다.
 
 ## 테스트
 

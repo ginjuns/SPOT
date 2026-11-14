@@ -29,7 +29,8 @@ EMBEDDING_THREADS = int(os.getenv("EMBEDDING_THREADS", "1"))
 
 DAILY_CHAT_LIMIT = int(os.getenv("DAILY_CHAT_LIMIT", "30"))
 GLOBAL_DAILY_CHAT_LIMIT = int(os.getenv("GLOBAL_DAILY_CHAT_LIMIT", "200"))
-MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.35"))
+# 시나리오 평가(2026-11-14)로 정한 값: 맞는 정책은 0.08~0.15, 관계없는 질문의 후보는 0.15 이상이었다.
+MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.15"))
 
 # 답변 생성에 넣는 후보 정책 글(지원 대상·지원 내용)의 최대 글자 수
 CANDIDATE_TEXT_LIMIT = 200

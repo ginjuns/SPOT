@@ -14,7 +14,7 @@ from app.services import llm
 
 NEEDS = ["의료비", "생활비", "주거", "일자리", "돌봄", "교육", "출산·육아", "장애", "기타"]
 HOUSEHOLDS = {"single", "single_parent", "multi_child", "multicultural", "no_house"}
-SEARCH_TEXT_LIMIT = 80
+SEARCH_TEXT_LIMIT = 80   # LLM이 다듬은 문장의 최대 길이
 
 PROMPT = (config.BASE_DIR / "app" / "prompts" / "analyze.txt").read_text(encoding="utf-8")
 KEYWORDS = json.loads((config.DATA_DIR / "keywords.json").read_text(encoding="utf-8"))
@@ -165,8 +165,20 @@ def analyze_by_rules(message):
         "region_text": None,
         "region_code": resolve_region(message, strict=True),
         "household": pick(KEYWORDS["household"]),
-        "search_text": " ".join(message.split())[:SEARCH_TEXT_LIMIT],
+        "search_text": " ".join(message.split()),
     }
+
+
+def with_question(search_text, message):
+    """검색 문장 = 다듬은 문장 + 원래 질문.
+
+    다듬은 문장만 쓰면 질문의 뜻이 빠질 때가 있고("다시 취직"이 사라짐), 질문만 쓰면 군말 때문에
+    엉뚱한 정책이 가까워진다. 시나리오 평가에서 둘을 이어 붙인 것이 가장 잘 맞았다 (30개 중 26개).
+    """
+    question = " ".join(message.split())
+    if not search_text or search_text == question[:SEARCH_TEXT_LIMIT]:
+        return question
+    return f"{search_text}. {question}"
 
 
 def analyze(message, history=None):
@@ -176,6 +188,8 @@ def analyze(message, history=None):
     """
     try:
         raw = llm.chat_json(config.GROQ_MODEL_ANALYZE, PROMPT, build_user_prompt(message, history))
-        return {**normalize(raw, message), "source": "llm"}
+        result = normalize(raw, message)
+        result["search_text"] = with_question(result["search_text"], message)
+        return {**result, "source": "llm"}
     except llm.LLMError:
         return {**analyze_by_rules(message), "source": "rules"}

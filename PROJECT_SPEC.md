@@ -395,7 +395,7 @@ CREATE TABLE IF NOT EXISTS region (
   "gender": null,
   "region_text": "서울 강남구", // 지역 언급이 있을 때만, 서버가 region_code로 변환
   "household": "single",
-  "search_text": "허리 통증 병원 진료비 의료비 지원"  // 의미 검색용으로 다듬은 문장
+  "search_text": "허리 통증 병원 진료비 의료비 지원"  // 의미 검색용으로 다듬은 문장. 서버는 여기에 원래 질문(개인정보를 가린 것)을 이어 붙여 검색한다 (평가에서 가장 잘 맞았다)
 }
 ```
 - 사용자가 말하지 않은 조건을 **추측해서 채우지 않도록** 프롬프트에 명시한다.
@@ -533,7 +533,7 @@ EMBEDDING_MODEL_FILE=onnx/model_quantized.onnx # 용량을 줄인(양자화) 모
 EMBEDDING_THREADS=1        # 서버는 1. 내 PC에서 수집할 때는 코어 수만큼
 DAILY_CHAT_LIMIT=30        # 사용자 1명당 하루 질문 수
 GLOBAL_DAILY_CHAT_LIMIT=200  # 서비스 전체 하루 질문 수 (Groq 한도 확인 후 조정)
-MAX_DISTANCE=0.35          # 의미 검색 거리 기준 (테스트로 조정)
+MAX_DISTANCE=0.15          # 의미 검색 거리 기준 (시나리오 평가로 정함)
 ```
 - 배포 시에는 Render 서비스의 **Environment** 화면에 같은 이름으로 넣는다 (`DATABASE_URL`, `GROQ_API_KEY` 등. 수집용 `DATA_GO_KR_API_KEY`는 서버에 넣지 않는다).
 

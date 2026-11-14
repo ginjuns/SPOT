@@ -19,7 +19,7 @@ class Conditions(BaseModel):
     region_code: Optional[str] = RegionCode
     household: Optional[Household] = None
     need: Optional[str] = Field(default=None, max_length=20)
-    search_text: Optional[str] = Field(default=None, max_length=200)
+    search_text: Optional[str] = Field(default=None, max_length=400)
 
 
 class HistoryItem(BaseModel):
