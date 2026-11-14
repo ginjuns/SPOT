@@ -1,0 +1,80 @@
+"""조건 필터 + 의미 검색. (의미 검색은 2주차에 추가)"""
+from app import db
+
+PAGE_SIZE = 10
+
+# 나이대 → (가장 어린 나이, 가장 많은 나이)
+AGE_RANGES = {
+    "u19": (0, 18),
+    "19_34": (19, 34),
+    "35_49": (35, 49),
+    "50_64": (50, 64),
+    "65_74": (65, 74),
+    "75plus": (75, 120),
+}
+
+CARD_COLUMNS = "id, name, agency, summary, has_income_rule, url, collected_at"
+
+
+def build_filter(age_group=None, gender=None, region_code=None, household=None):
+    """조건을 SQL WHERE 절과 값으로 바꾼다. 조건이 없는 항목은 넣지 않는다 (지역만 예외)."""
+    where, params = [], {}
+    if region_code:
+        where.append(
+            "(region_code IS NULL OR region_code = %(region)s OR region_code = LEFT(%(region)s, 2))"
+        )
+        params["region"] = region_code
+    else:
+        # 지역을 모르면 전국 정책만. 조건을 빼 버리면 다른 지역의 정책이 섞여 나온다.
+        where.append("region_code IS NULL")
+    if age_group:
+        params["age_lo"], params["age_hi"] = AGE_RANGES[age_group]
+        where.append("(age_min IS NULL OR age_min <= %(age_hi)s)")
+        where.append("(age_max IS NULL OR age_max >= %(age_lo)s)")
+    if gender:
+        where.append("(gender IS NULL OR gender = %(gender)s)")
+        params["gender"] = gender
+    if household:
+        where.append("(household IS NULL OR %(household)s = ANY(household))")
+        params["household"] = household
+    return " AND ".join(where), params
+
+
+def one_line(summary, limit=70):
+    """LLM을 쓰지 않는 카드의 한 줄 요약: DB 요약의 첫 줄 앞부분."""
+    if not summary:
+        return ""
+    line = summary.strip().split("\n")[0].lstrip("○-·ㆍ* ").strip()
+    if len(line) <= limit:
+        return line
+    cut = line[:limit]
+    if " " in cut[limit // 2:]:
+        cut = cut[:cut.rindex(" ")]
+    return cut + "…"
+
+
+def to_card(row):
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "agency": row["agency"],
+        "one_line": one_line(row["summary"]),
+        "has_income_rule": row["has_income_rule"],
+        "url": row["url"],
+        "collected_at": row["collected_at"],
+    }
+
+
+def search_by_conditions(age_group=None, gender=None, region_code=None, household=None, page=1):
+    """버튼 조회: 조건 필터만 사용. 시·군·구 정책 → 시·도 정책 → 전국 정책 → 정책명순."""
+    where, params = build_filter(age_group, gender, region_code, household)
+    total = db.query(f"SELECT count(*) AS n FROM policy WHERE {where}", params)[0]["n"]
+    params["limit"] = PAGE_SIZE
+    params["offset"] = (page - 1) * PAGE_SIZE
+    rows = db.query(
+        f"SELECT {CARD_COLUMNS} FROM policy WHERE {where} "
+        "ORDER BY CASE WHEN region_code IS NULL THEN 2 WHEN length(region_code) = 2 THEN 1 ELSE 0 END, "
+        "name, id LIMIT %(limit)s OFFSET %(offset)s",
+        params,
+    )
+    return {"total": total, "policies": [to_card(r) for r in rows]}

@@ -1,0 +1,21 @@
+{
+  "age_group": [
+    {"value": "u19", "label": "18세 이하"},
+    {"value": "19_34", "label": "19~34세"},
+    {"value": "35_49", "label": "35~49세"},
+    {"value": "50_64", "label": "50~64세"},
+    {"value": "65_74", "label": "65~74세"},
+    {"value": "75plus", "label": "75세 이상"}
+  ],
+  "gender": [
+    {"value": "M", "label": "남성"},
+    {"value": "F", "label": "여성"}
+  ],
+  "household": [
+    {"value": "single", "label": "혼자 살아요"},
+    {"value": "single_parent", "label": "한부모·조손 가정"},
+    {"value": "multi_child", "label": "자녀가 여럿이에요"},
+    {"value": "multicultural", "label": "다문화 가정"},
+    {"value": "no_house", "label": "내 집이 없어요"}
+  ]
+}

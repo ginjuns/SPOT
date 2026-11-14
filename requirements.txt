@@ -1,0 +1,18 @@
+# Keep this file ASCII-only: pip on Korean Windows (cp949) fails on Korean text here.
+# No torch / sentence-transformers: the embedding model runs on onnxruntime
+# so the server fits in a 512 MB free instance.
+
+fastapi
+uvicorn[standard]
+httpx
+psycopg[binary]
+psycopg-pool
+pgvector
+onnxruntime
+tokenizers
+huggingface_hub
+numpy
+groq
+python-dotenv
+pydantic
+pytest

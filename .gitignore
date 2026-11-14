@@ -1,0 +1,16 @@
+# 비밀 값
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# 공공데이터 원본 응답 (다시 받을 수 있으므로 올리지 않는다)
+data/raw/
+
+# 편집기
+.vscode/
+.idea/
