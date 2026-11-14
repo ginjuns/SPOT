@@ -221,7 +221,8 @@ def build_rows(raw):
             "target": target,
             "criteria": criteria,
             "content": clean(s.get("지원내용") or d.get("지원내용")),
-            "how_to_apply": clean(s.get("신청방법") or d.get("신청방법")),
+            # 목록의 신청방법은 "방문신청||직접입력" 같은 분류값이라, 풀어 쓴 상세 쪽 글을 먼저 쓴다
+            "how_to_apply": clean(d.get("신청방법") or s.get("신청방법")),
             "apply_place": clean(s.get("접수기관") or d.get("접수기관명")),
             "contact": clean(d.get("문의처") or s.get("전화문의")),
             "url": clean(s.get("상세조회URL")),
