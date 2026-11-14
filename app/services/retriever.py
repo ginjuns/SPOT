@@ -20,8 +20,15 @@ AGE_RANGES = {
 CARD_COLUMNS = "id, name, agency, summary, has_income_rule, url, collected_at"
 
 
-def build_filter(age_group=None, gender=None, region_code=None, household=None):
-    """조건을 SQL WHERE 절과 값으로 바꾼다. 조건이 없는 항목은 넣지 않는다 (지역만 예외)."""
+CHILD_AGE_MAX = 18
+
+
+def build_filter(age_group=None, gender=None, region_code=None, household=None, for_child=False):
+    """조건을 SQL WHERE 절과 값으로 바꾼다. 조건이 없는 항목은 넣지 않는다 (지역만 예외).
+
+    for_child: 부모가 아이를 위한 지원을 묻는 경우. 아이 대상 정책(대상 나이가 18세 이하)은
+    부모 나이로 걸러지지 않게 나이 조건에서 빼 준다.
+    """
     where, params = [], {}
     if region_code:
         where.append(
@@ -33,8 +40,8 @@ def build_filter(age_group=None, gender=None, region_code=None, household=None):
         where.append("region_code IS NULL")
     if age_group:
         params["age_lo"], params["age_hi"] = AGE_RANGES[age_group]
-        where.append("(age_min IS NULL OR age_min <= %(age_hi)s)")
-        where.append("(age_max IS NULL OR age_max >= %(age_lo)s)")
+        age = "(age_min IS NULL OR age_min <= %(age_hi)s) AND (age_max IS NULL OR age_max >= %(age_lo)s)"
+        where.append(f"(({age}) OR age_max <= {CHILD_AGE_MAX})" if for_child else f"({age})")
     if gender:
         where.append("(gender IS NULL OR gender = %(gender)s)")
         params["gender"] = gender
@@ -75,7 +82,7 @@ def drop_far(rows, max_distance):
 
 
 def search_semantic(search_text, age_group=None, gender=None, region_code=None, household=None,
-                    limit=CANDIDATE_LIMIT, max_distance=None):
+                    limit=CANDIDATE_LIMIT, max_distance=None, for_child=False):
     """채팅 검색: 조건으로 거른 정책 중에서 질문과 뜻이 가까운 순으로 고른다.
 
     돌려주는 행에는 distance(코사인 거리, 작을수록 가까움)가 들어 있다.
@@ -83,7 +90,7 @@ def search_semantic(search_text, age_group=None, gender=None, region_code=None, 
     """
     from app.services.embedder import embed_query  # 모델은 처음 쓸 때만 불러온다
 
-    where, params = build_filter(age_group, gender, region_code, household)
+    where, params = build_filter(age_group, gender, region_code, household, for_child=bool(for_child))
     params["query_vec"] = embed_query(search_text)
     params["limit"] = limit
     rows = db.query(

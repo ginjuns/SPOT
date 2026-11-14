@@ -93,3 +93,14 @@ def test_prompt_cuts_long_candidate_text_and_keeps_user_text_separate():
     line = next(l for l in prompt.split("\n") if l.startswith("[A1]"))
     assert len(line) < 300 and "…" in line          # 지원 대상은 200자에서 자른다
     assert "[A3] 긴급복지 의료지원 / 대상:  / 내용: " in prompt
+
+def test_name_from_the_policys_own_db_text_is_not_a_problem():
+    """정책의 DB 설명에 원래 나오는 다른 제도 이름은 지어낸 것이 아니다."""
+    extension = {"id": "T1", "name": "훈련연장급여", "summary": "훈련기간 동안 구직급여 지급(최대 2년)",
+                 "target": "", "content": ""}
+    all_names = frozenset({"훈련연장급여", "구직급여", "기초연금 지급"})
+    assert not mentions_outside_policy("훈련을 받는 동안 구직급여를 더 받을 수 있는지 확인해 보세요", [extension], all_names)
+    assert mentions_outside_policy("기초연금 지급도 알아보세요", [extension], all_names)
+    out = validate({"text": "찾았어요. 확인해 보세요.", "picks": [{"id": "T1", "one_line": "훈련 기간에 구직급여를 이어서 받아요."}]},
+                   [extension], all_names=all_names)
+    assert out["picks"][0]["one_line"] == "훈련 기간에 구직급여를 이어서 받아요."

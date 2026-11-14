@@ -65,12 +65,13 @@ def _all_policy_names():
 def mentions_outside_policy(text, candidates, all_names=None):
     """안내 문장에 후보 목록 밖의 정책 이름이 들어 있는지."""
     names = _all_policy_names() if all_names is None else all_names
-    allowed = {c["name"] for c in candidates}
-    # 후보 이름의 일부인 이름(예: 후보 "청년월세 지원" 안의 "월세 지원")은 문제 삼지 않는다
-    return any(
-        name in text and not any(name in ok for ok in allowed)
-        for name in names
+    # 아래 경우는 문제 삼지 않는다:
+    #  - 후보 이름의 일부인 이름 (후보 "청년월세 지원" 안의 "월세 지원")
+    #  - 후보 정책의 DB 글에 원래 나오는 이름 ("훈련연장급여"의 설명에 나오는 "구직급여")
+    allowed = " ".join(
+        str(c.get(key) or "") for c in candidates for key in ("name", "summary", "target", "content")
     )
+    return any(name in text and name not in allowed for name in names)
 
 
 def default_text(count):

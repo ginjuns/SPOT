@@ -64,3 +64,11 @@ def test_one_line():
     assert one_line("○ 짧은 요약\n둘째 줄") == "짧은 요약"
     long = "가나다라 " * 30
     assert len(one_line(long)) <= 71 and one_line(long).endswith("…")
+
+def test_for_child_keeps_child_policies_despite_parent_age():
+    where, params = build_filter(age_group="35_49", for_child=True)
+    assert "OR age_max <= 18" in where and params["age_lo"] == 35
+    plain, _ = build_filter(age_group="35_49")
+    assert "age_max <= 18" not in plain
+    # 나이를 모르면 나이 조건 자체가 없으므로 달라지지 않는다
+    assert build_filter(for_child=True) == build_filter()

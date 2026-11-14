@@ -73,7 +73,8 @@ def test_button_call_skips_analysis_and_searches(fake):
     }).json()
     assert fake["analyze"] == []  # LLM을 다시 부르지 않는다
     assert fake["search"] == [("병원비 의료비 지원", {"age_group": "75plus", "gender": None,
-                                               "region_code": "18101", "household": None})]
+                                               "region_code": "18101", "household": None,
+                                               "for_child": False})]
     assert r["type"] == "result" and r["policies"][0]["id"] == "SVC1"
     # 한 줄 요약만 AI가 쓴 글이고, 나머지 카드 내용은 DB 값이다
     assert r["policies"][0]["one_line"] == "AI가 쓴 한 줄 요약"

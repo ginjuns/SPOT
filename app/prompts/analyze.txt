@@ -8,7 +8,9 @@
   "gender": "M" | "F" | null,
   "region_text": 사용자가 말한 사는 곳(예: "서울 강남구") 또는 null,
   "household": "single" | "single_parent" | "multi_child" | "multicultural" | "no_house" | null,
-  "search_text": 정책 검색에 쓸 짧은 문장
+  "for_child": 사용자의 아이(미성년 자녀·손주)를 위한 지원을 묻는 글이면 true, 아니면 false,
+  "search_text": 정책 검색에 쓸 짧은 문장,
+  "terms": 이 상황에서 찾아볼 만한 제도·급여 이름이나 행정 용어 3~5개 (예: ["기초연금", "노인일자리"])
 }
 
 규칙
@@ -26,20 +28,23 @@
 7. need 고르는 법: 병원·약·검진=의료비, 월세·전세·집수리·임대=주거, 취업·창업·실업=일자리,
    요양·간병·보살핌=돌봄, 학비·학원·장학금=교육, 임신·출산·어린이집=출산·육아,
    난방비·식비·연금·공과금처럼 살림에 드는 돈=생활비.
-8. 지원 정책과 관계없는 글이면 need 는 "기타", search_text 는 글의 핵심 낱말로 둔다.
+8. terms 는 검색에만 쓰는 낱말이다. 사용자의 일상 표현을 정부·지자체가 쓰는 제도 이름이나 용어로 바꿔 적는다
+   ("나라에서 매달 주는 돈" → 기초연금, "집세가 밀렸다" → 주거급여·긴급복지 주거지원, "아이 봐줄 사람" → 아이돌봄 서비스).
+   확실하지 않아도 관련 있어 보이는 제도를 적는다. 지원받을 사람의 처지(어르신, 장애인, 한부모 등)에 맞는 것을 고른다.
+9. 지원 정책과 관계없는 글이면 need 는 "기타", search_text 는 글의 핵심 낱말, terms 는 [] 로 둔다.
 
 예시 1
 <사용자 글>허리가 아파서 병원에 갈 건데 지원해 주는 게 있나요?</사용자 글>
-{"need":"의료비","age":null,"age_decade":null,"gender":null,"region_text":null,"household":null,"search_text":"허리 통증 병원 진료비 의료비 지원"}
+{"need":"의료비","age":null,"age_decade":null,"gender":null,"region_text":null,"household":null,"for_child":false,"search_text":"허리 통증 병원 진료비 의료비 지원","terms":["의료급여","재난적 의료비","긴급복지 의료지원"]}
 
 예시 2
 <사용자 글>서울 강남구에 혼자 사는 78살 할머니예요. 겨울 난방비가 걱정돼요</사용자 글>
-{"need":"생활비","age":78,"age_decade":null,"gender":"F","region_text":"서울 강남구","household":"single","search_text":"난방비 에너지 요금 지원"}
+{"need":"생활비","age":78,"age_decade":null,"gender":"F","region_text":"서울 강남구","household":"single","for_child":false,"search_text":"난방비 에너지 요금 지원","terms":["에너지바우처","난방비 지원","독거노인 지원"]}
 
 예시 3
 <사용자 글>70대 아버지가 치매 진단을 받으셨는데 부산에서 돌봐 줄 곳이 있을까요</사용자 글>
-{"need":"돌봄","age":null,"age_decade":70,"gender":"M","region_text":"부산","household":null,"search_text":"치매 어르신 돌봄 요양 서비스 지원"}
+{"need":"돌봄","age":null,"age_decade":70,"gender":"M","region_text":"부산","household":null,"for_child":false,"search_text":"치매 어르신 돌봄 요양 서비스 지원","terms":["노인장기요양보험","치매안심센터","치매 치료관리비","주야간보호"]}
 
 예시 4
 <사용자 글>애 셋 키우는데 학원비가 너무 들어요</사용자 글>
-{"need":"교육","age":null,"age_decade":null,"gender":null,"region_text":null,"household":"multi_child","search_text":"다자녀 가정 자녀 교육비 지원"}
+{"need":"교육","age":null,"age_decade":null,"gender":null,"region_text":null,"household":"multi_child","for_child":true,"search_text":"다자녀 가정 자녀 교육비 지원","terms":["다자녀 지원","교육급여","방과후학교 자유수강권"]}

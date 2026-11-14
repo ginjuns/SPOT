@@ -18,8 +18,9 @@ class Conditions(BaseModel):
     gender: Optional[Gender] = None
     region_code: Optional[str] = RegionCode
     household: Optional[Household] = None
+    for_child: Optional[bool] = None   # 아이를 위한 지원을 묻는 질문인지 (서버가 분석해서 준 값)
     need: Optional[str] = Field(default=None, max_length=20)
-    search_text: Optional[str] = Field(default=None, max_length=400)
+    search_text: Optional[str] = Field(default=None, max_length=600)
 
 
 class HistoryItem(BaseModel):

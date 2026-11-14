@@ -119,6 +119,14 @@ def _clean_text(value):
     return " ".join(value.split()) if isinstance(value, str) and value.strip() else None
 
 
+def clean_terms(value):
+    """LLM이 준 제도 낱말 목록을 다듬는다 (최대 5개, 낱말마다 20자까지)."""
+    if not isinstance(value, list):
+        return []
+    terms = [_clean_text(v) for v in value if isinstance(v, str)]
+    return [t[:20] for t in terms if t][:5]
+
+
 def normalize(raw, message):
     """LLM이 준 JSON을 정해진 값으로만 걸러서 돌려준다."""
     region_text = _clean_text(raw.get("region_text"))
@@ -130,6 +138,8 @@ def normalize(raw, message):
         "region_text": region_text,
         "region_code": resolve_region(region_text),
         "household": raw.get("household") if raw.get("household") in HOUSEHOLDS else None,
+        "for_child": raw.get("for_child") is True,
+        "terms": clean_terms(raw.get("terms")),
         "search_text": search_text[:SEARCH_TEXT_LIMIT],
     }
 
@@ -165,8 +175,19 @@ def analyze_by_rules(message):
         "region_text": None,
         "region_code": resolve_region(message, strict=True),
         "household": pick(KEYWORDS["household"]),
+        "for_child": any(w in message for w in KEYWORDS["for_child"]),
         "search_text": " ".join(message.split()),
     }
+
+
+def expand(search_text):
+    """검색 문장에 정책에서 쓰는 낱말을 덧붙인다 (data/keywords.json 의 expand 규칙).
+
+    "나라에서 매달 주는 돈"(기초연금), "소일거리"(노인일자리)처럼 일상 표현과 정책 이름이 많이 다르면
+    의미 검색만으로는 못 찾는다. 검색할 때만 쓰고, 사용자에게 보이거나 답변 생성 AI에 넘기지 않는다.
+    """
+    adds = [rule["add"] for rule in KEYWORDS["expand"] if any(w in search_text for w in rule["when"])]
+    return f"{search_text} {' '.join(adds)}" if adds else search_text
 
 
 def with_question(search_text, message):
@@ -189,7 +210,10 @@ def analyze(message, history=None):
     try:
         raw = llm.chat_json(config.GROQ_MODEL_ANALYZE, PROMPT, build_user_prompt(message, history))
         result = normalize(raw, message)
-        result["search_text"] = with_question(result["search_text"], message)
+        # 검색 문장 = 제도 낱말 + 다듬은 문장 + 원래 질문.
+        # 새 질문 12개로 시험했을 때 낱말을 앞에 두는 것이 가장 잘 맞았다 (6개 → 9개).
+        refined = " ".join(result.pop("terms") + [result["search_text"]])
+        result["search_text"] = with_question(refined, message)
         return {**result, "source": "llm"}
     except llm.LLMError:
         return {**analyze_by_rules(message), "source": "rules"}

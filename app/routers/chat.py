@@ -41,6 +41,7 @@ def merge_conditions(sent, analysis):
     # "75살이고 서울 살아요"처럼 조건만 덧붙인 말이면 앞에서 정한 분야·검색 문장을 그대로 둔다.
     keep_previous = bool(sent.get("search_text")) and analysis.get("need") == "기타"
     source = sent if keep_previous else analysis
+    merged["for_child"] = bool(source.get("for_child"))
     merged["need"] = source.get("need")
     merged["search_text"] = source.get("search_text")
     return merged
@@ -88,11 +89,12 @@ def handle(req, client_key):
         return {"type": "ask", "text": ASK_TEXT[missing] + notice, "ask": list(missing), "conditions": conditions}
 
     candidates = retriever.search_semantic(
-        conditions["search_text"],
+        analyzer.expand(conditions["search_text"]),
         age_group=conditions["age_group"],
         gender=conditions["gender"],
         region_code=conditions["region_code"],
         household=conditions["household"],
+        for_child=bool(conditions.get("for_child")),
     )
     if not candidates:
         return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}

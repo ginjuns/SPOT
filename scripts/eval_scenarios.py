@@ -50,9 +50,12 @@ OFF_TOPIC = [
 ]
 
 
-def search(text, conditions):
+def search(text, conditions, for_child=False):
+    from app.services import analyzer
+
     return retriever.search_semantic(
-        text,
+        analyzer.expand(text),   # 실제 채팅과 똑같이 검색 보완 규칙을 적용한다
+        for_child=for_child,
         age_group=conditions.get("age_group"),
         gender=conditions.get("gender"),
         region_code=conditions.get("region_code"),
@@ -84,7 +87,11 @@ def eval_no_llm(analyze=False):
             text = result["search_text"]
             by_rules += result["source"] == "rules"
             time.sleep(8)  # 무료 한도(분당 호출 수)를 넘지 않게 천천히 부른다
-        rows = search(text, s["conditions"])
+        # 아이를 위한 질문인지는 낱말 규칙으로 본다 (Groq를 쓰지 않으므로)
+        from app.services.analyzer import KEYWORDS
+
+        for_child = any(w in s["question"] for w in KEYWORDS["for_child"])
+        rows = search(text, s["conditions"], for_child=for_child)
         top = rows[:TOP]
         top_distances += [r["distance"] for r in top]
         ranks = {r["id"]: i + 1 for i, r in enumerate(rows)}
@@ -154,8 +161,8 @@ def eval_with_llm(only=None, pause=20):
         blank = dict.fromkeys(("age_group", "gender", "region_code", "household", "need", "search_text"))
         conditions = merge_conditions({**blank, **s["conditions"]}, analysis)
         candidates = retriever.search_semantic(
-            conditions["search_text"], age_group=conditions["age_group"], gender=conditions["gender"],
-            region_code=conditions["region_code"], household=conditions["household"],
+            analyzer.expand(conditions["search_text"]), age_group=conditions["age_group"], gender=conditions["gender"],
+            region_code=conditions["region_code"], household=conditions["household"], for_child=conditions["for_child"],
         )
         head = f"{s['id']:2d} [{s['expected_need']}→{analysis['need']}] {s['question'][:30]}"
         if not candidates:

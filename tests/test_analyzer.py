@@ -99,3 +99,30 @@ def test_analyze_uses_llm_result(monkeypatch):
 def test_with_question_does_not_repeat_the_same_text():
     assert analyzer.with_question("월세가 부담돼요", "월세가  부담돼요") == "월세가 부담돼요"
     assert analyzer.with_question(None, "월세가 부담돼요") == "월세가 부담돼요"
+
+def test_expand_adds_policy_words_for_everyday_phrases():
+    out = analyzer.expand("나이 들면 나라에서 매달 주는 돈이 있다던데")
+    assert out.startswith("나이 들면 나라에서 매달 주는 돈이 있다던데 ") and "기초연금" in out
+    both = analyzer.expand("은퇴하고 소일거리를 찾는데 난방비도 걱정이에요")
+    assert "노인일자리" in both and "에너지바우처" in both
+    # 해당하는 말이 없으면 그대로 둔다
+    assert analyzer.expand("대학 등록금 장학금") == "대학 등록금 장학금"
+
+
+def test_for_child_is_detected():
+    assert analyze_by_rules("초등학생 아이를 봐줄 사람이 필요해요")["for_child"] is True
+    assert analyze_by_rules("무릎이 아파서 수술을 해야 해요")["for_child"] is False
+    assert normalize({"for_child": True}, "x")["for_child"] is True
+    assert normalize({"for_child": "yes"}, "x")["for_child"] is False   # true 가 아니면 모두 False
+
+def test_terms_from_llm_go_in_front_of_the_search_text(monkeypatch):
+    monkeypatch.setattr(llm, "chat_json", lambda *a, **k: {
+        "need": "생활비", "search_text": "노인 생활비 지원", "terms": ["기초연금", " 노인 수당 ", 3, "가" * 30]})
+    out = analyzer.analyze("나이 들면 매달 주는 돈이 있나요")
+    assert out["search_text"] == "기초연금 노인 수당 " + "가" * 20 + " 노인 생활비 지원. 나이 들면 매달 주는 돈이 있나요"
+    assert "terms" not in out   # 브라우저로 따로 보내지 않는다
+
+
+def test_clean_terms():
+    assert analyzer.clean_terms(None) == [] and analyzer.clean_terms("기초연금") == []
+    assert analyzer.clean_terms(["a", "b", "c", "d", "e", "f"]) == ["a", "b", "c", "d", "e"]
