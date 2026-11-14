@@ -1,0 +1,17 @@
+{
+  "name": "SPOT - 정부 지원 찾기",
+  "short_name": "SPOT",
+  "description": "평소 말투로 상황을 이야기하면 받을 수 있는 정부·지자체 지원을 찾아 드려요.",
+  "lang": "ko",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#0b4fb3",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

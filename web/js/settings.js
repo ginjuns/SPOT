@@ -27,6 +27,13 @@
     }
   }
 
+  // 홈 화면에 추가(PWA)를 위한 서비스 워커 등록. 지원하지 않는 브라우저에서는 그냥 넘어간다.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    });
+  }
+
   apply("big", read("big"));
   apply("contrast", read("contrast"));
 

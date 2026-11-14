@@ -1,5 +1,6 @@
 """FastAPI 앱 생성, 라우터 등록, 정적 파일 제공."""
 import logging
+import mimetypes
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -10,6 +11,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import config, db
 from app.routers import chat, meta, policy, search
+
+# 홈 화면에 추가(PWA) 설정 파일이 올바른 종류로 전달되게 한다
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 logger = logging.getLogger("benefit")
 logger.setLevel(logging.INFO)
