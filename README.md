@@ -11,7 +11,9 @@
 - [x] 1주차 4단계: 수집 스크립트 (`scripts/ingest.py`)
 - [x] 1주차 5단계: 지역 코드 (`scripts/load_regions.py`, `data/regions.csv`)
 - [x] 1주차 6단계: 조회 API (`/api/search`, `/api/policy/{id}`, `/api/policies`, `/api/options`, `/api/regions`, `/api/health`)
-- [ ] 1주차 7단계: Render 첫 배포 (`Dockerfile` 작성됨, 배포는 아래 "배포하기" 참고)
+- [x] 1주차 7단계: Render 첫 배포 (`/api/health` 확인 완료)
+- [x] 2주차 1단계: 임베딩(`embedder.py`), 조건 필터 + 의미 검색(`retriever.py`의 `search_semantic`)
+- [ ] 2주차 2단계: Groq 연결(`llm.py`), 질문 분석(`analyzer.py`)
 
 ## 준비물 (모두 무료)
 

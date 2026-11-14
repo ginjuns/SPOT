@@ -1,7 +1,11 @@
-"""조건 필터 + 의미 검색. (의미 검색은 2주차에 추가)"""
-from app import db
+"""조건 필터 + 의미 검색."""
+from app import config, db
 
 PAGE_SIZE = 10
+CANDIDATE_LIMIT = 8  # 의미 검색으로 고르는 후보 수
+
+# 의미 검색 후보에 필요한 열 (답변 생성에 지원 대상·지원 내용을 쓴다)
+CANDIDATE_COLUMNS = "id, name, agency, summary, target, content, has_income_rule, url, collected_at"
 
 # 나이대 → (가장 어린 나이, 가장 많은 나이)
 AGE_RANGES = {
@@ -63,6 +67,32 @@ def to_card(row):
         "url": row["url"],
         "collected_at": row["collected_at"],
     }
+
+
+def drop_far(rows, max_distance):
+    """거리가 기준값보다 먼 후보는 버린다."""
+    return [r for r in rows if r["distance"] <= max_distance]
+
+
+def search_semantic(search_text, age_group=None, gender=None, region_code=None, household=None,
+                    limit=CANDIDATE_LIMIT, max_distance=None):
+    """채팅 검색: 조건으로 거른 정책 중에서 질문과 뜻이 가까운 순으로 고른다.
+
+    돌려주는 행에는 distance(코사인 거리, 작을수록 가까움)가 들어 있다.
+    max_distance 를 주지 않으면 config.MAX_DISTANCE 를 쓴다.
+    """
+    from app.services.embedder import embed_query  # 모델은 처음 쓸 때만 불러온다
+
+    where, params = build_filter(age_group, gender, region_code, household)
+    params["query_vec"] = embed_query(search_text)
+    params["limit"] = limit
+    rows = db.query(
+        f"SELECT {CANDIDATE_COLUMNS}, embedding <=> %(query_vec)s AS distance "
+        f"FROM policy WHERE {where} AND embedding IS NOT NULL "
+        "ORDER BY distance, id LIMIT %(limit)s",
+        params,
+    )
+    return drop_far(rows, config.MAX_DISTANCE if max_distance is None else max_distance)
 
 
 def search_by_conditions(age_group=None, gender=None, region_code=None, household=None, page=1):

@@ -1,4 +1,31 @@
-from app.services.retriever import AGE_RANGES, build_filter, one_line
+import numpy as np
+
+from app.services import retriever
+from app.services.retriever import AGE_RANGES, build_filter, drop_far, one_line
+
+
+def test_drop_far():
+    rows = [{"id": "a", "distance": 0.10}, {"id": "b", "distance": 0.30}, {"id": "c", "distance": 0.31}]
+    assert [r["id"] for r in drop_far(rows, 0.30)] == ["a", "b"]
+
+
+def test_search_semantic_keeps_filter_and_drops_far(monkeypatch):
+    """DB와 모델 없이: 조건 필터가 SQL에 들어가고, 먼 후보는 빠지는지 본다."""
+    seen = {}
+
+    def fake_query(sql, params):
+        seen["sql"], seen["params"] = sql, params
+        return [{"id": "a", "distance": 0.1}, {"id": "b", "distance": 0.9}]
+
+    monkeypatch.setattr(retriever.db, "query", fake_query)
+    monkeypatch.setattr("app.services.embedder.embed_query", lambda text: np.zeros(384, dtype=np.float32))
+
+    rows = retriever.search_semantic("병원비 지원", age_group="75plus", max_distance=0.5)
+    assert [r["id"] for r in rows] == ["a"]
+    # 지역을 모르면 전국 정책만 찾는다
+    assert "region_code IS NULL" in seen["sql"] and "region_code =" not in seen["sql"]
+    assert "embedding <=> %(query_vec)s" in seen["sql"]
+    assert seen["params"]["age_lo"] == 75 and seen["params"]["limit"] == 8
 
 
 def test_no_region_means_nationwide_only():
