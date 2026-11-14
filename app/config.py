@@ -15,9 +15,12 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 # 2026-11-14 Groq 모델 목록(API)으로 확인: llama 계열은 더 이상 제공되지 않는다.
-# TODO(확인): Groq 콘솔의 Limits 화면에서 모델별 무료 한도(분당·하루 요청 수, 토큰 수) 확인
+# 무료 한도(2026-11-14 응답 헤더로 확인): 모델마다 하루 1,000회, 분당 8,000토큰.
+# 답변 1번에 약 2,000토큰, 분석 1번에 약 1,200토큰을 쓴다.
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")           # 답변 생성용
 GROQ_MODEL_ANALYZE = os.getenv("GROQ_MODEL_ANALYZE", "openai/gpt-oss-20b")  # 질문 분석용
+# 답변용 모델이 분당 한도(모델마다 따로 8,000토큰)를 넘었을 때 대신 쓰는 모델. 비워 두면 쓰지 않는다.
+GROQ_MODEL_BACKUP = os.getenv("GROQ_MODEL_BACKUP", "qwen/qwen3.8-27b")
 # 생각(추론) 단계를 짧게 해서 토큰과 시간을 아낀다. 이 옵션이 없는 모델을 쓸 때는 빈 값으로 둔다.
 GROQ_REASONING_EFFORT = os.getenv("GROQ_REASONING_EFFORT", "low")
 
@@ -33,4 +36,5 @@ GLOBAL_DAILY_CHAT_LIMIT = int(os.getenv("GLOBAL_DAILY_CHAT_LIMIT", "200"))
 MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.15"))
 
 # 답변 생성에 넣는 후보 정책 글(지원 대상·지원 내용)의 최대 글자 수
-CANDIDATE_TEXT_LIMIT = 200
+# 200자일 때 답변 1번에 3,000토큰을 써서 1분에 2번밖에 답하지 못했다. 120자로 줄였다.
+CANDIDATE_TEXT_LIMIT = 120

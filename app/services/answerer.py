@@ -116,6 +116,7 @@ def validate(raw, candidates, all_names=None):
 def answer(situation, conditions, candidates):
     """후보 정책 중 상황에 맞는 것을 고른다. LLM이 안 되면 llm.LLMError 가 그대로 올라간다."""
     raw = llm.chat_json(
-        config.GROQ_MODEL, PROMPT, build_user_prompt(situation, conditions, candidates), max_tokens=900
+        config.GROQ_MODEL, PROMPT, build_user_prompt(situation, conditions, candidates),
+        max_tokens=900, backup=config.GROQ_MODEL_BACKUP,
     )
     return validate(raw, candidates)

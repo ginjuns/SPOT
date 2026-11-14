@@ -22,7 +22,9 @@
 - [x] 3주차 1단계: 답변 생성(`answerer.py`), fallback 처리, 사용량 제한(`rate_limit.py`)
 - [x] 3주차 2단계: 나머지 화면 (시작, 채팅, 공유, 주민센터에서 보여주기, 큰 글씨·고대비 모드)
 - [x] 3주차 3단계: PWA 설정 (홈 화면에 추가, 아이콘)
-- [ ] 3주차 4단계: Render 최종 배포 확인
+- [x] 3주차 4단계: Render 최종 배포 확인 (휴대폰에서 질문 → 되묻기 → 결과 → 공유 확인)
+- [x] 4주차 1단계: 시나리오 30개 답변 평가 (`python scripts/eval_scenarios.py`) — 30개 중 25개(83%) 적합, 목록 밖 정책 언급 0건 (2026-11-14)
+- [ ] 4주차 2단계: 평가 결과로 프롬프트·키워드 규칙·모델 조정
 
 ## 준비물 (모두 무료)
 
@@ -92,6 +94,9 @@ python scripts/load_regions.py
 ## 검색 평가
 
 ```powershell
+# 답변까지 평가: 분석 → 검색 → 답변 생성 → 검증 (12분쯤 걸림, Groq 한도를 많이 쓰므로 하루 1~2번만)
+python scripts/eval_scenarios.py
+
 # Groq를 쓰지 않고 검색만 평가 (몇 번이든 돌려도 됨)
 python scripts/eval_scenarios.py --no-llm
 
