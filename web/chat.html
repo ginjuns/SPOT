@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>말로 물어보기 - SPOT</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/settings.js"></script>
+</head>
+<body>
+  <div class="page chat-page">
+    <nav class="topbar" aria-label="이동">
+      <a class="btn btn-quiet" href="index.html">← 뒤로</a>
+      <a class="btn btn-quiet" href="index.html">처음으로</a>
+    </nav>
+
+    <main id="log" class="chat-log" aria-live="polite"></main>
+
+    <form id="form" class="chat-form">
+      <label for="message" class="sr-only">궁금한 점을 적어 주세요</label>
+      <textarea id="message" rows="2" maxlength="300" placeholder="여기에 적어 주세요"></textarea>
+      <button type="submit" class="btn btn-primary" id="send">보내기</button>
+    </form>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/chat.js"></script>
+</body>
+</html>

@@ -154,3 +154,107 @@ p { margin: 0 0 10px; }
 .contact-list .who { display: block; margin-bottom: 4px; }
 
 [hidden] { display: none !important; }
+
+/* ---------- 화면 설정: 큰 글씨, 또렷한 화면(고대비) ---------- */
+
+html[data-big="1"] { font-size: 24px; }
+
+html[data-contrast="1"] {
+  --bg: #000000;
+  --surface: #000000;
+  --text: #ffffff;
+  --muted: #f0f0f0;
+  --line: #ffffff;
+  --primary: #ffe600;
+  --primary-text: #000000;
+  --soft: #1f1f1f;
+  --warn-bg: #ffe600;
+  --warn-text: #000000;
+}
+html[data-contrast="1"] .btn:active { background: #333333; }
+html[data-contrast="1"] .btn-primary:active { background: #ccb800; }
+html[data-contrast="1"] .btn[disabled] { background: #000000; color: #bdbdbd; }
+html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
+
+.settings-title { margin-top: 28px; }
+.toggle { flex-direction: column; gap: 2px; }
+.toggle .state { font-size: 0.85rem; font-weight: 500; color: var(--muted); }
+.toggle[aria-pressed="true"] { border-color: var(--primary); border-width: 3px; }
+.toggle[aria-pressed="true"] .state { color: var(--primary); font-weight: 700; }
+
+/* ---------- 채팅 ---------- */
+
+.chat-log { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
+
+.bubble {
+  max-width: 88%;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  white-space: pre-line;
+}
+.bubble.bot { align-self: flex-start; border-bottom-left-radius: 4px; }
+.bubble.user { align-self: flex-end; border-color: var(--primary); background: var(--primary); color: var(--primary-text); border-bottom-right-radius: 4px; }
+.bubble.waiting { color: var(--muted); font-weight: 600; }
+
+.picker { padding: 12px; border: 2px solid var(--primary); border-radius: var(--radius); background: var(--surface); }
+.picker-title { font-weight: 700; margin-bottom: 8px; }
+.picker .btn-quiet { margin-top: 10px; }
+.picker .options-scroll { max-height: 46vh; }
+
+.example { justify-content: flex-start; text-align: left; }
+.results, .result-actions { width: 100%; }
+.result-actions { margin-top: 4px; }
+
+/* 입력창은 화면 아래에 붙어 있다 */
+.chat-form {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;   /* 입력창 옆에 보내기 버튼 (화면을 덜 가리게) */
+  align-items: stretch;
+  gap: 8px;
+  margin: 0 -16px;
+  padding: 10px 16px 14px;
+  border-top: 2px solid var(--line);
+  background: var(--bg);
+}
+.chat-form textarea {
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  resize: none;
+}
+.chat-form textarea:focus { outline: 3px solid var(--primary); outline-offset: 1px; }
+.chat-form textarea::placeholder { color: var(--muted); }
+.chat-form .btn { width: auto; min-width: 5.2rem; }
+
+/* 화면에는 안 보이지만 화면 읽어 주는 프로그램은 읽는 글 */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- 주민센터에서 보여주기 ---------- */
+
+.no-scroll { overflow: hidden; }
+
+.office {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  color: var(--text);
+}
+.office-title { margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+.office-body { flex: 1; overflow-y: auto; }
+.office-item { padding: 14px 0; border-bottom: 2px solid var(--line); }
+.office-item h2 { font-size: 1.7rem; line-height: 1.35; margin-bottom: 8px; }
+.office-item p { font-size: 1.35rem; line-height: 1.45; margin-bottom: 6px; }

@@ -4,17 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SPOT - 나에게 맞는 정부 지원 찾기</title>
+  <meta name="description" content="평소 말투로 상황을 이야기하면 받을 수 있는 정부·지자체 지원을 찾아 드려요.">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/settings.js"></script>
 </head>
 <body>
   <div class="page">
     <main>
       <h1>SPOT</h1>
-      <p class="lead">받을 수 있는 정부·지자체 지원을 쉽게 찾아 드려요.</p>
+      <p class="lead">받을 수 있는 정부·지자체 지원을 쉽게 찾아 드려요. 회원가입 없이 바로 쓸 수 있어요.</p>
 
       <div class="stack">
-        <a class="btn btn-big btn-primary" href="search.html">👆 버튼으로 찾기</a>
-        <button type="button" class="btn btn-big" disabled>💬 말로 물어보기 (준비 중)</button>
+        <a class="btn btn-big btn-primary" href="chat.html">💬 말로 물어보기</a>
+        <a class="btn btn-big" href="search.html">👆 버튼으로 찾기</a>
+      </div>
+
+      <h2 class="settings-title">화면 설정</h2>
+      <div class="row">
+        <button type="button" class="btn toggle" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
+        <button type="button" class="btn toggle" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
       </div>
     </main>
 
