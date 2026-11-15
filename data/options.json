@@ -17,5 +17,17 @@
     {"value": "multi_child", "label": "자녀가 여럿이에요"},
     {"value": "multicultural", "label": "다문화 가정"},
     {"value": "no_house", "label": "내 집이 없어요"}
+  ],
+  "category": [
+    {"value": "생활안정", "label": "생활비"},
+    {"value": "보건·의료", "label": "병원·건강"},
+    {"value": "보호·돌봄", "label": "돌봄"},
+    {"value": "주거·자립", "label": "집·주거"},
+    {"value": "고용·창업", "label": "일자리"},
+    {"value": "임신·출산", "label": "임신·출산"},
+    {"value": "보육·교육", "label": "아이·교육"},
+    {"value": "문화·환경", "label": "문화·여가"},
+    {"value": "행정·안전", "label": "안전·생활 편의"},
+    {"value": "농림축산어업", "label": "농사·어업"}
   ]
 }

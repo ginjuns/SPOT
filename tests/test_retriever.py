@@ -65,6 +65,61 @@ def test_one_line():
     long = "가나다라 " * 30
     assert len(one_line(long)) <= 71 and one_line(long).endswith("…")
 
+def _capture_queries(monkeypatch):
+    """DB 없이 search_by_conditions 가 만든 SQL과 값을 받아 본다."""
+    seen = []
+
+    def fake_query(sql, params):
+        seen.append((sql, dict(params)))
+        return [{"n": 0}] if "count(*)" in sql else []
+
+    monkeypatch.setattr(retriever.db, "query", fake_query)
+    return seen
+
+
+def test_search_by_category(monkeypatch):
+    seen = _capture_queries(monkeypatch)
+    retriever.search_by_conditions(category="보건·의료")
+    sql, params = seen[0]
+    assert "category = %(category)s" in sql and params["category"] == "보건·의료"
+    # 낱말 없이 지역을 고르지 않으면 전과 같이 전국 정책만 찾는다
+    assert "region_code IS NULL" in sql
+
+
+def test_search_by_keyword(monkeypatch):
+    seen = _capture_queries(monkeypatch)
+    retriever.search_by_conditions(keyword="  기초연금   신청 ")
+    count_sql, params = seen[0]
+    list_sql, _ = seen[1]
+    # 낱말마다 이름·요약·대상·내용에서 찾고, 모든 낱말이 들어 있어야 한다
+    assert params["kw0"] == "%기초연금%" and params["kw1"] == "%신청%"
+    assert "name ILIKE %(kw0)s OR summary ILIKE %(kw0)s" in count_sql
+    assert "content ILIKE %(kw1)s" in count_sql
+    # 지역을 고르지 않고 낱말로 찾으면 모든 지역에서 찾는다
+    assert "region_code" not in count_sql
+    # 이름이 낱말과 똑같은 정책 → 이름에 낱말이 있는 정책 → 전국 정책 순서로 보여 준다
+    assert ("ORDER BY CASE WHEN name = %(kw_all)s THEN 0 "
+            "WHEN name ILIKE %(kw0)s AND name ILIKE %(kw1)s THEN 1 ELSE 2 END, "
+            "CASE WHEN region_code IS NULL THEN 0 ELSE 1 END, name") in list_sql
+    assert seen[1][1]["kw_all"] == "기초연금 신청"
+
+
+def test_keyword_with_region_keeps_region_filter(monkeypatch):
+    seen = _capture_queries(monkeypatch)
+    retriever.search_by_conditions(region_code="18101", keyword="난방비", category="생활안정")
+    sql, params = seen[0]
+    assert "region_code = %(region)s" in sql and "category = %(category)s" in sql
+    assert params["region"] == "18101" and params["kw0"] == "%난방비%"
+
+
+def test_keyword_terms_and_like_pattern():
+    assert retriever.keyword_terms(None) == []
+    assert retriever.keyword_terms("   ") == []
+    assert len(retriever.keyword_terms("가 나 다 라 마 바 사")) == retriever.MAX_KEYWORDS
+    # %, _ 는 "아무 글자"가 아니라 글자 그대로 찾는다
+    assert retriever.like_pattern("50%_할인\\") == "%50\\%\\_할인\\\\%"
+
+
 def test_for_child_keeps_child_policies_despite_parent_age():
     where, params = build_filter(age_group="35_49", for_child=True)
     assert "OR age_max <= 18" in where and params["age_lo"] == 35

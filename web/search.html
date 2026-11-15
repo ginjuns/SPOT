@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>버튼으로 찾기 - SPOT</title>
+  <title>지원 찾기 - SPOT</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b4fb3">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -12,7 +12,7 @@
   <script src="js/settings.js"></script>
 </head>
 <body>
-  <div class="page">
+  <div class="page has-fab">
     <nav class="topbar" aria-label="이동">
       <button type="button" class="btn btn-quiet" id="back">← 뒤로</button>
       <a class="btn btn-quiet" href="index.html">처음으로</a>
@@ -22,6 +22,8 @@
 
     <p class="notice">이 서비스는 혜택을 찾아 안내해 드려요. 받을 수 있는지는 신청하는 곳에서 최종 확인해 주세요.</p>
   </div>
+
+  <a class="chat-fab" href="chat.html" aria-label="말로 물어보기"><span class="fab-icon" aria-hidden="true">💬</span>말로 묻기</a>
 
   <script src="js/api.js"></script>
   <script src="js/search.js"></script>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SPOT - 나에게 맞는 정부 지원 찾기</title>
-  <meta name="description" content="평소 말투로 상황을 이야기하면 받을 수 있는 정부·지자체 지원을 찾아 드려요.">
+  <meta name="description" content="받을 수 있는 정부·지자체 지원을 이름, 분야, 내 조건으로 찾아보세요. 말로 물어볼 수도 있어요.">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b4fb3">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -13,17 +13,37 @@
   <script src="js/settings.js"></script>
 </head>
 <body>
-  <div class="page">
+  <div class="page has-fab">
     <main>
       <h1>SPOT</h1>
-      <p class="lead">받을 수 있는 정부·지자체 지원을 쉽게 찾아 드려요. 회원가입 없이 바로 쓸 수 있어요.</p>
+      <p class="lead">받을 수 있는 정부·지자체 지원을 찾아보세요. 회원가입 없이 바로 쓸 수 있어요.</p>
 
-      <div class="stack">
-        <a class="btn btn-big btn-primary" href="chat.html">💬 말로 물어보기</a>
-        <a class="btn btn-big" href="search.html">👆 버튼으로 찾기</a>
+      <h2 id="find-word">이름이나 낱말로 찾기</h2>
+      <form class="search-form" id="search-form" aria-labelledby="find-word">
+        <input type="search" id="q" maxlength="50" placeholder="예: 기초연금, 난방비" autocomplete="off" enterkeyhint="search">
+        <button type="submit" class="btn btn-primary">찾기</button>
+      </form>
+
+      <h2 class="home-title">분야로 찾기</h2>
+      <!-- 분야 값과 이름은 data/options.json 의 category 와 같게 둔다 -->
+      <div class="row">
+        <a class="btn" href="search.html?result=1&amp;category=%EC%83%9D%ED%99%9C%EC%95%88%EC%A0%95">생활비</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EB%B3%B4%EA%B1%B4%C2%B7%EC%9D%98%EB%A3%8C">병원·건강</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EB%B3%B4%ED%98%B8%C2%B7%EB%8F%8C%EB%B4%84">돌봄</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EC%A3%BC%EA%B1%B0%C2%B7%EC%9E%90%EB%A6%BD">집·주거</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EA%B3%A0%EC%9A%A9%C2%B7%EC%B0%BD%EC%97%85">일자리</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EC%9E%84%EC%8B%A0%C2%B7%EC%B6%9C%EC%82%B0">임신·출산</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EB%B3%B4%EC%9C%A1%C2%B7%EA%B5%90%EC%9C%A1">아이·교육</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EB%AC%B8%ED%99%94%C2%B7%ED%99%98%EA%B2%BD">문화·여가</a>
+        <a class="btn" href="search.html?result=1&amp;category=%ED%96%89%EC%A0%95%C2%B7%EC%95%88%EC%A0%84">안전·생활 편의</a>
+        <a class="btn" href="search.html?result=1&amp;category=%EB%86%8D%EB%A6%BC%EC%B6%95%EC%82%B0%EC%96%B4%EC%97%85">농사·어업</a>
       </div>
 
-      <h2 class="settings-title">화면 설정</h2>
+      <h2 class="home-title">내 조건으로 찾기</h2>
+      <p class="muted">나이대, 사는 곳 같은 조건을 하나씩 고르면 맞는 지원을 보여 드려요.</p>
+      <a class="btn btn-primary" href="search.html">👆 조건 골라서 찾기</a>
+
+      <h2 class="home-title">화면 설정</h2>
       <div class="row">
         <button type="button" class="btn toggle" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
         <button type="button" class="btn toggle" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
@@ -32,5 +52,9 @@
 
     <p class="notice">이 서비스는 혜택을 찾아 안내해 드려요. 받을 수 있는지는 신청하는 곳에서 최종 확인해 주세요.</p>
   </div>
+
+  <a class="chat-fab" href="chat.html" aria-label="말로 물어보기"><span class="fab-icon" aria-hidden="true">💬</span>말로 묻기</a>
+
+  <script src="js/home.js"></script>
 </body>
 </html>

@@ -1,7 +1,9 @@
-// 버튼 조회: 나이대 → 성별 → 시·도 → 시·군·구 → 가구 형태를 한 단계씩 고르고 결과를 본다.
+// 직접 찾기: 낱말, 분야, 내 조건(나이대 → 성별 → 시·도 → 시·군·구 → 가구 형태)으로 찾고 결과를 본다.
+// 조건은 한 단계씩 고른다. 결과 화면에서는 낱말과 분야로 더 좁힐 수 있다. AI는 쓰지 않는다.
 (function () {
   "use strict";
   const { api, el, showLoading, showError, policyCard } = window.SPOT;
+  const KEYWORD_LIMIT = 50;
 
   const main = document.getElementById("main");
   const backButton = document.getElementById("back");
@@ -21,6 +23,12 @@
   // 고른 값. 고르지 않은 것은 null 로 둔다.
   const chosen = { age_group: null, gender: null, sido: null, sigungu: null, household: null };
   const labels = {};       // 화면에 보여 줄 이름 (예: "75세 이상")
+  // 결과를 좁히는 값: 검색창에 적은 낱말과 분야. 조건을 다시 골라도 그대로 둔다.
+  const filters = { q: "", category: null };
+
+  function hasCondition() {
+    return STEPS.some((key) => chosen[key]);
+  }
 
   function regionCode() {
     return chosen.sigungu || chosen.sido || null;
@@ -111,6 +119,8 @@
       gender: chosen.gender,
       region_code: regionCode(),
       household: chosen.household,
+      category: filters.category,
+      q: filters.q || null,
     };
   }
 
@@ -119,10 +129,50 @@
     const params = new URLSearchParams();
     const cond = conditions();
     Object.keys(cond).forEach((key) => {
-      if (cond[key]) params.set(key, cond[key]);
+      if (cond[key] && key !== "q") params.set(key, cond[key]);
     });
     params.set("result", "1");
-    history.replaceState(null, "", "search.html?" + params.toString());
+    // 적은 낱말은 # 뒤에 둔다 (서버로 전송되지 않아 서버 기록에 남지 않는다)
+    const hash = filters.q ? "#q=" + encodeURIComponent(filters.q) : "";
+    history.replaceState(null, "", "search.html?" + params.toString() + hash);
+  }
+
+  // 결과 위에 두는 검색창과 분야 고르기. 바꾸면 결과를 다시 찾는다.
+  function filterBox() {
+    const box = el("div", "filter-box");
+
+    const form = el("form", "search-form");
+    const input = el("input");
+    input.type = "search";
+    input.maxLength = KEYWORD_LIMIT;
+    input.placeholder = "이름이나 낱말";
+    input.setAttribute("aria-label", "이름이나 낱말로 찾기");
+    input.setAttribute("enterkeyhint", "search");
+    input.autocomplete = "off";
+    input.value = filters.q;
+    const submit = el("button", "btn btn-primary", "찾기");
+    submit.type = "submit";
+    form.append(input, submit);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      filters.q = input.value.trim();
+      showResults(true);
+    });
+
+    const label = el("label", "field");
+    label.append(el("span", "field-name", "분야"));
+    const select = el("select");
+    select.append(new Option("모든 분야", ""));
+    options.category.forEach((o) => select.append(new Option(o.label, o.value)));
+    select.value = filters.category || "";
+    select.addEventListener("change", () => {
+      filters.category = select.value || null;
+      showResults(true);
+    });
+    label.append(select);
+
+    box.append(form, label);
+    return box;
   }
 
   async function showResults(remember) {
@@ -135,11 +185,10 @@
     const status = el("div");
     const more = optionButton("더 보기", loadPage, "btn btn-primary");
     more.hidden = true;
-    const again = optionButton("조건 다시 고르기", restart, "btn");
+    const again = optionButton(hasCondition() ? "조건 다시 고르기" : "내 조건 고르기 (나이대, 사는 곳)", restart, "btn");
 
     const title = el("h1", "", "찾은 지원");
-    main.replaceChildren(title, chosenList(), list, status, el("div", "stack"));
-    main.lastChild.append(more, again);
+    main.replaceChildren(title, filterBox(), chosenList(), again, list, status, more);
     window.scrollTo(0, 0);
 
     async function loadPage() {
@@ -161,13 +210,15 @@
 
       if (data.total === 0) {
         title.textContent = "맞는 지원을 찾지 못했어요";
-        status.append(el("p", "", "조건을 줄여서 다시 찾아보시거나, 가까운 주민센터나 보건복지상담센터(국번 없이 129)에 물어보시면 도움을 받을 수 있어요."));
+        status.append(el("p", "", (filters.q ? "낱말을 바꾸거나 " : "") + "조건을 줄여서 다시 찾아보시거나, 가까운 주민센터나 보건복지상담센터(국번 없이 129)에 물어보시면 도움을 받을 수 있어요."));
         return;
       }
       title.textContent = "지원 " + data.total.toLocaleString("ko-KR") + "건을 찾았어요";
       status.append(el("p", "muted", data.total.toLocaleString("ko-KR") + "건 중 " + shown.toLocaleString("ko-KR") + "건을 보고 있어요."));
       if (!regionCode()) {
-        status.append(el("p", "muted", "사시는 곳을 고르지 않아서 전국 지원만 보여 드렸어요."));
+        status.append(el("p", "muted", filters.q
+          ? "사시는 곳을 고르지 않아서 모든 지역의 지원을 보여 드렸어요. 카드에 적힌 기관 이름을 확인해 주세요."
+          : "사시는 곳을 고르지 않아서 전국 지원만 보여 드렸어요. 조건을 고르면 사시는 지역의 지원도 볼 수 있어요."));
       }
       more.hidden = shown >= data.total;
     }
@@ -189,7 +240,8 @@
   // ---------- 뒤로 ----------
 
   backButton.addEventListener("click", () => {
-    if (step === 0) {
+    // 첫 단계이거나, 조건을 고르지 않고 낱말·분야만으로 온 결과 화면이면 시작 화면으로 간다
+    if (step === 0 || (step >= STEPS.length && !hasCondition())) {
       location.href = "index.html";
       return;
     }
@@ -207,7 +259,11 @@
   // 주소에 조건이 담겨 있으면(상세 화면에서 돌아온 경우) 고른 값을 되살린다.
   async function restoreFromAddress(params) {
     const find = (list, key, value) => list.find((o) => o[key] === value);
-    const age = find(options.age_group, "value", params.get("age_group"));
+    const category = find(options.category, "value", params.get("category"));
+    if (category) filters.category = category.value;
+    const q = new URLSearchParams(location.hash.slice(1)).get("q") || "";
+    filters.q = q.trim().slice(0, KEYWORD_LIMIT);
+    const age =find(options.age_group, "value", params.get("age_group"));
     if (age) { chosen.age_group = age.value; labels.age_group = age.label; }
     const gender = find(options.gender, "value", params.get("gender"));
     if (gender) { chosen.gender = gender.value; labels.gender = gender.label; }

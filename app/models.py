@@ -10,6 +10,11 @@ Household = Literal[
     "nk_defector", "new_resident", "extended",
 ]
 RegionCode = Field(default=None, pattern=r"^\d{2}(\d{3})?$")
+# 서비스 분야 (공공데이터 API가 주는 값 그대로. 화면에 보이는 이름은 data/options.json 에 있다)
+Category = Literal[
+    "생활안정", "보건·의료", "보호·돌봄", "주거·자립", "고용·창업",
+    "임신·출산", "보육·교육", "문화·환경", "행정·안전", "농림축산어업",
+]
 
 
 class Conditions(BaseModel):
@@ -41,4 +46,6 @@ class SearchRequest(BaseModel):
     gender: Optional[Gender] = None
     region_code: Optional[str] = RegionCode
     household: Optional[Household] = None
+    category: Optional[Category] = None
+    q: Optional[str] = Field(default=None, max_length=50)   # 검색창에 적은 낱말
     page: int = Field(default=1, ge=1, le=1000)
