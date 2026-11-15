@@ -195,6 +195,10 @@ html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
 .filter-box ~ .btn { margin-bottom: 14px; }
 .results > .btn-primary { margin-top: 12px; }
 
+/* 표시(체크) 상자 + 글: 누르기 쉽게 줄 전체를 크게 잡는다 */
+.check { display: flex; align-items: center; gap: 10px; min-height: 48px; cursor: pointer; }
+.check input { flex: none; width: 1.5rem; height: 1.5rem; accent-color: var(--primary); }
+
 /* 분야를 모두 늘어놓은 목록 (컴퓨터 화면에서만 보인다. 휴대폰은 위의 펼침 목록) */
 .cat-list { display: none; gap: 2px; }
 .cat-list .field-name { margin: 0 0 6px; }

@@ -72,3 +72,12 @@ def test_region_from_name():
     assert r.resolve("광주시민장학회", "지방출자_출연기관") == "UNKNOWN"
     assert r.resolve("강서구시설관리공단", "지방공기업") == "UNKNOWN"
     assert r.resolve("재단법인세종문화회관", "지방출자_출연기관") == "UNKNOWN"
+
+
+def test_for_person():
+    assert ingest.for_person("개인") is True
+    assert ingest.for_person("개인||법인/시설/단체") is True
+    assert ingest.for_person("가구||소상공인") is True
+    assert ingest.for_person("소상공인||법인/시설/단체") is False
+    assert ingest.for_person("법인/시설/단체") is False
+    assert ingest.for_person(None) is True      # 값이 없으면 숨기지 않는다

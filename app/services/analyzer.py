@@ -190,6 +190,21 @@ def expand(search_text):
     return f"{search_text} {' '.join(adds)}" if adds else search_text
 
 
+def related_names(text):
+    """검색창에 적은 낱말과 비슷한 정책 이름 낱말 (data/keywords.json expand 규칙의 names).
+
+    "난방비"로는 이름에 그 말이 없는 "에너지바우처"를 못 찾는다. 규칙의 when(채팅과 같이 씀)이나
+    words(검색창에서만 씀)에 걸리면 그 규칙의 names 를 돌려준다. 적은 낱말 자체는 뺀다.
+    """
+    text = text or ""
+    typed = text.split()
+    names = []
+    for rule in KEYWORDS["expand"]:
+        if any(w in text for w in rule["when"] + rule.get("words", [])):
+            names += [n for n in rule.get("names", []) if n not in typed and n not in names]
+    return names[:6]
+
+
 def with_question(search_text, message):
     """검색 문장 = 다듬은 문장 + 원래 질문.
 

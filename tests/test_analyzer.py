@@ -126,3 +126,13 @@ def test_terms_from_llm_go_in_front_of_the_search_text(monkeypatch):
 def test_clean_terms():
     assert analyzer.clean_terms(None) == [] and analyzer.clean_terms("기초연금") == []
     assert analyzer.clean_terms(["a", "b", "c", "d", "e", "f"]) == ["a", "b", "c", "d", "e"]
+
+
+def test_related_names_for_search_box():
+    """검색창에 적은 일상 낱말 → 함께 찾을 정책 이름 낱말."""
+    assert "에너지바우처" in analyzer.related_names("난방비")
+    assert "난방비" not in analyzer.related_names("난방비")       # 적은 낱말 자체는 뺀다
+    assert "주거급여" in analyzer.related_names("월세")            # words: 검색창에서만 쓰는 표현
+    assert analyzer.related_names("기초연금") == []                # 이미 정책 이름이면 덧붙일 것이 없다
+    assert analyzer.related_names("청년") == []
+    assert analyzer.related_names(None) == []

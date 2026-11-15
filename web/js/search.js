@@ -25,7 +25,7 @@
   const chosen = { age_group: null, gender: null, sido: null, sigungu: null, household: null };
   const labels = {};       // 화면에 보여 줄 이름 (예: "75세 이상")
   // 결과를 좁히는 값: 검색창에 적은 낱말과 분야. 조건을 다시 골라도 그대로 둔다.
-  const filters = { q: "", category: null };
+  const filters = { q: "", category: null, org: false };   // org: 기업·단체가 받는 지원도 볼지
 
   function hasCondition() {
     return STEPS.some((key) => chosen[key]);
@@ -137,6 +137,7 @@
       household: chosen.household,
       category: filters.category,
       q: filters.q || null,
+      include_org: filters.org,
     };
   }
 
@@ -145,8 +146,9 @@
     const params = new URLSearchParams();
     const cond = conditions();
     Object.keys(cond).forEach((key) => {
-      if (cond[key] && key !== "q") params.set(key, cond[key]);
+      if (cond[key] && key !== "q" && key !== "include_org") params.set(key, cond[key]);
     });
+    if (filters.org) params.set("org", "1");
     params.set("result", "1");
     // 적은 낱말은 # 뒤에 둔다 (서버로 전송되지 않아 서버 기록에 남지 않는다)
     const hash = filters.q ? "#q=" + encodeURIComponent(filters.q) : "";
@@ -200,7 +202,18 @@
       cats.append(item);
     });
 
-    box.append(form, label, cats);
+    // 기본으로는 개인·가구가 받는 지원만 보여 준다. 표시하면 기업·단체가 받는 지원도 함께 본다.
+    const org = el("label", "check");
+    const box2 = el("input");
+    box2.type = "checkbox";
+    box2.checked = filters.org;
+    box2.addEventListener("change", () => {
+      filters.org = box2.checked;
+      showResults(true);
+    });
+    org.append(box2, el("span", "", "기업·단체가 받는 지원도 보기"));
+
+    box.append(form, label, cats, org);
     return box;
   }
 
@@ -243,11 +256,20 @@
 
       if (data.total === 0) {
         title.textContent = "맞는 지원을 찾지 못했어요";
+        if (data.hidden_org) {
+          status.append(el("p", "", "기업·단체가 받는 지원은 " + data.hidden_org.toLocaleString("ko-KR") + "건이 있어요. 위의 \"기업·단체가 받는 지원도 보기\"에 표시하면 볼 수 있어요."));
+        }
         status.append(el("p", "", (filters.q ? "낱말을 바꾸거나 " : "") + "조건을 줄여서 다시 찾아보시거나, 가까운 주민센터나 보건복지상담센터(국번 없이 129)에 물어보시면 도움을 받을 수 있어요."));
         return;
       }
       title.textContent = "지원 " + data.total.toLocaleString("ko-KR") + "건을 찾았어요";
       status.append(el("p", "muted", data.total.toLocaleString("ko-KR") + "건 중 " + shown.toLocaleString("ko-KR") + "건을 보고 있어요."));
+      if (data.related && data.related.length) {
+        status.append(el("p", "muted", "비슷한 말인 '" + data.related.join("', '") + "'(으)로도 함께 찾았어요."));
+      }
+      if (data.hidden_org) {
+        status.append(el("p", "muted", "기업·단체가 받는 지원 " + data.hidden_org.toLocaleString("ko-KR") + "건은 빼고 보여 드렸어요."));
+      }
       if (!regionCode()) {
         status.append(el("p", "muted", filters.q
           ? "사시는 곳을 고르지 않아서 모든 지역의 지원을 보여 드렸어요. 카드에 적힌 기관 이름을 확인해 주세요."
@@ -295,6 +317,7 @@
     const find = (list, key, value) => list.find((o) => o[key] === value);
     const category = find(options.category, "value", params.get("category"));
     if (category) filters.category = category.value;
+    filters.org = params.get("org") === "1";
     const q = new URLSearchParams(location.hash.slice(1)).get("q") || "";
     filters.q = q.trim().slice(0, KEYWORD_LIMIT);
     const age =find(options.age_group, "value", params.get("age_group"));

@@ -198,6 +198,15 @@ def embedding_text(row):
     return "\n".join(p for p in parts if p)
 
 
+def for_person(user_types):
+    """개인·가구가 받는 지원인지. 목록 응답의 사용자구분 ("개인||가구", "소상공인", "법인/시설/단체" 등).
+
+    소상공인·법인·시설·단체만 받는 지원이면 False 다. 값이 없으면 숨기지 않도록 True 로 둔다.
+    """
+    types = [t.strip() for t in (user_types or "").split("||") if t.strip()]
+    return not types or any(t in ("개인", "가구") for t in types)
+
+
 def build_rows(raw):
     codes = json.loads((config.DATA_DIR / "condition_codes.json").read_text(encoding="utf-8"))
     with open(config.DATA_DIR / "regions.csv", encoding="utf-8", newline="") as f:
@@ -227,6 +236,7 @@ def build_rows(raw):
             "contact": clean(d.get("문의처") or s.get("전화문의")),
             "url": clean(s.get("상세조회URL")),
             "region_code": resolver.resolve(s.get("소관기관명"), s.get("소관기관유형")),
+            "for_person": for_person(s.get("사용자구분")),
             "collected_at": collected_at,
             "_agency_type": s.get("소관기관유형"),
         }
@@ -250,7 +260,8 @@ def print_stats(rows):
         print(f"UNKNOWN 기관 {len(unknown)}곳 (많은 순 15곳):", unknown.most_common(15))
     print("성별:", dict(Counter(r["gender"] for r in rows)),
           "| 소득 기준 있음:", sum(r["has_income_rule"] for r in rows),
-          "| 가구 조건 있음:", sum(r["household"] is not None for r in rows))
+          "| 가구 조건 있음:", sum(r["household"] is not None for r in rows),
+          "| 기업·단체만 받는 지원:", sum(not r["for_person"] for r in rows))
 
 
 # ---------- 저장 ----------
@@ -258,7 +269,7 @@ def print_stats(rows):
 COLUMNS = [
     "id", "name", "agency", "category", "summary", "target", "criteria", "content",
     "how_to_apply", "apply_place", "contact", "url", "region_code", "age_min", "age_max",
-    "gender", "household", "has_income_rule", "collected_at",
+    "gender", "household", "has_income_rule", "for_person", "collected_at",
 ]
 
 

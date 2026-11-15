@@ -71,7 +71,7 @@ def _capture_queries(monkeypatch):
 
     def fake_query(sql, params):
         seen.append((sql, dict(params)))
-        return [{"n": 0}] if "count(*)" in sql else []
+        return [{"n": 0, "org": 0}] if "count(*)" in sql else []
 
     monkeypatch.setattr(retriever.db, "query", fake_query)
     return seen
@@ -110,6 +110,40 @@ def test_keyword_with_region_keeps_region_filter(monkeypatch):
     sql, params = seen[0]
     assert "region_code = %(region)s" in sql and "category = %(category)s" in sql
     assert params["region"] == "18101" and params["kw0"] == "%난방비%"
+
+
+def test_person_only_by_default(monkeypatch):
+    """기본으로는 개인·가구가 받는 지원만 보여 주고, 뺀 건수를 알려 준다."""
+    seen = []
+
+    def fake_query(sql, params):
+        seen.append(sql)
+        return [{"n": 7, "org": 3}] if "count(*)" in sql else []
+
+    monkeypatch.setattr(retriever.db, "query", fake_query)
+    result = retriever.search_by_conditions(category="고용·창업")
+    assert result["total"] == 7 and result["hidden_org"] == 3
+    assert seen[1].count("AND for_person") == 1
+
+    seen.clear()
+    result = retriever.search_by_conditions(category="고용·창업", include_org=True)
+    assert result["total"] == 10 and result["hidden_org"] == 0
+    assert "AND for_person" not in seen[1]
+
+
+def test_related_names_are_searched_in_name(monkeypatch):
+    """비슷한 말: 낱말이 없어도 이름에 비슷한 말이 있는 정책을 함께 찾는다."""
+    seen = _capture_queries(monkeypatch)
+    result = retriever.search_by_conditions(keyword="난방비", related=["에너지바우처"])
+    count_sql, params = seen[0]
+    assert params["rel0"] == "%에너지바우처%"
+    assert "OR name ILIKE %(rel0)s)" in count_sql
+    assert "WHEN (name ILIKE %(kw0)s) OR name ILIKE %(rel0)s THEN 1 ELSE 2 END" in seen[1][0]
+    assert result["related"] == ["에너지바우처"]
+    # 낱말 없이 비슷한 말만 넘어오면 쓰지 않는다
+    seen.clear()
+    assert retriever.search_by_conditions(related=["에너지바우처"])["related"] == []
+    assert "rel0" not in seen[0][1]
 
 
 def test_keyword_terms_and_like_pattern():

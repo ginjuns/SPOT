@@ -48,4 +48,5 @@ class SearchRequest(BaseModel):
     household: Optional[Household] = None
     category: Optional[Category] = None
     q: Optional[str] = Field(default=None, max_length=50)   # 검색창에 적은 낱말
+    include_org: bool = False   # 소상공인·법인·시설·단체만 받는 지원도 보여 줄지
     page: int = Field(default=1, ge=1, le=1000)

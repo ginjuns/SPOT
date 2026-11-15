@@ -119,27 +119,50 @@ def search_semantic(search_text, age_group=None, gender=None, region_code=None, 
 
 
 def search_by_conditions(age_group=None, gender=None, region_code=None, household=None, page=1,
-                         category=None, keyword=None):
+                         category=None, keyword=None, related=None, include_org=False):
     """직접 찾기 (LLM을 쓰지 않는다): 조건 필터 + 분야 + 낱말.
 
-    순서: (낱말이 있으면 이름이 낱말과 똑같은 정책 → 이름에 낱말이 있는 정책 →)
+    순서: (낱말이 있으면 이름이 낱말과 똑같은 정책 → 이름에 낱말이나 비슷한 말이 있는 정책 →)
           시·군·구 정책 → 시·도 정책 → 전국 정책 → 정책명순.
     낱말은 정책 이름·요약·지원 대상·지원 내용에서 찾고, 여러 낱말이면 모두 들어 있는 정책만 고른다.
     낱말로 찾는데 지역을 고르지 않았으면 모든 지역에서 찾고, 전국 정책을 먼저 보여 준다.
+    related: 낱말과 비슷한 정책 이름 낱말 ("난방비" → "에너지바우처"). 이름에 이 말이 있는 정책도 함께 찾는다.
+    include_org: False 면 개인·가구가 받는 지원만 보여 주고, 뺀 건수를 hidden_org 로 알려 준다.
     """
     terms = keyword_terms(keyword)
+    related = list(related or []) if terms else []
     where, params = build_filter(age_group, gender, region_code, household, all_regions=bool(terms))
     if category:
         where += " AND category = %(category)s"
         params["category"] = category
     order = ""
     if terms:
+        match = []
         for i, term in enumerate(terms):
             params[f"kw{i}"] = like_pattern(term)
-            where += " AND (" + " OR ".join(f"{col} ILIKE %(kw{i})s" for col in KEYWORD_COLUMNS) + ")"
+            match.append("(" + " OR ".join(f"{col} ILIKE %(kw{i})s" for col in KEYWORD_COLUMNS) + ")")
         in_name = " AND ".join(f"name ILIKE %(kw{i})s" for i in range(len(terms)))
-        order = f"CASE WHEN name = %(kw_all)s THEN 0 WHEN {in_name} THEN 1 ELSE 2 END, "
-    total = db.query(f"SELECT count(*) AS n FROM policy WHERE {where}", params)[0]["n"]
+        if related:
+            for i, word in enumerate(related):
+                params[f"rel{i}"] = like_pattern(word)
+            rel_name = " OR ".join(f"name ILIKE %(rel{i})s" for i in range(len(related)))
+            where += f" AND (({' AND '.join(match)}) OR {rel_name})"
+            # 비슷한 말이 이름에 있는 정책도 낱말이 이름에 있는 정책과 같은 순위로 둔다
+            # (그래야 "난방비"를 찾았을 때 전국 정책인 "에너지바우처"가 위쪽에 나온다)
+            order = f"CASE WHEN name = %(kw_all)s THEN 0 WHEN ({in_name}) OR {rel_name} THEN 1 ELSE 2 END, "
+        else:
+            where += " AND " + " AND ".join(match)
+            order = f"CASE WHEN name = %(kw_all)s THEN 0 WHEN {in_name} THEN 1 ELSE 2 END, "
+    counts = db.query(
+        "SELECT count(*) FILTER (WHERE for_person) AS n, count(*) FILTER (WHERE NOT for_person) AS org "
+        f"FROM policy WHERE {where}",
+        params,
+    )[0]
+    if include_org:
+        total, hidden_org = counts["n"] + counts["org"], 0
+    else:
+        total, hidden_org = counts["n"], counts["org"]
+        where += " AND for_person"
     if terms:
         params["kw_all"] = " ".join(terms)
     # 사는 곳을 골랐으면 가까운 지역 정책부터, 고르지 않았으면 전국 정책부터
@@ -154,4 +177,5 @@ def search_by_conditions(age_group=None, gender=None, region_code=None, househol
         f"ORDER BY {order}name, id LIMIT %(limit)s OFFSET %(offset)s",
         params,
     )
-    return {"total": total, "policies": [to_card(r) for r in rows]}
+    return {"total": total, "hidden_org": hidden_org, "related": related,
+            "policies": [to_card(r) for r in rows]}
