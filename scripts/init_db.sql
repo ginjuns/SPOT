@@ -24,13 +24,15 @@ CREATE TABLE IF NOT EXISTS policy (
   household        TEXT[],                -- options.json의 value 그대로. 예: {'single','single_parent'}; NULL = 무관
   has_income_rule  BOOLEAN DEFAULT FALSE, -- 소득·재산 기준이 있는 정책
   for_person       BOOLEAN NOT NULL DEFAULT TRUE, -- 개인·가구가 받는 지원 (FALSE = 소상공인·법인·시설·단체만)
+  views            INT NOT NULL DEFAULT 0, -- 정부24 조회수 (많이 찾는 정책을 먼저 보여 준다)
   embedding        vector(384),           -- multilingual-e5-small
   collected_at     DATE NOT NULL          -- 데이터 기준일
 );
 
--- 예전에 만든 테이블에는 for_person 열이 없으므로 더해 준다.
+-- 예전에 만든 테이블에는 for_person, views 열이 없으므로 더해 준다.
 -- 그 뒤에 `python scripts/ingest.py --from-raw --no-embed` 를 돌리면 값이 채워진다.
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS for_person BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE policy ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_policy_region ON policy (region_code);
 -- 벡터 인덱스(HNSW)는 만들지 않는다. 이유는 PROJECT_SPEC.md 6장 참고.

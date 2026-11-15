@@ -81,3 +81,18 @@ def test_for_person():
     assert ingest.for_person("소상공인||법인/시설/단체") is False
     assert ingest.for_person("법인/시설/단체") is False
     assert ingest.for_person(None) is True      # 값이 없으면 숨기지 않는다
+
+
+def test_age_from_text_only_when_sure():
+    f = ingest.age_from_text
+    assert f("56세 C형간염 확진검사비 지원", "국가건강검진(56세)에서 양성인 사람") == (56, 56)
+    assert f("중장년 기술창업센터", "만 40세 이상 (예비) 창업자") == (40, None)
+    assert f("학교밖청소년 직업역량강화 프로그램", "15세 이상 24세 이하 학교 밖 청소년") == (15, 24)
+    assert f("장애인 활동지원(추가)", "○ 6세~65세미만 장애인중 추가지원이 필요한 자") == (6, 64)
+    assert f("장애인 활동지원(추가)", "○ 6세이상 활동지원 수급자중 기능제한점수 330점(19세미만 266점) 이상") == (6, None)
+    # 나이가 여러 대상 중 하나의 조건이거나 자녀의 나이면 뽑지 않는다
+    assert f("국민건강보험료 지원", "○ 만65세 이상 노인세대, 장애인, 한부모, 국가유공자") == (None, None)
+    assert f("다자녀 가족카드", "18세 이하 자녀 1명을 포함한 2명 이상의 자녀가 있는 가정") == (None, None)
+    assert f("동행센터 방문건강관리", "○ 65세 이상 어르신 ○ 건강 취약계층 : 장애인, 한부모가구") == (None, None)
+    assert f("찾아가는 세탁서비스", "기초생활보장 수급가구 중 65세이상노인") == (None, None)
+    assert f("아무 정책", None) == (None, None)

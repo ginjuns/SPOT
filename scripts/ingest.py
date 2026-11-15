@@ -8,6 +8,7 @@
 import argparse
 import csv
 import json
+import re
 import sys
 import time
 from collections import Counter
@@ -198,6 +199,57 @@ def embedding_text(row):
     return "\n".join(p for p in parts if p)
 
 
+AGE_FROM = re.compile(r"(\d{1,3})\s*세\s*이상")
+AGE_UNDER = re.compile(r"(\d{1,3})\s*세\s*(미만|이하)")
+AGE_RANGE = re.compile(r"(\d{1,3})\s*세?\s*[~∼-]\s*(\d{1,3})\s*세")
+AGE_EXACT_IN_NAME = re.compile(r"^(\d{2})세\s")
+AGE_AT_START = re.compile(r"^[○\-·ㆍ*\s]*(만\s*)?\d{1,3}\s*(세|[~∼-])")
+# 이런 말이 있으면 나이는 여러 대상 중 하나의 조건이거나 자녀의 나이다
+AGE_NOT_SURE = re.compile(r"[,·ㆍ/]|및|또는|자녀|아이|세대|가구|가정|기업")
+
+
+def _ages_in(text):
+    text = re.sub(r"만\s*(?=\d)", "", text.split("(")[0])   # "만 6세" → "6세". 괄호 안의 나이는 덧붙인 설명이라 보지 않는다
+    ranged = AGE_RANGE.search(text)
+    if ranged:
+        under = text[ranged.end():].lstrip().startswith("미만")   # "6세~65세 미만" → 64세까지
+        return int(ranged.group(1)), int(ranged.group(2)) - (1 if under else 0)
+    start, under = AGE_FROM.search(text), AGE_UNDER.search(text)
+    age_min = int(start.group(1)) if start else None
+    age_max = int(under.group(1)) - (1 if under.group(2) == "미만" else 0) if under else None
+    return age_min, age_max
+
+
+def age_from_text(name, target):
+    """지원조건 코드에 나이가 없을 때, 정책 이름과 지원 대상 글에서 나이를 뽑는다. (age_min, age_max)
+
+    지자체 정책은 나이를 글로만 적어 둔 경우가 많다 ("65세 이상 폐렴구균 예방접종", "56세 C형간염").
+    잘못 뽑으면 받을 수 있는 정책이 가려지므로 아주 확실한 경우만 본다:
+      - 이름이 "56세 ..."처럼 나이로 시작하거나, 이름에 "N세 이상/이하"가 있을 때
+      - 지원 대상이 한 항목뿐이고(○ 가 1개 이하), 글이 나이로 시작할 때 ("만 40세 이상 예비 창업자")
+    글 앞머리(60자)에 쉼표·"및"·"자녀"·"가구" 같은 말이 있으면 쓰지 않는다. 나이가 여러 대상 중
+    하나의 조건이거나("65세 이상 노인, 장애인, 한부모") 자녀의 나이("18세 이하 자녀를 둔 가정")일 수 있다.
+    """
+    name = name or ""
+    head = " ".join((target or "").split())[:60]
+    exact = AGE_EXACT_IN_NAME.search(name)
+    if exact:
+        age_min = age_max = int(exact.group(1))
+    elif not AGE_NOT_SURE.search(name) and _ages_in(name) != (None, None):
+        age_min, age_max = _ages_in(name)
+    elif (target or "").count("○") <= 1 and AGE_AT_START.search(head) and not AGE_NOT_SURE.search(head):
+        age_min, age_max = _ages_in(head)
+    else:
+        return None, None
+    # 말이 안 되는 값은 버린다 (0세, 150세, 시작이 끝보다 큰 경우)
+    if age_min is not None and not 0 < age_min <= 120:
+        age_min = None
+    if age_max is not None and not 0 < age_max <= 120:
+        age_max = None
+    if age_min is not None and age_max is not None and age_min > age_max:
+        return None, None
+    return age_min, age_max
+
 def for_person(user_types):
     """개인·가구가 받는 지원인지. 목록 응답의 사용자구분 ("개인||가구", "소상공인", "법인/시설/단체" 등).
 
@@ -237,10 +289,16 @@ def build_rows(raw):
             "url": clean(s.get("상세조회URL")),
             "region_code": resolver.resolve(s.get("소관기관명"), s.get("소관기관유형")),
             "for_person": for_person(s.get("사용자구분")),
+            "views": int(s.get("조회수") or 0),   # 많이 찾는 정책을 먼저 보여 주는 데 쓴다
             "collected_at": collected_at,
             "_agency_type": s.get("소관기관유형"),
         }
+        # "발전소 주변지역 장학금"처럼 특정 지역 주민만 받는 공공기관 정책은 전국 정책으로 두지 않는다
+        if row["region_code"] is None and "주변지역" in (row["name"] or ""):
+            row["region_code"] = UNKNOWN
         row.update(map_conditions(conditions.get(sid, {}), (target or "") + (criteria or ""), codes))
+        if row["age_min"] is None and row["age_max"] is None:
+            row["age_min"], row["age_max"] = age_from_text(row["name"], target)
         if row["name"]:
             rows.append(row)
     return rows
@@ -269,7 +327,7 @@ def print_stats(rows):
 COLUMNS = [
     "id", "name", "agency", "category", "summary", "target", "criteria", "content",
     "how_to_apply", "apply_place", "contact", "url", "region_code", "age_min", "age_max",
-    "gender", "household", "has_income_rule", "for_person", "collected_at",
+    "gender", "household", "has_income_rule", "for_person", "views", "collected_at",
 ]
 
 

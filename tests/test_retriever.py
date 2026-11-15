@@ -100,7 +100,7 @@ def test_search_by_keyword(monkeypatch):
     # 이름이 낱말과 똑같은 정책 → 이름에 낱말이 있는 정책 → 전국 정책 순서로 보여 준다
     assert ("ORDER BY CASE WHEN name = %(kw_all)s THEN 0 "
             "WHEN name ILIKE %(kw0)s AND name ILIKE %(kw1)s THEN 1 ELSE 2 END, "
-            "CASE WHEN region_code IS NULL THEN 0 ELSE 1 END, name") in list_sql
+            "CASE WHEN region_code IS NULL THEN 0 ELSE 1 END, views DESC, name") in list_sql
     assert seen[1][1]["kw_all"] == "기초연금 신청"
 
 
@@ -161,3 +161,11 @@ def test_for_child_keeps_child_policies_despite_parent_age():
     assert "age_max <= 18" not in plain
     # 나이를 모르면 나이 조건 자체가 없으므로 달라지지 않는다
     assert build_filter(for_child=True) == build_filter()
+
+
+def test_minor_group_leaves_out_adult_policies():
+    """'18세 이하'를 고르면 시작 나이가 18세인 어른 정책은 나오지 않는다."""
+    _, params = build_filter(age_group="u19")
+    assert params["age_lo"] == 0 and params["age_hi"] == 17
+    _, params = build_filter(age_group="19_34")
+    assert params["age_hi"] == 34

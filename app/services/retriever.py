@@ -21,6 +21,10 @@ CARD_COLUMNS = "id, name, agency, summary, has_income_rule, url, collected_at"
 
 
 CHILD_AGE_MAX = 18
+# 나이대 "18세 이하"를 골랐을 때 보여 줄 정책의 시작 나이 상한. 18로 두면 "18세 이상" 어른 정책이
+# 모두 걸려서(산후조리비, 농기계 수리비 등) 17로 둔다. 18세가 받을 수 있는 어른 정책은 빠지지만,
+# 미성년자에게 어른 정책이 쏟아지는 것보다 낫다.
+MINOR_START_MAX = 17
 
 
 def build_filter(age_group=None, gender=None, region_code=None, household=None, for_child=False,
@@ -42,6 +46,8 @@ def build_filter(age_group=None, gender=None, region_code=None, household=None, 
         where.append("region_code IS NULL")
     if age_group:
         params["age_lo"], params["age_hi"] = AGE_RANGES[age_group]
+        if age_group == "u19":
+            params["age_hi"] = MINOR_START_MAX
         age = "(age_min IS NULL OR age_min <= %(age_hi)s) AND (age_max IS NULL OR age_max >= %(age_lo)s)"
         where.append(f"(({age}) OR age_max <= {CHILD_AGE_MAX})" if for_child else f"({age})")
     if gender:
@@ -123,7 +129,7 @@ def search_by_conditions(age_group=None, gender=None, region_code=None, househol
     """직접 찾기 (LLM을 쓰지 않는다): 조건 필터 + 분야 + 낱말.
 
     순서: (낱말이 있으면 이름이 낱말과 똑같은 정책 → 이름에 낱말이나 비슷한 말이 있는 정책 →)
-          시·군·구 정책 → 시·도 정책 → 전국 정책 → 정책명순.
+          시·군·구 정책 → 시·도 정책 → 전국 정책 → 조회수가 많은 순 → 정책명순.
     낱말은 정책 이름·요약·지원 대상·지원 내용에서 찾고, 여러 낱말이면 모두 들어 있는 정책만 고른다.
     낱말로 찾는데 지역을 고르지 않았으면 모든 지역에서 찾고, 전국 정책을 먼저 보여 준다.
     related: 낱말과 비슷한 정책 이름 낱말 ("난방비" → "에너지바우처"). 이름에 이 말이 있는 정책도 함께 찾는다.
@@ -174,7 +180,7 @@ def search_by_conditions(age_group=None, gender=None, region_code=None, househol
     params["offset"] = (page - 1) * PAGE_SIZE
     rows = db.query(
         f"SELECT {CARD_COLUMNS} FROM policy WHERE {where} "
-        f"ORDER BY {order}name, id LIMIT %(limit)s OFFSET %(offset)s",
+        f"ORDER BY {order}views DESC, name, id LIMIT %(limit)s OFFSET %(offset)s",
         params,
     )
     return {"total": total, "hidden_org": hidden_org, "related": related,
