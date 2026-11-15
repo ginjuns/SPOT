@@ -163,7 +163,13 @@ projectAI/
 │  ├─ init_db.sql           # 테이블 생성 SQL
 │  ├─ ingest.py             # 공공데이터 수집 → DB 저장
 │  ├─ load_regions.py       # 시·군·구 코드 넣기
-│  └─ eval_scenarios.py     # 시나리오 30개 자동 평가
+│  ├─ eval_scenarios.py     # 시나리오 30개 자동 평가
+│  └─ sample_search.py      # 조회 정확도 확인용 표본 뽑기 (조건 5세트 × 20건)
+│
+├─ docs/
+│  ├─ search_accuracy.md    # 조회 정확도 대조 결과
+│  ├─ user_test.md          # 사용자 테스트 진행 순서와 설문지
+│  └─ screenshots/          # 발표 자료용 화면 스크린샷
 │
 ├─ data/
 │  ├─ regions.csv           # 시·군·구 코드표

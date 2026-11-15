@@ -25,8 +25,35 @@
 - [x] 3주차 4단계: Render 최종 배포 확인 (휴대폰에서 질문 → 되묻기 → 결과 → 공유 확인)
 - [x] 4주차 1단계: 시나리오 30개 답변 평가 (`python scripts/eval_scenarios.py`) — 30개 중 25개(83%) 적합, 목록 밖 정책 언급 0건 (2026-11-14)
 - [x] 4주차 2단계: 평가 결과로 프롬프트·키워드 규칙·모델 조정 (검색 보완: 제도 낱말, 일상 표현 규칙, 아이를 위한 질문 처리) — 다시 평가: 30개 중 28개(93%) 적합, 지어낸 정책 언급 0건. 규칙을 만들 때 보지 않은 새 질문 12개는 검색 기준 9개(75%)
-- [ ] 4주차 3단계: 사용자 테스트 (60대 이상 포함), 설문
-- [ ] 4주차 4단계: README 정리, 발표 자료용 스크린샷
+  - 2026-11-15에 코드를 바꾸지 않고 전체를 다시 평가: 30개 중 30개(100%) 적합, 사용자에게 나간 목록 밖 정책 언급 0건. AI가 고르는 정책이 돌릴 때마다 조금씩 달라서 93~100%로 본다
+- [ ] 4주차 3단계: 사용자 테스트 (60대 이상 포함), 설문 — 진행 순서와 설문지는 준비됨 ([docs/user_test.md](docs/user_test.md)). 테스트는 아직 하지 않음
+- [x] 4주차 4단계: README 정리, 발표 자료용 스크린샷 ([docs/screenshots/](docs/screenshots/))
+
+## 성과 목표 확인
+
+명세서 13장의 목표 다섯 가지를 확인한 결과입니다.
+
+| 지표 | 목표 | 결과 | 확인한 방법 |
+|---|---|---|---|
+| 새로 알게 된 혜택 수 | 참가자 1인당 1개 이상 | 아직 확인 못 함 | 사용자 테스트 설문 ([docs/user_test.md](docs/user_test.md)) |
+| 사용 편의성 | 60대 이상 평균 4점 이상 | 아직 확인 못 함 | 사용자 테스트 설문 |
+| 조회 정확도 | 조건 부합 90% 이상 | 100건 중 부합 93건, 애매 5건, 불일치 2건 (93~98%) | 조건 5세트 × 20건을 원문과 대조 ([docs/search_accuracy.md](docs/search_accuracy.md), 2026-11-15) |
+| 검색 품질 | 80% 이상 | 30개 중 30개 (100%) | `python scripts/eval_scenarios.py --no-llm` (2026-11-15) |
+| 채팅 답변 정확도 | 적합 80% 이상, 없는 정책 언급 0건 | 30개 중 28~30개 (93~100%), 0건 | `python scripts/eval_scenarios.py` (2026-11-14, 11-15) |
+
+숫자를 읽을 때 주의할 점:
+
+- 시나리오 30개는 놓친 것을 보고 규칙을 고친 질문들이라 실제보다 좋게 나옵니다. 규칙을 만들 때 보지 않은 새 질문 12개는 검색 기준 9개(75%)였고, 실제 사용에서는 이쪽에 가까울 것으로 봅니다.
+- 채팅 답변 평가는 "기대한 정책이 답변에 들어갔는가"만 자동으로 셉니다. 함께 나온 다른 정책이 상황에 맞는지는 사람이 읽어 봐야 합니다.
+- 조회 정확도는 AI가 원문을 읽고 판정했습니다. "조건에 어긋나는 정책이 섞이지 않았는가"만 보며, 그 사람에게 쓸모 있는 정책인지는 보지 않습니다.
+
+## 화면
+
+| 시작 | 채팅 결과 | 버튼 조회 결과 | 큰 글씨·또렷한 화면 |
+|---|---|---|---|
+| <img src="docs/screenshots/01-시작-화면.png" width="180"> | <img src="docs/screenshots/04-채팅-결과.png" width="180"> | <img src="docs/screenshots/10-버튼-조회-결과.png" width="180"> | <img src="docs/screenshots/15-큰-글씨-또렷한-화면.png" width="180"> |
+
+채팅 되묻기, 정책 상세, 공유 화면, 주민센터에서 보여주기 등 나머지 화면은 [docs/screenshots/](docs/screenshots/)에 있습니다 (휴대폰 크기 390×844, 2026-11-15에 내 컴퓨터에서 실행해 찍음).
 
 ## 준비물 (모두 무료)
 
@@ -79,7 +106,7 @@ python scripts/load_regions.py
 
 1. 이 폴더를 GitHub 저장소에 올립니다.
 2. render.com → **New → Web Service** → GitHub 저장소 연결 → Language **Docker**, Instance Type **Free**.
-3. **Environment**에 `DATABASE_URL`(과 2주차부터 `GROQ_API_KEY`)을 넣습니다. Health Check Path는 `/api/health`.
+3. **Environment**에 `DATABASE_URL`과 `GROQ_API_KEY`를 넣습니다. Health Check Path는 `/api/health`.
 4. 배포가 끝나면 `https://<서비스이름>.onrender.com/api/health` 가 `ok`를 돌려주는지 확인합니다.
 
 - GitHub에 올릴(push) 때마다 자동으로 다시 배포됩니다.
@@ -107,6 +134,20 @@ python scripts/eval_scenarios.py --no-llm --analyze
 ```
 
 시나리오 30개(`data/scenarios.json`)의 기대 정책이 후보 8개 안에 드는 비율과 거리 분포를 보여 줍니다.
+
+## 조회 정확도 확인
+
+```powershell
+# 조건 5세트로 버튼 조회를 하고 세트마다 20건을 뽑아 원문과 함께 출력 (Groq를 쓰지 않음)
+python scripts/sample_search.py
+```
+
+뽑힌 정책의 지원 대상·선정 기준을 읽고 나이·지역·성별 조건에 맞는지 대조합니다. 대조한 결과는 [docs/search_accuracy.md](docs/search_accuracy.md)에 있습니다.
+
+## 사용자 테스트
+
+진행 순서, 관찰 기록표, 인쇄해서 쓰는 설문지가 [docs/user_test.md](docs/user_test.md)에 있습니다.
+테스트하는 날에는 Groq 한도를 아끼기 위해 답변 평가(`eval_scenarios.py`)를 돌리지 않습니다.
 
 ## 테스트
 

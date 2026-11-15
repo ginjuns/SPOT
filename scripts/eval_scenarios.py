@@ -1,6 +1,6 @@
 """시나리오 30개 자동 평가.
 
-  python scripts/eval_scenarios.py                     # 답변까지 평가 (Groq 한도를 많이 쓴다. 하루 1~2번만, 7분쯤 걸림)
+  python scripts/eval_scenarios.py                     # 답변까지 평가 (Groq 한도를 많이 쓴다. 하루 1~2번만, 12분쯤 걸림)
   python scripts/eval_scenarios.py --only 5,9          # 몇 개만 골라서 답변 평가
   python scripts/eval_scenarios.py --no-llm            # 검색만 평가 (Groq를 쓰지 않아 몇 번이든 돌려도 된다)
   python scripts/eval_scenarios.py --no-llm --analyze  # 질문 분석(작은 모델)만 Groq로 하고 검색 평가 (5분쯤 걸림)
