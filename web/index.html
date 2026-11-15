@@ -13,37 +13,42 @@
   <script src="js/settings.js"></script>
 </head>
 <body>
-  <div class="page has-fab">
-    <main>
-      <h1>SPOT</h1>
-      <p class="lead">받을 수 있는 정부·지자체 지원을 찾아보세요. 회원가입 없이 바로 쓸 수 있어요.</p>
-
-      <h2 id="find-word">이름이나 낱말로 찾기</h2>
-      <form class="search-form" id="search-form" aria-labelledby="find-word">
-        <input type="search" id="q" maxlength="50" placeholder="예: 기초연금, 난방비" autocomplete="off" enterkeyhint="search">
-        <button type="submit" class="btn btn-primary">찾기</button>
+  <div class="page has-fab home">
+    <header class="hero">
+      <div class="hero-top">
+        <p class="brand">SPOT</p>
+        <a class="hero-link" href="#settings">화면 설정</a>
+      </div>
+      <h1>받을 수 있는 지원,<br>여기서 찾아보세요</h1>
+      <form class="search-form" id="search-form">
+        <input type="search" id="q" maxlength="50" placeholder="예: 기초연금, 난방비" aria-label="이름이나 낱말로 찾기" autocomplete="off" enterkeyhint="search">
+        <button type="submit" class="btn">찾기</button>
       </form>
+    </header>
 
+    <main>
       <h2 class="home-title">분야로 찾기</h2>
       <!-- 분야 값과 이름은 data/options.json 의 category 와 같게 둔다 -->
-      <div class="row">
-        <a class="btn" href="search.html?result=1&amp;category=%EC%83%9D%ED%99%9C%EC%95%88%EC%A0%95">생활비</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EB%B3%B4%EA%B1%B4%C2%B7%EC%9D%98%EB%A3%8C">병원·건강</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EB%B3%B4%ED%98%B8%C2%B7%EB%8F%8C%EB%B4%84">돌봄</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EC%A3%BC%EA%B1%B0%C2%B7%EC%9E%90%EB%A6%BD">집·주거</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EA%B3%A0%EC%9A%A9%C2%B7%EC%B0%BD%EC%97%85">일자리</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EC%9E%84%EC%8B%A0%C2%B7%EC%B6%9C%EC%82%B0">임신·출산</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EB%B3%B4%EC%9C%A1%C2%B7%EA%B5%90%EC%9C%A1">아이·교육</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EB%AC%B8%ED%99%94%C2%B7%ED%99%98%EA%B2%BD">문화·여가</a>
-        <a class="btn" href="search.html?result=1&amp;category=%ED%96%89%EC%A0%95%C2%B7%EC%95%88%EC%A0%84">안전·생활 편의</a>
-        <a class="btn" href="search.html?result=1&amp;category=%EB%86%8D%EB%A6%BC%EC%B6%95%EC%82%B0%EC%96%B4%EC%97%85">농사·어업</a>
+      <div class="row tiles">
+        <a class="btn tile" href="search.html?result=1&amp;category=%EC%83%9D%ED%99%9C%EC%95%88%EC%A0%95"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 9l2 6 2-5 2 5 2-6M7 12h10"/></svg>생활비</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EB%B3%B4%EA%B1%B4%C2%B7%EC%9D%98%EB%A3%8C"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 7v10M7 12h10"/></svg>병원·건강</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EB%B3%B4%ED%98%B8%C2%B7%EB%8F%8C%EB%B4%84"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.4-7 10-7 10z"/></svg>돌봄</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EC%A3%BC%EA%B1%B0%C2%B7%EC%9E%90%EB%A6%BD"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v10h12V10M10 20v-6h4v6"/></svg>집·주거</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EA%B3%A0%EC%9A%A9%C2%B7%EC%B0%BD%EC%97%85"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></svg>일자리</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EC%9E%84%EC%8B%A0%C2%B7%EC%B6%9C%EC%82%B0"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 14c1 1.2 5 1.2 6 0M9.5 10h.01M14.5 10h.01"/></svg>임신·출산</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EB%B3%B4%EC%9C%A1%C2%B7%EA%B5%90%EC%9C%A1"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/></svg>아이·교육</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EB%AC%B8%ED%99%94%C2%B7%ED%99%98%EA%B2%BD"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg>문화·여가</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%ED%96%89%EC%A0%95%C2%B7%EC%95%88%EC%A0%84"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg>안전·편의</a>
+        <a class="btn tile" href="search.html?result=1&amp;category=%EB%86%8D%EB%A6%BC%EC%B6%95%EC%82%B0%EC%96%B4%EC%97%85"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20v-8M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 14c0-3 2.5-5 7-5 0 3.5-2.5 5-7 5z"/></svg>농사·어업</a>
       </div>
 
       <h2 class="home-title">내 조건으로 찾기</h2>
-      <p class="muted">나이대, 사는 곳 같은 조건을 하나씩 고르면 맞는 지원을 보여 드려요.</p>
-      <a class="btn btn-primary" href="search.html">👆 조건 골라서 찾기</a>
+      <div class="panel">
+        <p>나이대와 사는 곳을 하나씩 고르면 맞는 지원만 보여 드려요.</p>
+        <a class="btn btn-primary" href="search.html">조건 골라서 찾기</a>
+      </div>
 
-      <h2 class="home-title">화면 설정</h2>
+      <h2 class="home-title" id="settings">화면 설정</h2>
       <div class="row">
         <button type="button" class="btn toggle" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
         <button type="button" class="btn toggle" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
@@ -53,7 +58,7 @@
     <p class="notice">이 서비스는 혜택을 찾아 안내해 드려요. 받을 수 있는지는 신청하는 곳에서 최종 확인해 주세요.</p>
   </div>
 
-  <a class="chat-fab" href="chat.html" aria-label="말로 물어보기"><span class="fab-icon" aria-hidden="true">💬</span>말로 묻기</a>
+  <a class="chat-fab" href="chat.html" aria-label="말로 물어보기"><svg class="fab-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>말로 묻기</a>
 
   <script src="js/home.js"></script>
 </body>
