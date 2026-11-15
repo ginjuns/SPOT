@@ -44,7 +44,8 @@ def sample(conditions, rng):
     where, params = retriever.build_filter(
         conditions["age_group"], conditions["gender"], conditions["region_code"], conditions["household"]
     )
-    rows = db.query(f"SELECT {COLUMNS} FROM policy WHERE {where} ORDER BY id", params)
+    # 실제 화면과 같이 개인·가구가 받는 지원만 본다
+    rows = db.query(f"SELECT {COLUMNS} FROM policy WHERE {where} AND for_person ORDER BY id", params)
     return len(rows), rng.sample(rows, min(SAMPLE_SIZE, len(rows)))
 
 
