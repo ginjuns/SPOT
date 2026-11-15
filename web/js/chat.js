@@ -3,6 +3,15 @@
   "use strict";
   const { api, el, button, policyCard, resultActions } = window.SPOT;
 
+  // 컴퓨터에서는 이 화면이 다른 화면 위의 작은 창 안에 들어간다 (js/fab.js).
+  // 그때는 위쪽 이동 버튼을 숨기고, 카드의 링크가 창 안이 아니라 전체 화면에서 열리게 한다.
+  if (window.self !== window.top) {
+    document.documentElement.classList.add("embed");
+    const base = document.createElement("base");
+    base.target = "_top";
+    document.head.append(base);
+  }
+
   const log = document.getElementById("log");
   const form = document.getElementById("form");
   const input = document.getElementById("message");

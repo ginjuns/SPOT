@@ -84,7 +84,14 @@
     else renderStep();
   }
 
+  // 결과 화면은 컴퓨터에서 넓게 쓰고(왼쪽 칸 + 카드 여러 줄), 조건 고르기는 좁게 가운데에 둔다
+  function setWide(on) {
+    main.classList.toggle("results", on);
+    main.parentElement.classList.toggle("wide", on);
+  }
+
   function renderStep() {
+    setWide(false);
     const key = STEPS[step];
     const items = {
       age_group: () => options.age_group.map((o) => [o.value, o.label]),
@@ -171,7 +178,20 @@
     });
     label.append(select);
 
-    box.append(form, label);
+    // 컴퓨터 화면에서는 펼침 목록 대신 분야를 모두 늘어놓는다 (어느 쪽을 보일지는 CSS가 정한다)
+    const cats = el("div", "cat-list");
+    cats.append(el("p", "field-name", "분야"));
+    [["", "모든 분야"]].concat(options.category.map((o) => [o.value, o.label])).forEach(([value, name]) => {
+      const on = (filters.category || "") === value;
+      const item = optionButton(name, () => {
+        filters.category = value || null;
+        showResults(true);
+      }, on ? "btn cat on" : "btn cat");
+      item.setAttribute("aria-pressed", on ? "true" : "false");
+      cats.append(item);
+    });
+
+    box.append(form, label, cats);
     return box;
   }
 
@@ -181,14 +201,18 @@
     let page = 1;
     let shown = 0;
 
-    const list = el("div", "stack");
+    const list = el("div", "stack cards");
     const status = el("div");
     const more = optionButton("더 보기", loadPage, "btn btn-primary");
     more.hidden = true;
     const again = optionButton(hasCondition() ? "조건 다시 고르기" : "내 조건 고르기 (나이대, 사는 곳)", restart, "btn");
 
+    // 좁히는 도구(검색창, 분야, 조건)는 한 묶음으로 둔다. 컴퓨터 화면에서는 왼쪽 칸이 된다.
+    const side = el("aside", "filters");
+    side.append(filterBox(), chosenList(), again);
     const title = el("h1", "", "찾은 지원");
-    main.replaceChildren(title, filterBox(), chosenList(), again, list, status, more);
+    setWide(true);
+    main.replaceChildren(title, side, list, status, more);
     window.scrollTo(0, 0);
 
     async function loadPage() {

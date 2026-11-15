@@ -39,18 +39,22 @@
 
   // 시작 화면의 전환 버튼: <button data-setting="big"> 처럼 쓴다
   document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll("[data-setting]").forEach((button) => {
-      const name = button.getAttribute("data-setting");
-      const show = () => {
-        const on = root.hasAttribute("data-" + name);
+    // 같은 설정의 버튼이 여러 개일 수 있으므로(위쪽 띠, 아래 설정) 누르면 모두 함께 바꿔 보여 준다
+    const buttons = document.querySelectorAll("[data-setting]");
+    const showAll = () => {
+      buttons.forEach((button) => {
+        const on = root.hasAttribute("data-" + button.getAttribute("data-setting"));
         button.setAttribute("aria-pressed", on ? "true" : "false");
         button.querySelector(".state").textContent = on ? "켜짐" : "꺼짐";
-      };
+      });
+    };
+    buttons.forEach((button) => {
+      const name = button.getAttribute("data-setting");
       button.addEventListener("click", () => {
         set(name, !root.hasAttribute("data-" + name));
-        show();
+        showAll();
       });
-      show();
     });
+    showAll();
   });
 })();

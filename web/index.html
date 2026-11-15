@@ -17,9 +17,14 @@
     <header class="hero">
       <div class="hero-top">
         <p class="brand">SPOT</p>
-        <a class="hero-link" href="#settings">화면 설정</a>
+        <!-- 휴대폰에서는 아래 설정으로 가는 링크, 컴퓨터에서는 바로 누르는 전환 버튼을 보여 준다 -->
+        <a class="hero-pill hero-link" href="#settings">화면 설정</a>
+        <div class="hero-toggles">
+          <button type="button" class="hero-pill" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
+          <button type="button" class="hero-pill" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
+        </div>
       </div>
-      <h1>받을 수 있는 지원,<br>여기서 찾아보세요</h1>
+      <h1>받을 수 있는 지원,<br> 여기서 찾아보세요</h1>
       <form class="search-form" id="search-form">
         <input type="search" id="q" maxlength="50" placeholder="예: 기초연금, 난방비" aria-label="이름이나 낱말로 찾기" autocomplete="off" enterkeyhint="search">
         <button type="submit" class="btn">찾기</button>
@@ -48,10 +53,12 @@
         <a class="btn btn-primary" href="search.html">조건 골라서 찾기</a>
       </div>
 
-      <h2 class="home-title" id="settings">화면 설정</h2>
-      <div class="row">
-        <button type="button" class="btn toggle" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
-        <button type="button" class="btn toggle" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
+      <div class="settings-block">
+        <h2 class="home-title" id="settings">화면 설정</h2>
+        <div class="row">
+          <button type="button" class="btn toggle" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
+          <button type="button" class="btn toggle" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
+        </div>
       </div>
     </main>
 
@@ -61,5 +68,6 @@
   <a class="chat-fab" href="chat.html" aria-label="말로 물어보기"><svg class="fab-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>말로 묻기</a>
 
   <script src="js/home.js"></script>
+  <script src="js/fab.js"></script>
 </body>
 </html>

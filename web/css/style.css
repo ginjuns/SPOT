@@ -125,20 +125,27 @@ p { margin: 0 0 10px; }
 .hero-top { display: flex; align-items: center; justify-content: space-between; }
 .brand { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: 0.02em; }
 .hero h1 { margin: 0; font-size: 1.45rem; font-weight: 800; }
-.hero-link {
+/* 파란 띠 위의 알약 모양 버튼 */
+.hero-pill {
   display: flex;
   align-items: center;
+  gap: 6px;
   min-height: 44px;
   padding: 0 14px;
   border: 2px solid var(--primary-text);
   border-radius: 999px;
+  background: transparent;
   color: var(--primary-text);
+  font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
 }
+.hero-pill[aria-pressed="true"] { background: var(--primary-text); color: var(--primary); }
 /* 아래쪽의 "또렷한 화면 링크 색" 규칙보다 우선하게 :not(.btn) 을 붙인다 */
-html[data-contrast="1"] a.hero-link:not(.btn) { color: var(--primary-text); }
+html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
+.hero-toggles { display: none; gap: 10px; }   /* 컴퓨터 화면에서만 보인다 */
 .hero .search-form input { border-color: var(--surface); }
 .hero .search-form .btn { border-color: var(--hero-btn-bg); background: var(--hero-btn-bg); color: var(--hero-btn-text); font-weight: 800; }
 
@@ -186,7 +193,44 @@ html[data-contrast="1"] a.hero-link:not(.btn) { color: var(--primary-text); }
 .field-name { font-weight: 700; }
 .filter-box ~ .chosen { margin-bottom: 8px; }
 .filter-box ~ .btn { margin-bottom: 14px; }
-.filter-box ~ .btn-primary { margin-top: 12px; }
+.results > .btn-primary { margin-top: 12px; }
+
+/* 분야를 모두 늘어놓은 목록 (컴퓨터 화면에서만 보인다. 휴대폰은 위의 펼침 목록) */
+.cat-list { display: none; gap: 2px; }
+.cat-list .field-name { margin: 0 0 6px; }
+.cat { min-height: 46px; justify-content: flex-start; border-color: transparent; background: transparent; font-weight: 500; text-align: left; }
+.cat.on { border-color: var(--primary); background: var(--primary); color: var(--primary-text); font-weight: 700; }
+
+/* 채팅 창 안에 들어간 채팅 화면 (컴퓨터) */
+.embed .topbar { display: none; }
+
+/* ---------- 컴퓨터 화면에서 뜨는 채팅 창 ---------- */
+
+.chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  height: min(640px, calc(100vh - 48px));
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg);
+  box-shadow: 0 12px 36px rgba(17, 24, 39, 0.32);
+}
+.chat-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-weight: 800;
+}
+.chat-panel iframe { flex: 1; width: 100%; border: 0; }
 
 /* ---------- 말로 물어보기 버튼 (모든 화면 오른쪽 아래에 떠 있다) ---------- */
 
@@ -385,3 +429,66 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
 .office-item { padding: 14px 0; border-bottom: 2px solid var(--line); }
 .office-item h2 { font-size: 1.7rem; line-height: 1.35; margin-bottom: 8px; }
 .office-item p { font-size: 1.35rem; line-height: 1.45; margin-bottom: 6px; }
+
+/* ---------- 컴퓨터 화면 (폭 900px 이상): 같은 내용을 넓게 배치한다 ---------- */
+
+@media (min-width: 900px) {
+  .page.home, .page.wide { max-width: 1184px; padding-left: 32px; padding-right: 32px; }
+
+  /* 시작 화면: 파란 띠를 화면 끝까지 넓히고, 제목과 검색창을 가운데에 둔다 */
+  .hero {
+    gap: 22px;
+    margin: 0;
+    padding: 20px 0 44px;
+    border-radius: 0;
+    box-shadow: 0 0 0 100vmax var(--primary);   /* 띠 색을 화면 양 끝까지 칠한다 */
+    clip-path: inset(0 -100vmax);
+  }
+  .hero h1 { font-size: 2.1rem; text-align: center; }
+  .hero h1 br { display: none; }
+  .hero .search-form { width: 100%; max-width: 720px; margin: 0 auto; }
+  .hero .search-form .btn { min-width: 6.5rem; }
+  .hero-link { display: none; }
+  .hero-toggles { display: flex; }
+  .settings-block { display: none; }           /* 화면 설정은 위쪽 띠에 있다 */
+
+  .tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .tile { flex-direction: column; align-items: flex-start; justify-content: center; gap: 12px; padding: 18px; }
+  .tile svg { width: 1.8rem; height: 1.8rem; }
+
+  .panel { grid-template-columns: 1fr auto; align-items: center; padding: 26px 28px; }
+  .panel .btn { width: 280px; }
+
+  /* 결과 화면: 왼쪽에 좁히는 도구, 오른쪽에 카드 여러 줄 */
+  main.results {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 28px;
+    align-items: start;
+  }
+  main.results > * { grid-column: 2; }
+  main.results > .filters {
+    grid-column: 1;
+    grid-row: 1 / span 4;
+    position: sticky;
+    top: 16px;
+    padding: 20px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .filters .filter-box { margin-top: 0; }
+  .filters .field { display: none; }
+  .filters .cat-list { display: grid; }
+  .filters > .btn { margin-bottom: 0; }
+  .results > .btn-primary { width: 240px; justify-self: center; }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .cards .card { display: flex; flex-direction: column; }
+  .cards .card .badge { align-self: flex-start; }
+  .cards .card .actions { margin-top: auto; padding-top: 12px; }
+  .page.wide .topbar { max-width: 360px; }
+  .page.wide .notice { margin-top: 28px; }
+
+  .chat-fab { right: 32px; bottom: 32px; }
+}
