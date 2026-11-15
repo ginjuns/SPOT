@@ -8,8 +8,9 @@
   const main = document.getElementById("main");
   const backButton = document.getElementById("back");
 
-  const STEPS = ["age_group", "gender", "sido", "sigungu", "household"];
+  const STEPS = ["category", "age_group", "gender", "sido", "sigungu", "household"];
   const QUESTIONS = {
+    category: "어떤 도움을 찾으세요?",
     age_group: "나이대를 골라 주세요",
     gender: "성별을 골라 주세요",
     sido: "사시는 곳(시·도)을 골라 주세요",
@@ -52,6 +53,12 @@
   }
 
   function choose(key, value, label) {
+    // 분야는 결과 화면에서도 바꿀 수 있어서 filters 에 둔다 (건너뛰면 모든 분야)
+    if (key === "category") {
+      filters.category = value;
+      next();
+      return;
+    }
     chosen[key] = value;
     if (label) labels[key] = label;
     else delete labels[key];
@@ -94,6 +101,7 @@
     setWide(false);
     const key = STEPS[step];
     const items = {
+      category: () => options.category.map((o) => [o.value, o.label]),
       age_group: () => options.age_group.map((o) => [o.value, o.label]),
       gender: () => options.gender.map((o) => [o.value, o.label]),
       sido: () => options.sido.map((o) => [o.code, o.name]),
@@ -112,7 +120,8 @@
       box,
     );
     if (many) main.append(el("p", "muted", "목록을 위아래로 밀어서 찾아 주세요."));
-    const skip = optionButton("잘 모르겠어요 / 건너뛰기", () => choose(key, null, null), "btn btn-quiet");
+    const skipLabel = key === "category" ? "모든 분야에서 찾기" : "잘 모르겠어요 / 건너뛰기";
+    const skip = optionButton(skipLabel, () => choose(key, null, null), "btn btn-quiet");
     skip.style.marginTop = "12px";
     main.append(skip);
     window.scrollTo(0, 0);
@@ -256,7 +265,8 @@
       delete labels[key];
     });
     sigunguList = [];
-    step = 0;
+    // 결과 화면에서 이미 분야를 골랐으면 분야 단계는 건너뛴다 ([← 뒤로]로 돌아가 바꿀 수 있다)
+    step = filters.category ? 1 : 0;
     history.replaceState(null, "", "search.html");
     renderStep();
   }
