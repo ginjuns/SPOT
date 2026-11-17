@@ -1,7 +1,7 @@
-// 정책 상세: 지원 대상, 지원 내용, 신청 방법, 문의처(전화 걸기), 원문 링크, 자료 기준일
+// 정책 상세: 지원 대상, 지원 내용, 신청 기간, 신청 방법, 준비할 서류, 문의처(전화 걸기), 원문 링크, 공유, 자료 기준일
 (function () {
   "use strict";
-  const { api, el, safeUrl, showLoading, showError } = window.SPOT;
+  const { api, el, safeUrl, showLoading, showError, resultActions } = window.SPOT;
 
   const main = document.getElementById("main");
   const LONG_TEXT = 400;   // 이보다 길면 접어 두고 [더 보기]를 둔다
@@ -81,7 +81,9 @@
       section("지원 대상", policy.target),
       section("지원 내용", policy.content),
       section("선정 기준", policy.criteria),
+      section("신청 기간", policy.apply_period),
       section("신청 방법", policy.how_to_apply),
+      section("준비할 서류", policy.documents),
       section("신청하는 곳", policy.apply_place),
       contactSection(policy.contact),
     ].filter(Boolean);
@@ -95,6 +97,8 @@
       origin.rel = "noopener";
       foot.append(origin);
     }
+    // 이 지원 하나를 가족에게 보내거나, 주민센터 창구에서 큰 글씨로 보여 준다
+    foot.append(resultActions(null, [policy.id]));
     foot.append(el("p", "muted", "자료 기준일 " + policy.collected_at + " · 그 뒤에 내용이 바뀌었을 수 있어요."));
     parts.push(foot);
 

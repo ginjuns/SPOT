@@ -5,7 +5,7 @@ PAGE_SIZE = 10
 CANDIDATE_LIMIT = 8  # 의미 검색으로 고르는 후보 수
 
 # 의미 검색 후보에 필요한 열 (답변 생성에 지원 대상·지원 내용을 쓴다)
-CANDIDATE_COLUMNS = "id, name, agency, summary, target, content, has_income_rule, url, collected_at"
+CANDIDATE_COLUMNS = "id, name, agency, summary, target, content, has_income_rule, url, apply_period, collected_at"
 
 # 나이대 → (가장 어린 나이, 가장 많은 나이)
 AGE_RANGES = {
@@ -17,7 +17,7 @@ AGE_RANGES = {
     "75plus": (75, 120),
 }
 
-CARD_COLUMNS = "id, name, agency, summary, has_income_rule, url, collected_at"
+CARD_COLUMNS = "id, name, agency, summary, has_income_rule, url, apply_period, collected_at"
 
 
 CHILD_AGE_MAX = 18
@@ -94,6 +94,7 @@ def to_card(row):
         "one_line": one_line(row["summary"]),
         "has_income_rule": row["has_income_rule"],
         "url": row["url"],
+        "apply_period": row.get("apply_period"),   # 신청 기간 ("상시신청", "매년 1월" 등)
         "collected_at": row["collected_at"],
     }
 

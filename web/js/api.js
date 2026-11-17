@@ -73,6 +73,11 @@
     card.append(el("p", "agency", policy.agency || ""));
     if (policy.has_income_rule) card.append(el("span", "badge", "소득 기준 있음"));
     if (policy.one_line) card.append(el("p", "", policy.one_line));
+    // 신청 기간이 정해져 있으면 카드에서 바로 보여 준다 (늘 신청할 수 있는 것, 긴 설명은 상세 화면에서)
+    const period = (policy.apply_period || "").trim();
+    if (period && period.length <= 30 && !/^(상시신청|접수기관 별 상이|연중)$/.test(period)) {
+      card.append(el("p", "period", "신청 기간: " + period));
+    }
 
     const actions = el("div", "row actions");
     const detail = el("a", "btn btn-primary", "자세히 보기");
@@ -147,6 +152,7 @@
         const item = el("section", "office-item");
         item.append(el("h2", "", i + 1 + ". " + p.name));
         item.append(el("p", "", "신청하는 곳: " + (p.apply_place || p.agency || "주민센터에 문의")));
+        if (p.apply_period) item.append(el("p", "", "신청 기간: " + p.apply_period.slice(0, 60)));
         const contact = (p.contact || "").split("||").map((s) => s.trim().replace("/", " ")).filter(Boolean).slice(0, 2);
         if (contact.length) item.append(el("p", "", "문의: " + contact.join(", ")));
         body.append(item);

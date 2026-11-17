@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api")
 
 DETAIL_COLUMNS = (
     "id, name, agency, category, summary, target, criteria, content, how_to_apply, "
-    "apply_place, contact, url, has_income_rule, collected_at"
+    "apply_place, apply_period, documents, contact, url, has_income_rule, collected_at"
 )
 MAX_IDS = 10
 

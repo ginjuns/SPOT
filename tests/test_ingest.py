@@ -96,3 +96,12 @@ def test_age_from_text_only_when_sure():
     assert f("동행센터 방문건강관리", "○ 65세 이상 어르신 ○ 건강 취약계층 : 장애인, 한부모가구") == (None, None)
     assert f("찾아가는 세탁서비스", "기초생활보장 수급가구 중 65세이상노인") == (None, None)
     assert f("아무 정책", None) == (None, None)
+
+
+def test_documents_drops_empty_markers():
+    assert ingest.documents("해당없음") is None
+    assert ingest.documents("해당 없음") is None
+    assert ingest.documents(" - ") is None
+    assert ingest.documents("구비서류 없음.") is None
+    assert ingest.documents(None) is None
+    assert ingest.documents("신분증, 주민등록등본") == "신분증, 주민등록등본"

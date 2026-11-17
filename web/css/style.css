@@ -304,6 +304,7 @@ html[data-contrast="1"] .chat-fab:active { background: #ccb800; }
 .card .agency { color: var(--muted); margin-bottom: 8px; }
 .card .actions { margin-top: 12px; }
 .card .foot { margin: 10px 0 0; }
+.card .period { margin: 6px 0 0; font-weight: 700; }
 
 .badge {
   display: inline-block;

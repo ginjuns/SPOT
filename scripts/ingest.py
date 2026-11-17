@@ -250,6 +250,18 @@ def age_from_text(name, target):
         return None, None
     return age_min, age_max
 
+# 구비서류 칸에 "없다"는 뜻으로 적어 둔 값들 (이런 값은 보여 주지 않는다)
+NO_DOCUMENTS = {"해당없음", "없음", "-", "구비서류없음", "해당사항없음", "별도구비서류없음", "제출서류없음"}
+
+
+def documents(text):
+    """준비할 서류. "해당없음"처럼 없다는 뜻의 값은 None 으로 바꾼다."""
+    text = clean(text)
+    if not text or text.replace(" ", "").rstrip(".") in NO_DOCUMENTS:
+        return None
+    return text
+
+
 def for_person(user_types):
     """개인·가구가 받는 지원인지. 목록 응답의 사용자구분 ("개인||가구", "소상공인", "법인/시설/단체" 등).
 
@@ -285,6 +297,8 @@ def build_rows(raw):
             # 목록의 신청방법은 "방문신청||직접입력" 같은 분류값이라, 풀어 쓴 상세 쪽 글을 먼저 쓴다
             "how_to_apply": clean(d.get("신청방법") or s.get("신청방법")),
             "apply_place": clean(s.get("접수기관") or d.get("접수기관명")),
+            "apply_period": clean(s.get("신청기한") or d.get("신청기한")),
+            "documents": documents(d.get("구비서류")),
             "contact": clean(d.get("문의처") or s.get("전화문의")),
             "url": clean(s.get("상세조회URL")),
             "region_code": resolver.resolve(s.get("소관기관명"), s.get("소관기관유형")),
@@ -326,7 +340,7 @@ def print_stats(rows):
 
 COLUMNS = [
     "id", "name", "agency", "category", "summary", "target", "criteria", "content",
-    "how_to_apply", "apply_place", "contact", "url", "region_code", "age_min", "age_max",
+    "how_to_apply", "apply_place", "apply_period", "documents", "contact", "url", "region_code", "age_min", "age_max",
     "gender", "household", "has_income_rule", "for_person", "views", "collected_at",
 ]
 

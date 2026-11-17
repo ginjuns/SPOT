@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS policy (
   content          TEXT,                  -- 지원 내용
   how_to_apply     TEXT,                  -- 신청 방법
   apply_place      TEXT,                  -- 접수 기관
+  apply_period     TEXT,                  -- 신청 기한 ("상시신청", "매년 1월", 날짜 등 원문 그대로)
+  documents        TEXT,                  -- 준비할 서류 (없으면 NULL)
   contact          TEXT,                  -- 문의처
   url              TEXT,                  -- 원문 링크
   region_code      TEXT,                  -- 시·도(2자리) 또는 시·군·구(5자리), 전국은 NULL, 지역 불명은 'UNKNOWN'
@@ -29,10 +31,12 @@ CREATE TABLE IF NOT EXISTS policy (
   collected_at     DATE NOT NULL          -- 데이터 기준일
 );
 
--- 예전에 만든 테이블에는 for_person, views 열이 없으므로 더해 준다.
+-- 예전에 만든 테이블에는 아래 열들이 없으므로 더해 준다.
 -- 그 뒤에 `python scripts/ingest.py --from-raw --no-embed` 를 돌리면 값이 채워진다.
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS for_person BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
+ALTER TABLE policy ADD COLUMN IF NOT EXISTS apply_period TEXT;
+ALTER TABLE policy ADD COLUMN IF NOT EXISTS documents TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_policy_region ON policy (region_code);
 -- 벡터 인덱스(HNSW)는 만들지 않는다. 이유는 PROJECT_SPEC.md 6장 참고.
