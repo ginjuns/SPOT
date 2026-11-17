@@ -45,7 +45,8 @@
       buttons.forEach((button) => {
         const on = root.hasAttribute("data-" + button.getAttribute("data-setting"));
         button.setAttribute("aria-pressed", on ? "true" : "false");
-        button.querySelector(".state").textContent = on ? "켜짐" : "꺼짐";
+        const state = button.querySelector(".state");
+        if (state) state.textContent = on ? "켜짐" : "꺼짐";
       });
     };
     buttons.forEach((button) => {

@@ -145,7 +145,11 @@ p { margin: 0 0 10px; }
 .hero-pill[aria-pressed="true"] { background: var(--primary-text); color: var(--primary); }
 /* 아래쪽의 "또렷한 화면 링크 색" 규칙보다 우선하게 :not(.btn) 을 붙인다 */
 html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
-.hero-toggles { display: none; gap: 10px; }   /* 컴퓨터 화면에서만 보인다 */
+.hero-toggles { display: flex; gap: 8px; }
+/* 그림만 있는 둥근 버튼 (또렷한 화면). 이름은 aria-label 로 읽어 준다 */
+.hero-pill.icon { justify-content: center; width: 44px; padding: 0; }
+.hero-pill.icon svg { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.hero-pill.icon[aria-pressed="true"] svg { fill: currentColor; }
 .hero .search-form input { border-color: var(--surface); }
 .hero .search-form .btn { border-color: var(--hero-btn-bg); background: var(--hero-btn-bg); color: var(--hero-btn-text); font-weight: 800; }
 
@@ -452,9 +456,7 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
   .hero h1 br { display: none; }
   .hero .search-form { width: 100%; max-width: 720px; margin: 0 auto; }
   .hero .search-form .btn { min-width: 6.5rem; }
-  .hero-link { display: none; }
-  .hero-toggles { display: flex; }
-  .settings-block { display: none; }           /* 화면 설정은 위쪽 띠에 있다 */
+  .hero-toggles { gap: 10px; }
 
   .tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
   .tile { flex-direction: column; align-items: flex-start; justify-content: center; gap: 12px; padding: 18px; }

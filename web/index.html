@@ -17,11 +17,13 @@
     <header class="hero">
       <div class="hero-top">
         <p class="brand">SPOT</p>
-        <!-- 휴대폰에서는 아래 설정으로 가는 링크, 컴퓨터에서는 바로 누르는 전환 버튼을 보여 준다 -->
-        <a class="hero-pill hero-link" href="#settings">화면 설정</a>
+        <!-- 화면 설정: 큰 글씨, 또렷한 화면(어두운 바탕에 밝은 글씨) -->
         <div class="hero-toggles">
-          <button type="button" class="hero-pill" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
-          <button type="button" class="hero-pill" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
+          <button type="button" class="hero-pill" data-setting="big">큰 글씨<span class="state sr-only">꺼짐</span></button>
+          <button type="button" class="hero-pill icon" data-setting="contrast" aria-label="또렷한 화면" title="또렷한 화면">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+            <span class="state sr-only">꺼짐</span>
+          </button>
         </div>
       </div>
       <h1>받을 수 있는 지원,<br> 여기서 찾아보세요</h1>
@@ -51,14 +53,6 @@
       <div class="panel">
         <p>나이대와 사는 곳을 하나씩 고르면 맞는 지원만 보여 드려요.</p>
         <a class="btn btn-primary" href="search.html">조건 골라서 찾기</a>
-      </div>
-
-      <div class="settings-block">
-        <h2 class="home-title" id="settings">화면 설정</h2>
-        <div class="row">
-          <button type="button" class="btn toggle" data-setting="big">큰 글씨 <span class="state">꺼짐</span></button>
-          <button type="button" class="btn toggle" data-setting="contrast">또렷한 화면 <span class="state">꺼짐</span></button>
-        </div>
       </div>
     </main>
 
