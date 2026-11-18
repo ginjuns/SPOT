@@ -562,33 +562,29 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
     font-weight: 800;
     cursor: pointer;
   }
-  .site-menu-btn.on { color: var(--primary); border-bottom-color: var(--primary); }
-  .mega {
+  .site-menu-item { position: relative; }
+  .site-menu-item.open .site-menu-btn { color: var(--primary); border-bottom-color: var(--primary); }
+  /* 펼침 상자: 마우스를 올린 메뉴 하나만, 그 이름 바로 아래에 뜬다 */
+  .drop {
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
-    right: 0;
-    border-bottom: 1px solid var(--line);
+    min-width: 260px;
+    padding: 10px;
+    border: 2px solid var(--line);
+    border-top: 3px solid var(--primary);
+    border-radius: 0 0 14px 14px;
     background: var(--surface);
-    box-shadow: 0 14px 28px rgba(17, 24, 39, 0.14);
+    box-shadow: 0 14px 28px rgba(17, 24, 39, 0.16);
   }
-  .site-nav.open .mega { display: block; }
-  .mega-inner {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 32px;
-    max-width: 1184px;
-    margin: 0 auto;
-    padding: 28px 32px 32px;
-  }
-  .mega-col h2 { margin: 0 0 10px; padding-bottom: 10px; border-bottom: 2px solid var(--line); font-size: 1.1rem; font-weight: 800; }
-  .mega-col.on h2 { color: var(--primary); border-bottom-color: var(--primary); }
-  .mega-col ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-  .mega-col.wide ul { grid-template-columns: 1fr 1fr; column-gap: 16px; }
-  .mega-col a { display: block; padding: 8px 10px; border-radius: 8px; color: var(--text); text-decoration: none; }
-  .mega-col a:hover { background: var(--soft); color: var(--primary); text-decoration: underline; }
-  .mega-col .muted { margin: 10px 10px 0; }
+  .site-menu-item.open .drop { display: block; }
+  .drop.wide { min-width: 360px; }
+  .drop ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+  .drop.wide ul { grid-template-columns: 1fr 1fr; column-gap: 8px; }
+  .drop a { display: block; padding: 10px 12px; border-radius: 8px; color: var(--text); text-decoration: none; white-space: nowrap; }
+  .drop a:hover { background: var(--soft); color: var(--primary); text-decoration: underline; }
+  .drop .muted { margin: 8px 12px 4px; white-space: normal; }
 
   /* 시작 화면: 이름은 위쪽 메뉴에 있으므로 파란 띠에서는 빼고, 화면 설정 버튼만 오른쪽에 둔다 */
   .hero .brand { display: none; }

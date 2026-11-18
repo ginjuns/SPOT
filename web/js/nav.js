@@ -1,4 +1,4 @@
-// 컴퓨터 화면(폭 900px 이상)의 위쪽 메뉴. 메뉴 이름에 마우스를 올리면 아래로 전체 메뉴가 펼쳐진다.
+// 컴퓨터 화면(폭 900px 이상)의 위쪽 메뉴. 메뉴 이름에 마우스를 올리면 그 메뉴만 바로 아래에 펼쳐진다.
 // 휴대폰에서는 CSS 로 숨긴다 (휴대폰 배치는 바꾸지 않는다).
 // 키보드(Tab)로 들어와도 펼쳐지고, Esc 를 누르거나 바깥을 누르면 닫힌다.
 (function () {
@@ -52,25 +52,18 @@
   const logo = el("a", "site-logo", "SPOT");
   logo.href = "index.html";
   const menu = el("ul", "site-menu");
-  const mega = el("div", "mega");
-  mega.id = "mega-menu";
-  const megaInner = el("div", "mega-inner");
-
-  const topButtons = [];
-  const columns = [];
+  const entries = [];   // [메뉴 칸(li), 메뉴 이름 버튼]
 
   MENUS.forEach((m, index) => {
-    const li = el("li");
+    const li = el("li", "site-menu-item");
     const top = el("button", "site-menu-btn", m.title);
     top.type = "button";
     top.setAttribute("aria-expanded", "false");
-    top.setAttribute("aria-controls", "mega-menu");
-    li.append(top);
-    menu.append(li);
-    topButtons.push(top);
+    top.setAttribute("aria-controls", "drop-" + index);
 
-    const col = el("section", "mega-col" + (m.wide ? " wide" : ""));
-    col.append(el("h2", "", m.title));
+    // 이 메뉴만의 펼침 상자 (메뉴 이름 바로 아래)
+    const drop = el("div", "drop" + (m.wide ? " wide" : ""));
+    drop.id = "drop-" + index;
     const list = el("ul");
     m.items.forEach(([label, href, kind]) => {
       const item = el("li");
@@ -80,58 +73,55 @@
       item.append(link);
       list.append(item);
     });
-    col.append(list);
-    if (m.note) col.append(el("p", "muted", m.note));
-    megaInner.append(col);
-    columns.push(col);
+    drop.append(list);
+    if (m.note) drop.append(el("p", "muted", m.note));
 
-    top.addEventListener("mouseenter", () => open(index));
+    li.append(top, drop);
+    menu.append(li);
+    entries.push([li, top]);
+
+    li.addEventListener("mouseenter", () => open(index));
+    li.addEventListener("mouseleave", () => closeSoon());
     top.addEventListener("focus", () => open(index));
-    // 누르면 펼친다 (마우스를 올리면 이미 펼쳐져 있으므로 닫지 않는다). 닫기는 Esc, 바깥 누르기, 마우스 떠나기
     top.addEventListener("click", () => open(index));
-    col.addEventListener("mouseenter", () => mark(index));
   });
 
   inner.append(logo, menu);
-  mega.append(megaInner);
-  header.append(inner, mega);
+  header.append(inner);
   document.body.prepend(header);
 
-  // ---------- 열고 닫기 ----------
+  // ---------- 열고 닫기 (한 번에 하나만) ----------
 
   let closeTimer = null;
 
-  function mark(index) {
-    columns.forEach((c, i) => c.classList.toggle("on", i === index));
-    topButtons.forEach((b, i) => b.classList.toggle("on", i === index));
-  }
-
   function open(index) {
     clearTimeout(closeTimer);
-    header.classList.add("open");
-    topButtons.forEach((b) => b.setAttribute("aria-expanded", "true"));
-    mark(index);
+    entries.forEach(([li, top], i) => {
+      li.classList.toggle("open", i === index);
+      top.setAttribute("aria-expanded", i === index ? "true" : "false");
+    });
   }
 
   function close() {
-    clearTimeout(closeTimer);
-    header.classList.remove("open");
-    topButtons.forEach((b) => b.setAttribute("aria-expanded", "false"));
-    mark(-1);
+    open(-1);
   }
 
-  // 마우스가 메뉴 밖으로 나가면 잠깐 뒤에 닫는다 (메뉴 이름에서 펼친 메뉴로 옮겨 가는 사이에 닫히지 않게)
-  header.addEventListener("mouseleave", () => {
+  // 마우스가 메뉴 밖으로 나가면 잠깐 뒤에 닫는다 (메뉴 이름에서 펼친 상자로 옮겨 가는 사이에 닫히지 않게)
+  function closeSoon() {
+    clearTimeout(closeTimer);
     closeTimer = setTimeout(close, 200);
-  });
-  header.addEventListener("mouseenter", () => clearTimeout(closeTimer));
+  }
+
   header.addEventListener("focusout", (event) => {
     if (!header.contains(event.relatedTarget)) close();
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && header.classList.contains("open")) {
+    if (event.key !== "Escape") return;
+    const opened = entries.find(([li]) => li.classList.contains("open"));
+    if (opened) {
       close();
-      topButtons[0].focus();
+      opened[1].focus();
+      close();   // focus 가 다시 펼치므로 한 번 더 닫는다
     }
   });
   document.addEventListener("click", (event) => {
@@ -140,7 +130,7 @@
 
   // ---------- 메뉴 항목 누르기 ----------
 
-  mega.addEventListener("click", (event) => {
+  menu.addEventListener("click", (event) => {
     const link = event.target.closest("a");
     if (!link) return;
     // [말로 물어보기]: 오른쪽 아래 채팅 창을 띄운다 (js/fab.js 가 처리)
