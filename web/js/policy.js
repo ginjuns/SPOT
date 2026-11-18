@@ -5,6 +5,9 @@
 
   const main = document.getElementById("main");
   const LONG_TEXT = 400;   // 이보다 길면 접어 두고 [더 보기]를 둔다
+  // 소득 기준이 있는 정책에서 여는 복지로 "복지서비스 모의계산" 화면
+  // TODO(확인): 2026-11-18에 주소가 열리는 것만 확인했다. 복지로 화면이 바뀌면 주소를 고친다.
+  const BOKJIRO_MOCK_URL = "https://www.bokjiro.go.kr/ssis-tbu/twatbz/mkclAsis/mkclInsertNblgPage.do";
 
   document.getElementById("back").addEventListener("click", () => {
     // 이 사이트 안에서 넘어왔으면 그 화면으로, 링크로 바로 열었으면 처음 화면으로
@@ -72,7 +75,12 @@
     head.append(el("p", "agency muted", policy.agency || ""));
     if (policy.has_income_rule) {
       head.append(el("span", "badge", "소득 기준 있음"));
-      head.append(el("p", "muted", "소득이나 재산에 따라 받을 수 있는지가 달라져요. 신청하는 곳에서 확인해 주세요."));
+      head.append(el("p", "muted", "소득이나 재산에 따라 받을 수 있는지가 달라져요. 복지로 모의계산으로 미리 알아보거나, 주민센터에 물어보세요."));
+      const mock = el("a", "btn", "복지로에서 모의계산 해 보기");
+      mock.href = BOKJIRO_MOCK_URL;
+      mock.target = "_blank";
+      mock.rel = "noopener";
+      head.append(mock);
     }
     if (policy.summary) head.append(el("p", "", tidy(policy.summary)));
 
