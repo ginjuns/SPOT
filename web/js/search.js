@@ -6,7 +6,6 @@
   const KEYWORD_LIMIT = 50;
 
   const main = document.getElementById("main");
-  const backButton = document.getElementById("back");
 
   const STEPS = ["category", "age_group", "gender", "sido", "sigungu", "household"];
   const QUESTIONS = {
@@ -124,6 +123,9 @@
     const skip = optionButton(skipLabel, () => choose(key, null, null), "btn btn-quiet");
     skip.style.marginTop = "12px";
     main.append(skip);
+    // 위쪽 [← 뒤로]를 뺐으므로, 잘못 고른 단계를 다시 고를 수 있게 여기에 둔다 (첫 단계에서는 시작 화면으로)
+    const back = optionButton(step === 0 ? "← 처음 화면으로" : "← 앞 단계로", goBack, "btn btn-quiet step-back");
+    main.append(back);
     window.scrollTo(0, 0);
   }
 
@@ -287,15 +289,15 @@
       delete labels[key];
     });
     sigunguList = [];
-    // 결과 화면에서 이미 분야를 골랐으면 분야 단계는 건너뛴다 ([← 뒤로]로 돌아가 바꿀 수 있다)
+    // 결과 화면에서 이미 분야를 골랐으면 분야 단계는 건너뛴다 ([← 앞 단계로]로 돌아가 바꿀 수 있다)
     step = filters.category ? 1 : 0;
     history.replaceState(null, "", "search.html");
     renderStep();
   }
 
-  // ---------- 뒤로 ----------
+  // ---------- 앞 단계로 ----------
 
-  backButton.addEventListener("click", () => {
+  function goBack() {
     // 첫 단계이거나, 조건을 고르지 않고 낱말·분야만으로 온 결과 화면이면 시작 화면으로 간다
     if (step === 0 || (step >= STEPS.length && !hasCondition())) {
       location.href = "index.html";
@@ -308,7 +310,7 @@
     chosen[key] = null;
     delete labels[key];
     renderStep();
-  });
+  }
 
   // ---------- 시작 ----------
 

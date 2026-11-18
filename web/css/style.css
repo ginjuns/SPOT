@@ -40,15 +40,43 @@ body {
   padding: 12px 16px 32px;
 }
 
-/* ---------- 위쪽 이동 버튼 (모든 화면 같은 자리) ---------- */
+/* ---------- 모든 화면 맨 위 머리줄 (js/nav.js) ----------
+   휴대폰: 왼쪽 "SPOT"(누르면 시작 화면), 오른쪽 "글씨 크기 [작게] [크게]". 메뉴는 컴퓨터에서만.
+   ([← 뒤로] [처음으로] 버튼 줄은 2026-11-18 사용자 요청으로 뺐다) */
 
-.topbar {
+.site-nav {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 16px 4px;
 }
+.site-nav-inner { order: 1; }
+.nav-util { order: 2; }
+.site-menu { display: none; }
+.site-logo { font-size: 1.45rem; font-weight: 800; letter-spacing: 0.02em; color: var(--primary); text-decoration: none; }
+.nav-font { gap: 6px; }
+.nav-font .font-level { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.nav-pill {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+/* 컴퓨터의 작은 채팅 창 안에서는 머리줄을 숨긴다 */
+.embed .site-nav { display: none; }
 
-.topbar .btn { flex: 1; }
+/* 조건 고르기의 [← 앞 단계로] */
+.step-back { margin-top: 8px; color: var(--muted); }
 
 /* ---------- 버튼 ---------- */
 
@@ -256,11 +284,6 @@ html[data-size="2"] .row.tiles, html[data-size="3"] .row.tiles { grid-template-c
 .cat { min-height: 46px; justify-content: flex-start; border-color: transparent; background: transparent; font-weight: 500; text-align: left; }
 .cat.on { border-color: var(--primary); background: var(--primary); color: var(--primary-text); font-weight: 700; }
 
-/* 컴퓨터 화면의 위쪽 메뉴 (js/nav.js). 휴대폰에서는 숨긴다 */
-.site-nav { display: none; }
-
-/* 채팅 창 안에 들어간 채팅 화면 (컴퓨터) */
-.embed .topbar { display: none; }
 
 /* ---------- 컴퓨터 화면에서 뜨는 채팅 창 ---------- */
 
@@ -548,7 +571,6 @@ html[data-size="3"] { font-size: 24px; }
   .cards .card { display: flex; flex-direction: column; }
   .cards .card .badge { align-self: flex-start; }
   .cards .card .actions { margin-top: auto; padding-top: 12px; }
-  .page.wide .topbar { max-width: 360px; }
   .page.wide .notice { margin-top: 28px; }
 
   /* 물어보기 버튼: 컴퓨터에서는 그림만 둔 동그라미 (이름은 aria-label 로 읽어 준다. 사용자 요청) */
@@ -561,9 +583,14 @@ html[data-size="3"] { font-size: 24px; }
     display: block;
     position: relative;
     z-index: 7;
+    max-width: none;
+    margin: 0;
+    padding: 0;
     background: var(--surface);
     border-bottom: 1px solid var(--line);
   }
+  .site-menu { display: flex; }
+  .embed .site-nav { display: none; }
   .site-nav-inner {
     display: flex;
     flex-wrap: wrap;            /* 글씨를 가장 크게 해도 화면 밖으로 나가지 않게 */
@@ -574,8 +601,8 @@ html[data-size="3"] { font-size: 24px; }
     margin: 0 auto;
     padding: 0 32px;
   }
-  .site-logo { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.02em; color: var(--primary); text-decoration: none; }
-  .site-menu { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .site-logo { font-size: 1.6rem; }
+  .site-menu { gap: 8px; margin: 0; padding: 0; list-style: none; }
   .site-menu-btn {
     min-height: 60px;
     padding: 0 18px;
@@ -598,19 +625,7 @@ html[data-size="3"] { font-size: 24px; }
   }
   .nav-font { gap: 8px; }
   .nav-font .font-name { color: var(--muted); }
-  .nav-font .font-level { min-width: 5.2em; text-align: center; font-weight: 700; color: var(--primary); }
-  .nav-pill {
-    min-height: 44px;
-    padding: 0 14px;
-    border: 2px solid var(--line);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
+  .nav-font .font-level { position: static; width: auto; height: auto; overflow: visible; clip-path: none; min-width: 5.2em; text-align: center; font-weight: 700; color: var(--primary); }
   .nav-pill:hover:not([disabled]) { border-color: var(--primary); color: var(--primary); }
 
   .site-menu-item { position: relative; }
@@ -637,6 +652,4 @@ html[data-size="3"] { font-size: 24px; }
   .drop a:hover { background: var(--soft); color: var(--primary); text-decoration: underline; }
   .drop .muted { margin: 8px 12px 4px; white-space: normal; }
 
-  /* 시작 화면: 이름과 글씨 크기는 위쪽 메뉴에 있으므로 맨 윗줄을 통째로 숨긴다 */
-  .hero-top { display: none; }
 }

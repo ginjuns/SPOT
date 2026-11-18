@@ -51,6 +51,7 @@
   const inner = el("div", "site-nav-inner");
   const logo = el("a", "site-logo", "SPOT");
   logo.href = "index.html";
+  logo.setAttribute("aria-label", "SPOT 처음 화면으로");   // [처음으로] 버튼을 대신한다
   const menu = el("ul", "site-menu");
   const entries = [];   // [메뉴 칸(li), 메뉴 이름 버튼]
 

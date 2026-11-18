@@ -267,15 +267,6 @@
     });
   }
 
-  // [← 뒤로]: 채팅은 어느 화면에서나 열 수 있으므로, 보던 화면으로 돌아간다 (없으면 시작 화면).
-  document.getElementById("back").addEventListener("click", (event) => {
-    // 이 파일의 history 는 대화 기록이므로, 방문 기록은 window.history 로 쓴다
-    if (window.history.length > 1 && document.referrer.startsWith(location.origin)) {
-      event.preventDefault();
-      window.history.back();
-    }
-  });
-
   // ---------- 시작 ----------
 
   bubble("bot", "안녕하세요. 어떤 도움이 필요하신지 편하게 말씀해 주세요. 받을 수 있는 지원을 찾아 드릴게요.\n이름이나 전화번호는 적지 않으셔도 돼요.");

@@ -29,12 +29,6 @@
   // TODO(확인): 2026-11-18에 주소가 열리는 것만 확인했다. 복지로 화면이 바뀌면 주소를 고친다.
   const BOKJIRO_MOCK_URL = "https://www.bokjiro.go.kr/ssis-tbu/twatbz/mkclAsis/mkclInsertNblgPage.do";
 
-  document.getElementById("back").addEventListener("click", () => {
-    // 이 사이트 안에서 넘어왔으면 그 화면으로, 링크로 바로 열었으면 처음 화면으로
-    if (history.length > 1 && document.referrer.startsWith(location.origin)) history.back();
-    else location.href = "index.html";
-  });
-
   // 빈 줄이 여러 개 이어진 원문을 읽기 좋게 줄인다. "상동"처럼 내용이 없는 값은 빈 글로 (항목을 숨긴다)
   function tidy(text) {
     return realText((text || "").replace(/[ \t]+\n/g, "\n").replace(/\n{2,}/g, "\n"));
