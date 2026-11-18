@@ -209,6 +209,9 @@ html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
 .cat { min-height: 46px; justify-content: flex-start; border-color: transparent; background: transparent; font-weight: 500; text-align: left; }
 .cat.on { border-color: var(--primary); background: var(--primary); color: var(--primary-text); font-weight: 700; }
 
+/* 컴퓨터 화면의 위쪽 메뉴 (js/nav.js). 휴대폰에서는 숨긴다 */
+.site-nav { display: none; }
+
 /* 채팅 창 안에 들어간 채팅 화면 (컴퓨터) */
 .embed .topbar { display: none; }
 
@@ -522,5 +525,72 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
   .page.wide .topbar { max-width: 360px; }
   .page.wide .notice { margin-top: 28px; }
 
-  .chat-fab { right: 32px; bottom: 32px; }
+  /* 말로 묻기 버튼: 컴퓨터에서는 그림만 둔다 (이름은 aria-label 로 읽어 준다. 사용자 요청) */
+  .chat-fab { right: 32px; bottom: 32px; width: 4.2rem; height: 4.2rem; }
+  .chat-fab .fab-label { display: none; }
+  .chat-fab .fab-icon { width: 2rem; height: 2rem; }
+
+  /* 위쪽 메뉴: 흰 띠에 이름과 메뉴. 메뉴에 마우스를 올리면 아래로 전체 메뉴가 펼쳐진다 */
+  .site-nav {
+    display: block;
+    position: relative;
+    z-index: 7;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    max-width: 1184px;
+    min-height: 84px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .site-logo { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.02em; color: var(--primary); text-decoration: none; }
+  html[data-contrast="1"] a.site-logo { color: var(--primary); }
+  .site-menu { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .site-menu-btn {
+    min-height: 60px;
+    padding: 0 18px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 1.15rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .site-menu-btn.on { color: var(--primary); border-bottom-color: var(--primary); }
+  .mega {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: 0 14px 28px rgba(17, 24, 39, 0.14);
+  }
+  .site-nav.open .mega { display: block; }
+  .mega-inner {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 32px;
+    max-width: 1184px;
+    margin: 0 auto;
+    padding: 28px 32px 32px;
+  }
+  .mega-col h2 { margin: 0 0 10px; padding-bottom: 10px; border-bottom: 2px solid var(--line); font-size: 1.1rem; font-weight: 800; }
+  .mega-col.on h2 { color: var(--primary); border-bottom-color: var(--primary); }
+  .mega-col ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+  .mega-col.wide ul { grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  .mega-col a { display: block; padding: 8px 10px; border-radius: 8px; color: var(--text); text-decoration: none; }
+  .mega-col a:hover { background: var(--soft); color: var(--primary); text-decoration: underline; }
+  .mega-col .muted { margin: 10px 10px 0; }
+
+  /* 시작 화면: 이름은 위쪽 메뉴에 있으므로 파란 띠에서는 빼고, 화면 설정 버튼만 오른쪽에 둔다 */
+  .hero .brand { display: none; }
+  .hero-top { justify-content: flex-end; }
 }
