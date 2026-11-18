@@ -1,10 +1,11 @@
 // SPOT 서비스 워커: 화면 파일(HTML·CSS·JS·아이콘)만 캐시한다. API 응답은 캐시하지 않는다.
 // 화면 파일을 고쳐서 다시 배포할 때는 아래 버전 숫자를 올린다 (옛 캐시가 지워진다).
-const CACHE = "spot-v8";
+const CACHE = "spot-v9";
 
 const SCREEN_FILES = [
   "./",
   "index.html",
+  "offline.html",
   "chat.html",
   "search.html",
   "policy.html",
@@ -55,7 +56,12 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() =>
         // 주소 뒤의 ?id=... 같은 값은 무시하고 화면 파일을 찾는다
-        caches.match(request, { ignoreSearch: true }).then((cached) => cached || Response.error())
+        // 저장해 둔 화면도 없으면, 화면을 여는 요청에는 "인터넷 연결 확인" 화면을 보여 준다
+        caches.match(request, { ignoreSearch: true }).then((cached) => {
+          if (cached) return cached;
+          if (request.mode === "navigate") return caches.match("offline.html").then((page) => page || Response.error());
+          return Response.error();
+        })
       )
   );
 });

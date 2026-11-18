@@ -57,5 +57,18 @@
       });
     });
     showAll();
+
+    // 인터넷이 끊기면 화면 위에 알린다. 다시 연결되면 저절로 사라진다.
+    const banner = document.createElement("p");
+    banner.className = "offline-banner";
+    banner.setAttribute("role", "status");
+    banner.textContent = "인터넷이 끊겼어요. 연결되면 다시 찾을 수 있어요.";
+    const showBanner = () => {
+      if (navigator.onLine) banner.remove();
+      else if (!banner.isConnected) document.body.prepend(banner);
+    };
+    window.addEventListener("online", showBanner);
+    window.addEventListener("offline", showBanner);
+    showBanner();
   });
 })();

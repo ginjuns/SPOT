@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>인터넷 연결 확인 - SPOT</title>
+  <meta name="theme-color" content="#0b4fb3">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/settings.js"></script>
+</head>
+<body>
+  <!-- 인터넷이 끊겼는데 저장해 둔 화면도 없을 때 서비스 워커가 대신 보여 주는 화면 -->
+  <div class="page">
+    <main class="card offline-page">
+      <h1>인터넷이 연결되어 있지 않아요</h1>
+      <p>와이파이나 모바일 데이터가 켜져 있는지 확인해 주세요.</p>
+      <p>연결된 뒤에 아래 버튼을 누르면 다시 열어 드려요.</p>
+      <button type="button" class="btn btn-primary" onclick="location.reload()">다시 열기</button>
+      <p class="muted">급하시면 보건복지상담센터(국번 없이 129)에 전화로 물어보실 수도 있어요.</p>
+    </main>
+  </div>
+</body>
+</html>

@@ -187,6 +187,7 @@ projectAI/
 │  ├─ search.html           # 직접 찾기: 조건 고르기와 결과 (낱말·분야로 좁히기)
 │  ├─ policy.html           # 정책 상세
 │  ├─ share.html            # 공유 링크로 열리는 결과 화면
+│  ├─ offline.html          # 인터넷이 끊겼을 때 보여 주는 화면
 │  ├─ css/style.css
 │  ├─ js/
 │  │  ├─ api.js             # 서버 호출 공통 함수
@@ -558,6 +559,7 @@ LIMIT 8;
 - `manifest.webmanifest`: 이름 "SPOT", `display: standalone`, 아이콘 192·512px.
 - `service-worker.js`: 화면 파일(HTML·CSS·JS)만 캐시. **API 응답은 캐시하지 않는다.**
 - 캐시 이름에 버전을 넣고(예: `benefit-v3`), 화면 파일은 **네트워크 먼저 → 실패하면 캐시** 순서로 가져온다. 캐시 먼저로 하면 다시 배포해도 사용자 휴대폰에 옛 화면이 계속 남는다.
+- 인터넷이 끊겼을 때 (2026-11-18 추가): 캐시에도 없는 화면을 열면 `offline.html`("인터넷이 연결되어 있지 않아요", [다시 열기], 129 안내)을 보여 준다. 화면을 보는 중에 끊기면 `settings.js`가 화면 맨 위에 "인터넷이 끊겼어요" 띠를 띄우고, 다시 연결되면 지운다.
 
 ---
 
