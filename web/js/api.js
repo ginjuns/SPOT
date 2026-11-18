@@ -176,5 +176,51 @@
     return box;
   }
 
-  window.SPOT = { api, el, button, safeUrl, showLoading, showError, policyCard, share, showForOffice, resultActions };
+  // ---------- 읽어 주기 (브라우저의 Web Speech API) ----------
+  // 기기에 있는 목소리로 읽으므로 서버나 바깥 서비스로 글을 보내지 않는다.
+  // 지원하지 않는 브라우저에서는 버튼을 만들지 않는다 (null 을 돌려준다).
+
+  const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+  let speakingButton = null;   // 지금 읽고 있는 버튼 (한 번에 하나만 읽는다)
+
+  function koreanVoice() {
+    return speechSynthesis.getVoices().find((v) => /^ko/i.test(v.lang)) || null;
+  }
+
+  function stopSpeaking() {
+    if (!canSpeak) return;
+    speechSynthesis.cancel();
+    if (speakingButton) speakingButton.textContent = "읽어 주기";
+    speakingButton = null;
+  }
+
+  // getText: 누를 때 읽을 글을 돌려주는 함수
+  function speakButton(getText, className) {
+    if (!canSpeak) return null;
+    const node = button("읽어 주기", () => {
+      const wasMe = speakingButton === node;
+      stopSpeaking();
+      if (wasMe) return;   // 읽는 중에 다시 누르면 멈춘다
+      const voices = speechSynthesis.getVoices();
+      const voice = koreanVoice();
+      if (voices.length > 0 && !voice) {
+        node.textContent = "이 기기에는 한국어 목소리가 없어요";
+        return;
+      }
+      const talk = new SpeechSynthesisUtterance(getText());
+      talk.lang = "ko-KR";
+      if (voice) talk.voice = voice;
+      talk.rate = 0.9;   // 조금 천천히
+      talk.onend = talk.onerror = () => { if (speakingButton === node) stopSpeaking(); };
+      speakingButton = node;
+      node.textContent = "그만 읽기";
+      speechSynthesis.speak(talk);
+    }, className || "btn btn-quiet speak");
+    return node;
+  }
+
+  // 다른 화면으로 가면 읽던 것을 멈춘다
+  window.addEventListener("pagehide", stopSpeaking);
+
+  window.SPOT = { api, el, button, safeUrl, showLoading, showError, policyCard, share, showForOffice, resultActions, speakButton };
 })();

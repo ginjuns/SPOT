@@ -1,7 +1,27 @@
 // 정책 상세: 지원 대상, 지원 내용, 신청 기간, 신청 방법, 준비할 서류, 문의처(전화 걸기), 원문 링크, 공유, 자료 기준일
 (function () {
   "use strict";
-  const { api, el, safeUrl, showLoading, showError, resultActions } = window.SPOT;
+  const { api, el, safeUrl, showLoading, showError, resultActions, speakButton } = window.SPOT;
+  const SPEAK_PART = 200;   // 읽어 줄 때 항목마다 앞부분만 읽는다 (너무 길면 듣기 힘들다)
+
+  // [읽어 주기]로 읽을 글: 이름, 요약, 지원 대상, 지원 내용, 신청 기간, 신청하는 곳
+  function speechText(policy) {
+    const parts = [
+      [policy.name, ""],
+      [policy.summary, ""],
+      [policy.target, "지원 대상. "],
+      [policy.content, "지원 내용. "],
+      [policy.apply_period, "신청 기간. "],
+      [policy.apply_place, "신청하는 곳. "],
+    ];
+    return parts
+      .filter(([text]) => tidy(text))
+      .map(([text, label]) => {
+        const body = tidy(text).replace(/\n/g, " ");
+        return label + (body.length > SPEAK_PART ? body.slice(0, SPEAK_PART) + " 등" : body) + ".";
+      })
+      .join(" ") + " 자세한 내용은 화면에서 확인해 주세요.";
+  }
 
   const main = document.getElementById("main");
   const LONG_TEXT = 400;   // 이보다 길면 접어 두고 [더 보기]를 둔다
@@ -83,6 +103,8 @@
       head.append(mock);
     }
     if (policy.summary) head.append(el("p", "", tidy(policy.summary)));
+    const speak = speakButton(() => speechText(policy));
+    if (speak) head.append(speak);
 
     const parts = [
       head,

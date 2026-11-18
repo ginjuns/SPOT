@@ -431,6 +431,14 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
 .chat-form textarea:focus { outline: 3px solid var(--primary); outline-offset: 1px; }
 .chat-form textarea::placeholder { color: var(--muted); }
 .chat-form .btn { width: auto; min-width: 5.2rem; }
+/* [말로 입력하기]는 입력창 아래 한 줄을 다 쓴다. 듣는 중에는 색을 반대로 */
+.chat-form .mic { grid-column: 1 / -1; width: 100%; min-height: 48px; }
+.chat-form .mic.on { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
+
+/* [읽어 주기] */
+.btn.speak { display: inline-flex; width: auto; min-height: 48px; padding: 6px 16px; }
+.chat-log > .btn.speak { align-self: flex-start; }
+.card .btn.speak, .card .btn[href*="bokjiro"] { margin-top: 10px; }
 
 /* 화면에는 안 보이지만 화면 읽어 주는 프로그램은 읽는 글 */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

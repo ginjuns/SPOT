@@ -47,6 +47,7 @@
     // 채팅 화면을 그대로 창 안에 넣는다. 창을 닫아도 대화는 이 화면을 떠날 때까지 남아 있다.
     frame = document.createElement("iframe");
     frame.title = "말로 묻기";
+    frame.allow = "microphone";   // 창 안에서도 [말로 입력]을 쓸 수 있게
     frame.src = "chat.html";
     frame.addEventListener("load", syncSettings);
 

@@ -1,7 +1,7 @@
 // 채팅 화면. 대화 내용은 이 화면의 변수에만 두고 어디에도 저장하지 않는다 (새로 고치면 사라진다).
 (function () {
   "use strict";
-  const { api, el, button, policyCard, resultActions } = window.SPOT;
+  const { api, el, button, policyCard, resultActions, speakButton } = window.SPOT;
 
   // 컴퓨터에서는 이 화면이 다른 화면 위의 작은 창 안에 들어간다 (js/fab.js).
   // 그때는 위쪽 이동 버튼을 숨기고, 카드의 링크가 창 안이 아니라 전체 화면에서 열리게 한다.
@@ -82,6 +82,10 @@
     if (data.conditions) conditions = Object.assign(conditions, data.conditions);
     bubble("bot", data.text);
     remember("assistant", data.text);
+    // 답변 아래 [읽어 주기]: 안내 문장과 찾은 지원의 이름을 읽는다
+    const names = (data.policies || []).map((p, i) => i + 1 + "번, " + p.name + ".");
+    const speak = speakButton(() => [data.text].concat(names).join(" "));
+    if (speak) log.append(speak);
 
     if (data.type === "ask") {
       asked = true;
@@ -200,6 +204,58 @@
       send(input.value);
     }
   });
+
+  // ---------- 말로 입력하기 (브라우저의 음성 인식) ----------
+  // 알아들은 말을 입력창에 넣기만 하고 바로 보내지는 않는다 (잘못 알아들었으면 고칠 수 있게).
+  // 지원하지 않는 브라우저에서는 버튼을 숨긴 채로 둔다.
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micButton = document.getElementById("mic");
+  if (Recognition) {
+    let listening = null;
+    const MIC_LABEL = "말로 입력하기";
+    const done = () => {
+      listening = null;
+      micButton.textContent = MIC_LABEL;
+      micButton.classList.remove("on");
+    };
+    micButton.hidden = false;
+    micButton.addEventListener("click", () => {
+      if (listening) {   // 듣는 중에 다시 누르면 멈춘다
+        listening.stop();
+        return;
+      }
+      const rec = new Recognition();
+      rec.lang = "ko-KR";
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onresult = (event) => {
+        const said = event.results[0][0].transcript.trim();
+        if (said) {
+          input.value = (input.value ? input.value + " " : "") + said;
+          input.value = input.value.slice(0, 300);
+          bubble("bot", "알아들은 말을 입력창에 넣었어요. 맞으면 [보내기]를 눌러 주세요.");
+        }
+      };
+      rec.onerror = (event) => {
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          bubble("bot", "마이크를 쓸 수 없어요. 휴대폰 설정에서 이 사이트의 마이크 사용을 허용하거나, 글로 적어 주세요.");
+        } else if (event.error === "no-speech") {
+          bubble("bot", "말씀을 듣지 못했어요. 버튼을 누르고 조금 크게 말씀해 주세요.");
+        } else if (event.error !== "aborted") {
+          bubble("bot", "말로 입력하기가 지금은 안 돼요. 글로 적어 주세요.");
+        }
+      };
+      rec.onend = done;
+      try {
+        rec.start();
+        listening = rec;
+        micButton.textContent = "듣고 있어요… (다 말하면 누르기)";
+        micButton.classList.add("on");
+      } catch (e) {
+        done();
+      }
+    });
+  }
 
   // [← 뒤로]: 채팅은 어느 화면에서나 열 수 있으므로, 보던 화면으로 돌아간다 (없으면 시작 화면).
   document.getElementById("back").addEventListener("click", (event) => {
