@@ -1,7 +1,7 @@
 // 정책 상세: 지원 대상, 지원 내용, 신청 기간, 신청 방법, 준비할 서류, 문의처(전화 걸기), 원문 링크, 공유, 자료 기준일
 (function () {
   "use strict";
-  const { api, el, safeUrl, showLoading, showError, resultActions, speakButton } = window.SPOT;
+  const { api, el, safeUrl, showLoading, showError, resultActions, speakButton, realText } = window.SPOT;
   const SPEAK_PART = 200;   // 읽어 줄 때 항목마다 앞부분만 읽는다 (너무 길면 듣기 힘들다)
 
   // [소리로 듣기]로 읽을 글: 이름, 요약, 지원 대상, 지원 내용, 신청 기간, 신청하는 곳
@@ -35,9 +35,9 @@
     else location.href = "index.html";
   });
 
-  // 빈 줄이 여러 개 이어진 원문을 읽기 좋게 줄인다
+  // 빈 줄이 여러 개 이어진 원문을 읽기 좋게 줄인다. "상동"처럼 내용이 없는 값은 빈 글로 (항목을 숨긴다)
   function tidy(text) {
-    return (text || "").replace(/[ \t]+\n/g, "\n").replace(/\n{2,}/g, "\n").trim();
+    return realText((text || "").replace(/[ \t]+\n/g, "\n").replace(/\n{2,}/g, "\n"));
   }
 
   function section(title, text) {

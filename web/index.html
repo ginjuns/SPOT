@@ -6,7 +6,7 @@
   <title>SPOT - 나에게 맞는 정부 지원 찾기</title>
   <meta name="description" content="받을 수 있는 정부·지자체 지원을 이름, 분야, 내 조건으로 찾아보세요. 말로 물어볼 수도 있어요.">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0b4fb3">
+  <meta name="theme-color" content="#fff8f1">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.css">
@@ -31,7 +31,10 @@
           </button>
         </div>
       </div>
-      <h1>받을 수 있는 지원,<br> 여기서 찾아보세요</h1>
+      <div class="hero-greet">
+        <p class="hello">안녕하세요</p>
+        <h1>오늘은 어떤 지원을<br> 찾아볼까요?</h1>
+      </div>
       <form class="search-form" id="search-form">
         <input type="search" id="q" maxlength="50" placeholder="예: 기초연금, 난방비" aria-label="이름이나 낱말로 찾기" autocomplete="off" enterkeyhint="search">
         <button type="submit" class="btn">찾기</button>
@@ -53,6 +56,15 @@
         <a class="btn tile" href="search.html?result=1&amp;category=%ED%96%89%EC%A0%95%C2%B7%EC%95%88%EC%A0%84"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg>안전·편의</a>
         <a class="btn tile" href="search.html?result=1&amp;category=%EB%86%8D%EB%A6%BC%EC%B6%95%EC%82%B0%EC%96%B4%EC%97%85"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20v-8M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 14c0-3 2.5-5 7-5 0 3.5-2.5 5-7 5z"/></svg>농사·어업</a>
       </div>
+
+      <h2 class="home-title">이렇게 찾아보세요</h2>
+      <!-- 낱말은 주소의 # 뒤에 담는다 (서버로 전송되지 않는다). 찾는 횟수 순위가 아니라 예시다 -->
+      <ol class="popular">
+        <li><a href="search.html?result=1#q=%EA%B8%B0%EC%B4%88%EC%97%B0%EA%B8%88"><span class="rank">1</span>기초연금</a></li>
+        <li><a href="search.html?result=1#q=%EB%82%9C%EB%B0%A9%EB%B9%84"><span class="rank">2</span>난방비</a></li>
+        <li><a href="search.html?result=1#q=%EB%85%B8%EC%9D%B8%EC%9D%BC%EC%9E%90%EB%A6%AC"><span class="rank">3</span>노인일자리</a></li>
+        <li><a href="search.html?result=1#q=%EB%B3%91%EC%9B%90%EB%B9%84"><span class="rank">4</span>병원비</a></li>
+      </ol>
 
       <h2 class="home-title">내 조건으로 찾기</h2>
       <div class="panel">

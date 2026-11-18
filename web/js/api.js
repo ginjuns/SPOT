@@ -66,13 +66,21 @@
     if (onRetry) box.append(button("다시 해 보기", onRetry, "btn btn-primary"));
   }
 
+  // 원문에 내용 대신 들어 있는 말("상동" = 위와 같음, "-", "해당없음" 등)은 보여 주지 않는다
+  const EMPTY_WORDS = /^(상동|상동함|위와 같음|-+|없음|해당없음|해당 없음|\.)$/;
+  function realText(text) {
+    const value = (text || "").trim();
+    return EMPTY_WORDS.test(value) ? "" : value;
+  }
+
   // 정책 카드. 내용은 서버가 준 DB 값을 그대로 보여 준다.
   function policyCard(policy) {
     const card = el("article", "card");
     card.append(el("h2", "", policy.name));
     card.append(el("p", "agency", policy.agency || ""));
     if (policy.has_income_rule) card.append(el("span", "badge", "소득 기준 있음"));
-    if (policy.one_line) card.append(el("p", "", policy.one_line));
+    const oneLine = realText(policy.one_line);
+    if (oneLine) card.append(el("p", "", oneLine));
     // 신청 기간이 정해져 있으면 카드에서 바로 보여 준다 (늘 신청할 수 있는 것, 긴 설명은 상세 화면에서)
     const period = (policy.apply_period || "").trim();
     if (period && period.length <= 30 && !/^(상시신청|접수기관 별 상이|연중)$/.test(period)) {
@@ -222,5 +230,5 @@
   // 다른 화면으로 가면 읽던 것을 멈춘다
   window.addEventListener("pagehide", stopSpeaking);
 
-  window.SPOT = { api, el, button, safeUrl, showLoading, showError, policyCard, share, showForOffice, resultActions, speakButton };
+  window.SPOT = { api, el, button, safeUrl, showLoading, showError, policyCard, share, showForOffice, resultActions, speakButton, realText };
 })();

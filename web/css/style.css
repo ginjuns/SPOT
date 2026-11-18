@@ -1,19 +1,22 @@
-/* SPOT 공통 스타일 — 모바일 우선, 큰 글씨, 큰 버튼 */
+/* SPOT 공통 스타일 — 모바일 우선, 큰 글씨, 큰 버튼
+   디자인: "C. 따뜻한 파스텔" (2026-11-18) — 크림색 바탕, 청록 강조색, 분야마다 파스텔 동그라미, 둥근 모양 */
 
 :root {
-  --bg: #f3f6fb;
+  --bg: #fff8f1;              /* 크림색 바탕 */
   --surface: #ffffff;
-  --text: #111827;
-  --muted: #4b5563;
-  --line: #d5dbe5;
-  --primary: #0b4fb3;
+  --text: #2b2118;            /* 따뜻한 짙은 갈색 (검정 대신) */
+  --muted: #6b5644;
+  --line: #f0dcc8;
+  --primary: #0b7285;         /* 청록 */
+  --primary-dark: #095c6b;    /* 누르고 있을 때 */
   --primary-text: #ffffff;
-  --soft: #e3ecfa;
-  --hero-btn-bg: #ffd43b;     /* 파란 띠 위의 찾기 버튼 */
-  --hero-btn-text: #111827;
-  --warn-bg: #fff3d6;
-  --warn-text: #5c3b00;
-  --radius: 14px;
+  --soft: #fdecdc;
+  --warn-bg: #fff0d4;
+  --warn-text: #6b3b00;
+  --fab-bg: #2b2118;          /* 물어보기 버튼 */
+  --card-line: transparent;   /* 카드는 테두리 대신 그림자 (또렷한 화면에서는 흰 테두리) */
+  --shadow: 0 6px 18px rgba(120, 80, 40, 0.10);
+  --radius: 18px;
   font-size: 18px;            /* 기본 글자 크기. 다른 크기는 모두 rem 으로 잡는다 */
 }
 
@@ -69,10 +72,10 @@ body {
 
 .btn:active { background: var(--soft); }
 .btn:focus-visible, a:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
-.btn[disabled] { color: var(--muted); background: #eceff3; cursor: default; }
+.btn[disabled] { color: var(--muted); background: #f5ece3; cursor: default; }
 
 .btn-primary { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
-.btn-primary:active { background: #083b86; }
+.btn-primary:active { background: var(--primary-dark); }
 .btn-quiet { min-height: 48px; font-weight: 500; }
 .btn-big { min-height: 96px; font-size: 1.3rem; }
 
@@ -111,63 +114,114 @@ p { margin: 0 0 10px; }
   stroke-linejoin: round;
 }
 
-/* 시작 화면 위쪽의 파란 띠: 이름, 큰 제목, 검색창 */
+/* 시작 화면 위쪽: 이름과 화면 설정, 인사, 큰 제목, 검색창 */
 .page.home { padding-top: 0; }
 .hero {
   display: grid;
-  gap: 14px;
-  margin: 0 -16px;
-  padding: 18px 16px 26px;
-  border-radius: 0 0 24px 24px;
-  background: var(--primary);
-  color: var(--primary-text);
+  gap: 16px;
+  padding: 16px 0 8px;
+  color: var(--text);
 }
 .hero-top { display: flex; align-items: center; justify-content: space-between; }
-.brand { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: 0.02em; }
-.hero h1 { margin: 0; font-size: 1.45rem; font-weight: 800; }
-/* 파란 띠 위의 알약 모양 버튼 */
+.brand { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: 0.02em; color: var(--primary); }
+.hero-greet { display: grid; gap: 4px; }
+.hello { margin: 0; color: var(--muted); font-weight: 500; }
+.hero h1 { margin: 0; font-size: 1.5rem; line-height: 1.38; font-weight: 800; }
+/* 화면 설정 알약 버튼 */
 .hero-pill {
   display: flex;
   align-items: center;
   gap: 6px;
   min-height: 44px;
   padding: 0 14px;
-  border: 2px solid var(--primary-text);
+  border: 2px solid var(--line);
   border-radius: 999px;
-  background: transparent;
-  color: var(--primary-text);
+  background: var(--surface);
+  color: var(--text);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
 }
-.hero-pill[aria-pressed="true"] { background: var(--primary-text); color: var(--primary); }
+.hero-pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
 /* 아래쪽의 "또렷한 화면 링크 색" 규칙보다 우선하게 :not(.btn) 을 붙인다 */
-html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
+html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--text); }
 .hero-toggles { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .hero-top { flex-wrap: wrap; gap: 8px; }   /* 글씨를 키워 자리가 모자라면 설정 버튼이 아랫줄로 내려간다 */
 /* 그림만 있는 둥근 버튼 (또렷한 화면). 이름은 aria-label 로 읽어 준다 */
 .hero-pill.icon { justify-content: center; width: 44px; padding: 0; }
 .hero-pill.icon svg { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .hero-pill.icon[aria-pressed="true"] svg { fill: currentColor; }
-.hero .search-form input { border-color: var(--surface); }
-.hero .search-form .btn { border-color: var(--hero-btn-bg); background: var(--hero-btn-bg); color: var(--hero-btn-text); font-weight: 800; }
+/* 시작 화면 검색창: 흰 알약 모양 상자 안에 입력칸과 찾기 버튼 */
+.hero .search-form {
+  align-items: center;
+  gap: 6px;
+  padding: 5px 5px 5px 18px;
+  border: 2px solid var(--card-line);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.hero .search-form:focus-within { outline: 3px solid var(--primary); outline-offset: 2px; }
+.hero .search-form input { min-height: 50px; padding: 0; border: 0; background: transparent; }
+.hero .search-form input:focus { outline: none; }
+.hero .search-form .btn { min-height: 50px; border-radius: 999px; border-color: var(--primary); background: var(--primary); color: var(--primary-text); font-weight: 800; }
 
 .home-title { margin-top: 28px; margin-bottom: 12px; font-size: 1.15rem; font-weight: 800; }
 
-/* 분야 버튼: 그림 + 이름 */
-.tile { justify-content: flex-start; gap: 10px; min-height: 68px; padding: 10px 14px; text-align: left; }
-.tile svg { color: var(--primary); }
+/* 분야 버튼: 파스텔 동그라미 그림 + 아래 이름 (한 줄에 3개) */
+.row.tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 8px; }
+html[data-size="2"] .row.tiles, html[data-size="3"] .row.tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tile {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 2px;
+  border-color: transparent;
+  background: transparent;
+  font-weight: 700;
+}
+.tile:hover { background: var(--soft); }
+.tile svg { width: 3.6rem; height: 3.6rem; padding: 0.95rem; border-radius: 50%; overflow: visible; }
+/* 분야마다 다른 파스텔 색 (순서는 index.html 의 분야 순서) */
+.tiles .tile:nth-child(1) svg { background: #ffe8cc; color: #c2410c; }   /* 생활비 */
+.tiles .tile:nth-child(2) svg { background: #ffe3e3; color: #c92a2a; }   /* 병원·건강 */
+.tiles .tile:nth-child(3) svg { background: #f3d9fa; color: #9c36b5; }   /* 돌봄 */
+.tiles .tile:nth-child(4) svg { background: #d3f9d8; color: #2b8a3e; }   /* 집·주거 */
+.tiles .tile:nth-child(5) svg { background: #d0ebff; color: #1864ab; }   /* 일자리 */
+.tiles .tile:nth-child(6) svg { background: #ffdeeb; color: #c2255c; }   /* 임신·출산 */
+.tiles .tile:nth-child(7) svg { background: #fff3bf; color: #a15c07; }   /* 아이·교육 */
+.tiles .tile:nth-child(8) svg { background: #e5dbff; color: #6741d9; }   /* 문화·여가 */
+.tiles .tile:nth-child(9) svg { background: #c5f6fa; color: #0b7285; }   /* 안전·편의 */
+.tiles .tile:nth-child(10) svg { background: #e9fac8; color: #5c940d; }  /* 농사·어업 */
+html[data-contrast="1"] .tiles .tile svg { background: transparent; color: #ffe600; box-shadow: inset 0 0 0 2px #ffffff; }
+
+/* 이렇게 찾아보세요: 번호가 붙은 낱말 목록 */
+.popular {
+  margin: 0;
+  padding: 4px 18px;
+  list-style: none;
+  border: 2px solid var(--card-line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.popular li + li { border-top: 1px solid var(--line); }
+.popular a { display: flex; align-items: center; gap: 12px; min-height: 54px; color: var(--text); font-weight: 600; text-decoration: none; }
+.popular a:hover { color: var(--primary); text-decoration: underline; }
+.popular .rank { width: 1.4rem; font-weight: 800; color: var(--primary); }
 
 /* 흰 상자 (내 조건으로 찾기) */
 .panel {
   display: grid;
   gap: 14px;
-  padding: 18px;
-  border: 2px solid var(--line);
-  border-radius: 16px;
+  padding: 20px;
+  border: 2px solid var(--card-line);
+  border-radius: 22px;
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 .panel p { margin: 0; color: var(--muted); }
 
@@ -229,9 +283,9 @@ html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
   height: min(640px, calc(100vh - 48px));
   overflow: hidden;
   border: 2px solid var(--line);
-  border-radius: 18px;
+  border-radius: 22px;
   background: var(--bg);
-  box-shadow: 0 12px 36px rgba(17, 24, 39, 0.32);
+  box-shadow: 0 12px 36px rgba(60, 40, 20, 0.28);
 }
 .chat-panel-head {
   display: flex;
@@ -253,23 +307,22 @@ html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
   bottom: calc(16px + env(safe-area-inset-bottom));
   z-index: 5;
   display: flex;
-  flex-direction: column;            /* 그림 아래에 글자 (그림만 있는 버튼은 쓰지 않는다) */
-  align-items: center;
+  align-items: center;               /* 그림 옆에 글자 (휴대폰. 그림만 있는 버튼은 쓰지 않는다) */
   justify-content: center;
-  gap: 2px;
-  width: 4.7rem;
-  height: 4.7rem;
-  border: 3px solid var(--primary-text);
-  border-radius: 50%;
-  background: var(--primary);
-  color: var(--primary-text);
-  font-size: 0.8rem;
-  font-weight: 700;
+  gap: 8px;
+  min-height: 3.4rem;
+  padding: 0 1.3rem;
+  border: 2px solid var(--fab-bg);
+  border-radius: 999px;
+  background: var(--fab-bg);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
   line-height: 1.2;
   text-decoration: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 20px rgba(43, 33, 24, 0.28);
 }
-.chat-fab:active { background: #083b86; }
+.chat-fab:active { background: #4a3a2c; }
 /* 아래쪽의 "또렷한 화면 링크 색" 규칙보다 우선하게 :not(.btn) 을 붙인다 */
 html[data-contrast="1"] a.chat-fab:not(.btn) { color: #000000; border-color: #000000; box-shadow: 0 0 0 3px #ffffff; }
 html[data-contrast="1"] .chat-fab:active { background: #ccb800; }
@@ -298,10 +351,11 @@ html[data-contrast="1"] .chat-fab:active { background: #ccb800; }
 /* ---------- 정책 카드 ---------- */
 
 .card {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  padding: 18px;
+  border: 2px solid var(--card-line);
+  border-radius: 22px;
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .card h2 { font-size: 1.2rem; line-height: 1.4; }
@@ -376,11 +430,14 @@ html[data-contrast="1"] {
   --primary: #ffe600;
   --primary-text: #000000;
   --soft: #1f1f1f;
-  --hero-btn-bg: #000000;
-  --hero-btn-text: #ffffff;
+  --primary-dark: #ccb800;
   --warn-bg: #ffe600;
   --warn-text: #000000;
+  --fab-bg: #ffe600;
+  --card-line: #ffffff;
+  --shadow: none;
 }
+html[data-contrast="1"] .chat-fab { color: #000000; }
 html[data-contrast="1"] .btn:active { background: #333333; }
 html[data-contrast="1"] .btn-primary:active { background: #ccb800; }
 html[data-contrast="1"] .btn[disabled] { background: #000000; color: #bdbdbd; }
@@ -481,24 +538,21 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
 @media (min-width: 900px) {
   .page.home, .page.wide { max-width: 1184px; padding-left: 32px; padding-right: 32px; }
 
-  /* 시작 화면: 파란 띠를 화면 끝까지 넓히고, 제목과 검색창을 가운데에 둔다 */
-  .hero {
-    gap: 22px;
-    margin: 0;
-    padding: 20px 0 44px;
-    border-radius: 0;
-    box-shadow: 0 0 0 100vmax var(--primary);   /* 띠 색을 화면 양 끝까지 칠한다 */
-    clip-path: inset(0 -100vmax);
-  }
-  .hero h1 { font-size: 2.1rem; text-align: center; }
+  /* 시작 화면: 인사·제목과 검색창을 가운데에 둔다 */
+  .hero { gap: 22px; padding: 20px 0 16px; }
+  .hero-greet { text-align: center; }
+  .hero h1 { font-size: 2.1rem; }
   .hero h1 br { display: none; }
   .hero .search-form { width: 100%; max-width: 720px; margin: 0 auto; }
   .hero .search-form .btn { min-width: 6.5rem; }
   .hero-toggles { gap: 10px; }
 
-  .tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-  .tile { flex-direction: column; align-items: flex-start; justify-content: center; gap: 12px; padding: 18px; }
-  .tile svg { width: 1.8rem; height: 1.8rem; }
+  .row.tiles, html[data-size="2"] .row.tiles, html[data-size="3"] .row.tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px 14px; }
+  .tile { padding: 14px 6px; }
+  .tile svg { width: 4.4rem; height: 4.4rem; padding: 1.15rem; }
+  .popular { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+  .popular li + li { border-top: 0; }
+  .popular li:nth-child(n+3) { border-top: 1px solid var(--line); }
 
   .panel { grid-template-columns: 1fr auto; align-items: center; padding: 26px 28px; }
   .panel .btn { width: 280px; }
@@ -534,8 +588,8 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
   .page.wide .topbar { max-width: 360px; }
   .page.wide .notice { margin-top: 28px; }
 
-  /* 물어보기 버튼: 컴퓨터에서는 그림만 둔다 (이름은 aria-label 로 읽어 준다. 사용자 요청) */
-  .chat-fab { right: 32px; bottom: 32px; width: 4.2rem; height: 4.2rem; }
+  /* 물어보기 버튼: 컴퓨터에서는 그림만 둔 동그라미 (이름은 aria-label 로 읽어 준다. 사용자 요청) */
+  .chat-fab { right: 32px; bottom: 32px; width: 4.2rem; height: 4.2rem; padding: 0; border-radius: 50%; }
   .chat-fab .fab-label { display: none; }
   .chat-fab .fab-icon { width: 2rem; height: 2rem; }
 
@@ -621,7 +675,7 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
   .drop a:hover { background: var(--soft); color: var(--primary); text-decoration: underline; }
   .drop .muted { margin: 8px 12px 4px; white-space: normal; }
 
-  /* 시작 화면: 이름은 위쪽 메뉴에 있으므로 파란 띠에서는 빼고, 화면 설정 버튼만 오른쪽에 둔다 */
+  /* 시작 화면: 이름은 위쪽 메뉴에 있으므로 여기서는 빼고, 또렷한 화면 버튼만 오른쪽에 둔다 */
   .hero .brand { display: none; }
   .hero .font-size { display: none; }   /* 글씨 크기는 위쪽 메뉴 줄에 있다 */
   .hero-top { justify-content: flex-end; }
