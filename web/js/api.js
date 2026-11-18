@@ -176,7 +176,7 @@
     return box;
   }
 
-  // ---------- 읽어 주기 (브라우저의 Web Speech API) ----------
+  // ---------- 소리로 듣기 (브라우저의 Web Speech API) ----------
   // 기기에 있는 목소리로 읽으므로 서버나 바깥 서비스로 글을 보내지 않는다.
   // 지원하지 않는 브라우저에서는 버튼을 만들지 않는다 (null 을 돌려준다).
 
@@ -190,14 +190,14 @@
   function stopSpeaking() {
     if (!canSpeak) return;
     speechSynthesis.cancel();
-    if (speakingButton) speakingButton.textContent = "읽어 주기";
+    if (speakingButton) speakingButton.textContent = "소리로 듣기";
     speakingButton = null;
   }
 
   // getText: 누를 때 읽을 글을 돌려주는 함수
   function speakButton(getText, className) {
     if (!canSpeak) return null;
-    const node = button("읽어 주기", () => {
+    const node = button("소리로 듣기", () => {
       const wasMe = speakingButton === node;
       stopSpeaking();
       if (wasMe) return;   // 읽는 중에 다시 누르면 멈춘다
@@ -213,7 +213,7 @@
       talk.rate = 0.9;   // 조금 천천히
       talk.onend = talk.onerror = () => { if (speakingButton === node) stopSpeaking(); };
       speakingButton = node;
-      node.textContent = "그만 읽기";
+      node.textContent = "그만 듣기";
       speechSynthesis.speak(talk);
     }, className || "btn btn-quiet speak");
     return node;

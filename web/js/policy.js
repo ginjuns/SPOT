@@ -4,7 +4,7 @@
   const { api, el, safeUrl, showLoading, showError, resultActions, speakButton } = window.SPOT;
   const SPEAK_PART = 200;   // 읽어 줄 때 항목마다 앞부분만 읽는다 (너무 길면 듣기 힘들다)
 
-  // [읽어 주기]로 읽을 글: 이름, 요약, 지원 대상, 지원 내용, 신청 기간, 신청하는 곳
+  // [소리로 듣기]로 읽을 글: 이름, 요약, 지원 대상, 지원 내용, 신청 기간, 신청하는 곳
   function speechText(policy) {
     const parts = [
       [policy.name, ""],

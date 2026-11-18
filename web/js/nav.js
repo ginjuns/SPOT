@@ -34,8 +34,8 @@
       items: [word("기초연금"), word("난방비"), word("병원비"), word("노인일자리"), word("출산"), word("월세")],
     },
     {
-      title: "말로 묻기",
-      items: [["말로 물어보기", "chat.html", "chat"]],
+      title: "물어보기",
+      items: [["궁금한 것 물어보기", "chat.html", "chat"]],
       note: "정책 이름을 몰라도 지금 상황을 말씀하시면 찾아 드려요.",
     },
   ];

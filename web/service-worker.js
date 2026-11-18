@@ -1,6 +1,6 @@
 // SPOT 서비스 워커: 화면 파일(HTML·CSS·JS·아이콘)만 캐시한다. API 응답은 캐시하지 않는다.
 // 화면 파일을 고쳐서 다시 배포할 때는 아래 버전 숫자를 올린다 (옛 캐시가 지워진다).
-const CACHE = "spot-v12";
+const CACHE = "spot-v13";
 
 const SCREEN_FILES = [
   "./",
@@ -46,8 +46,10 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
 
   // 네트워크 먼저 → 실패하면 캐시. 캐시 먼저로 하면 다시 배포해도 옛 화면이 계속 남는다.
+  // cache: "no-cache" — 브라우저가 옛 화면 파일을 그냥 꺼내 쓰지 않고 서버에 바뀌었는지 꼭 물어보게 한다
+  // (이게 없으면 다시 배포해도 채팅 화면 같은 일부 파일이 한동안 옛것으로 보일 수 있다)
   event.respondWith(
-    fetch(request)
+    fetch(request, { cache: "no-cache" })
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();

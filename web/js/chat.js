@@ -82,7 +82,7 @@
     if (data.conditions) conditions = Object.assign(conditions, data.conditions);
     bubble("bot", data.text);
     remember("assistant", data.text);
-    // 답변 아래 [읽어 주기]: 안내 문장과 찾은 지원의 이름을 읽는다
+    // 답변 아래 [소리로 듣기]: 안내 문장과 찾은 지원의 이름을 읽는다
     const names = (data.policies || []).map((p, i) => i + 1 + "번, " + p.name + ".");
     const speak = speakButton(() => [data.text].concat(names).join(" "));
     if (speak) log.append(speak);
@@ -205,54 +205,64 @@
     }
   });
 
-  // ---------- 말로 입력하기 (브라우저의 음성 인식) ----------
-  // 알아들은 말을 입력창에 넣기만 하고 바로 보내지는 않는다 (잘못 알아들었으면 고칠 수 있게).
+  // ---------- 말로 하기 (브라우저의 음성 인식) ----------
+  // 들은 말을 입력창에 넣기만 하고 바로 보내지는 않는다 (잘못 들었으면 고칠 수 있게).
   // 지원하지 않는 브라우저에서는 버튼을 숨긴 채로 둔다.
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micButton = document.getElementById("mic");
-  if (Recognition) {
+  if (Recognition && micButton) {
     let listening = null;
-    const MIC_LABEL = "말로 입력하기";
-    const done = () => {
-      listening = null;
-      micButton.textContent = MIC_LABEL;
-      micButton.classList.remove("on");
-    };
+    const MIC_LABEL = "말로 하기";
     micButton.hidden = false;
     micButton.addEventListener("click", () => {
-      if (listening) {   // 듣는 중에 다시 누르면 멈춘다
+      if (listening) {   // 듣는 중에 다시 누르면 멈춘다 (들은 말은 그대로 남는다)
         listening.stop();
         return;
       }
+      const before = input.value.trim();   // 원래 적혀 있던 글 뒤에 이어 붙인다
+      let heard = "";
+      let failed = false;
+
       const rec = new Recognition();
       rec.lang = "ko-KR";
-      rec.interimResults = false;
+      // 듣는 중에도 글자를 보여 준다. 일부 휴대폰 브라우저는 이 설정이 있어야 들은 말을 넘겨준다.
+      rec.interimResults = true;
+      rec.continuous = false;
       rec.maxAlternatives = 1;
       rec.onresult = (event) => {
-        const said = event.results[0][0].transcript.trim();
-        if (said) {
-          input.value = (input.value ? input.value + " " : "") + said;
-          input.value = input.value.slice(0, 300);
-          bubble("bot", "알아들은 말을 입력창에 넣었어요. 맞으면 [보내기]를 눌러 주세요.");
-        }
+        heard = Array.from(event.results).map((r) => r[0].transcript).join("").trim();
+        input.value = ((before ? before + " " : "") + heard).slice(0, 300);
       };
       rec.onerror = (event) => {
+        failed = true;
         if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          bubble("bot", "마이크를 쓸 수 없어요. 휴대폰 설정에서 이 사이트의 마이크 사용을 허용하거나, 글로 적어 주세요.");
+          bubble("bot", "마이크를 쓸 수 없어요. 브라우저나 휴대폰 설정에서 이 사이트의 마이크 사용을 허용해 주세요. 글로 적으셔도 돼요.");
         } else if (event.error === "no-speech") {
-          bubble("bot", "말씀을 듣지 못했어요. 버튼을 누르고 조금 크게 말씀해 주세요.");
+          bubble("bot", "말씀이 들리지 않았어요. 버튼을 누르고 조금 크게 말씀해 주세요.");
         } else if (event.error !== "aborted") {
-          bubble("bot", "말로 입력하기가 지금은 안 돼요. 글로 적어 주세요.");
+          bubble("bot", "지금은 말로 하기가 안 돼요. 글로 적어 주세요.");
         }
       };
-      rec.onend = done;
+      rec.onend = () => {
+        listening = null;
+        micButton.textContent = MIC_LABEL;
+        micButton.classList.remove("on");
+        if (heard) {
+          bubble("bot", "이렇게 들었어요. 맞으면 [보내기]를 눌러 주세요. 틀린 곳은 고쳐서 보내셔도 돼요.");
+          input.focus();
+        } else if (!failed) {
+          // 오류도 결과도 없이 끝나는 브라우저가 있다
+          bubble("bot", "말씀을 알아듣지 못했어요. 다시 눌러서 말씀해 주시거나 글로 적어 주세요.");
+        }
+      };
       try {
         rec.start();
         listening = rec;
-        micButton.textContent = "듣고 있어요… (다 말하면 누르기)";
+        micButton.textContent = "듣고 있어요. 다 말씀하셨으면 눌러 주세요";
         micButton.classList.add("on");
       } catch (e) {
-        done();
+        listening = null;
+        bubble("bot", "지금은 말로 하기가 안 돼요. 글로 적어 주세요.");
       }
     });
   }

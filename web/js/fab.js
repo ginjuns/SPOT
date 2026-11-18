@@ -1,4 +1,4 @@
-// [말로 묻기] 버튼. 휴대폰에서는 채팅 화면으로 이동하고(링크 그대로),
+// [물어보기] 버튼. 휴대폰에서는 채팅 화면으로 이동하고(링크 그대로),
 // 컴퓨터처럼 넓은 화면에서는 보던 화면 위에 작은 채팅 창을 띄운다.
 (function () {
   "use strict";
@@ -31,12 +31,12 @@
     panel = document.createElement("div");
     panel.className = "chat-panel";
     panel.setAttribute("role", "dialog");
-    panel.setAttribute("aria-label", "말로 묻기");
+    panel.setAttribute("aria-label", "물어보기");
 
     const head = document.createElement("div");
     head.className = "chat-panel-head";
     const title = document.createElement("span");
-    title.textContent = "말로 묻기";
+    title.textContent = "궁금한 것 물어보기";
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.className = "hero-pill";
@@ -46,8 +46,8 @@
 
     // 채팅 화면을 그대로 창 안에 넣는다. 창을 닫아도 대화는 이 화면을 떠날 때까지 남아 있다.
     frame = document.createElement("iframe");
-    frame.title = "말로 묻기";
-    frame.allow = "microphone";   // 창 안에서도 [말로 입력]을 쓸 수 있게
+    frame.title = "물어보기";
+    frame.allow = "microphone";   // 창 안에서도 [말로 하기]를 쓸 수 있게
     frame.src = "chat.html";
     frame.addEventListener("load", syncSettings);
 

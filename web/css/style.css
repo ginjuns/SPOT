@@ -99,7 +99,7 @@ p { margin: 0 0 10px; }
 
 /* ---------- 시작 화면, 검색창 ---------- */
 
-/* 선으로 그린 그림 (분야 버튼, 말로 묻기 버튼) */
+/* 선으로 그린 그림 (분야 버튼, 물어보기 버튼) */
 .tile svg, .fab-icon {
   flex: none;
   width: 1.55rem;
@@ -434,11 +434,11 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
 .chat-form textarea:focus { outline: 3px solid var(--primary); outline-offset: 1px; }
 .chat-form textarea::placeholder { color: var(--muted); }
 .chat-form .btn { width: auto; min-width: 5.2rem; }
-/* [말로 입력하기]는 입력창 아래 한 줄을 다 쓴다. 듣는 중에는 색을 반대로 */
+/* [말로 하기]는 입력창 아래 한 줄을 다 쓴다. 듣는 중에는 색을 반대로 */
 .chat-form .mic { grid-column: 1 / -1; width: 100%; min-height: 48px; }
 .chat-form .mic.on { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
 
-/* [읽어 주기] */
+/* [소리로 듣기] */
 .btn.speak { display: inline-flex; width: auto; min-height: 48px; padding: 6px 16px; }
 .chat-log > .btn.speak { align-self: flex-start; }
 .card .btn.speak, .card .btn[href*="bokjiro"] { margin-top: 10px; }
@@ -525,7 +525,7 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
   .page.wide .topbar { max-width: 360px; }
   .page.wide .notice { margin-top: 28px; }
 
-  /* 말로 묻기 버튼: 컴퓨터에서는 그림만 둔다 (이름은 aria-label 로 읽어 준다. 사용자 요청) */
+  /* 물어보기 버튼: 컴퓨터에서는 그림만 둔다 (이름은 aria-label 로 읽어 준다. 사용자 요청) */
   .chat-fab { right: 32px; bottom: 32px; width: 4.2rem; height: 4.2rem; }
   .chat-fab .fab-label { display: none; }
   .chat-fab .fab-icon { width: 2rem; height: 2rem; }
