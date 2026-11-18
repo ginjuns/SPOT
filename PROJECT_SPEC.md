@@ -173,6 +173,7 @@ projectAI/
 ├─ docs/
 │  ├─ search_accuracy.md    # 조회 정확도 대조 결과
 │  ├─ user_test.md          # 사용자 테스트 진행 순서와 설문지
+│  ├─ HANDOFF_messenger.md  # 텔레그램·디스코드 연결 작업 인수인계 (2026-11-18)
 │  └─ screenshots/          # 발표 자료용 화면 스크린샷
 │
 ├─ data/
