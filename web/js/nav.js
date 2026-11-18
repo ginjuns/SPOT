@@ -35,7 +35,7 @@
     },
     {
       title: "물어보기",
-      items: [["궁금한 것 물어보기", "chat.html", "chat"]],
+      items: [["궁금한 것 물어보기", "chat.html"]],   // 작은 창이 아니라 채팅 화면 전체로 옮겨 간다
       note: "정책 이름을 몰라도 지금 상황을 말씀하시면 찾아 드려요.",
     },
   ];
@@ -65,11 +65,10 @@
     const drop = el("div", "drop" + (m.wide ? " wide" : ""));
     drop.id = "drop-" + index;
     const list = el("ul");
-    m.items.forEach(([label, href, kind]) => {
+    m.items.forEach(([label, href]) => {
       const item = el("li");
       const link = el("a", "", label);
       link.href = href;
-      if (kind === "chat") link.dataset.chat = "1";
       item.append(link);
       list.append(item);
     });
@@ -150,16 +149,6 @@
   menu.addEventListener("click", (event) => {
     const link = event.target.closest("a");
     if (!link) return;
-    // [말로 물어보기]: 오른쪽 아래 채팅 창을 띄운다 (js/fab.js 가 처리)
-    if (link.dataset.chat) {
-      const fab = document.querySelector(".chat-fab");
-      if (fab) {
-        event.preventDefault();
-        close();
-        fab.click();
-      }
-      return;
-    }
     // 같은 화면에서 # 뒤(찾는 낱말)만 바뀌면 브라우저가 화면을 다시 읽지 않으므로 직접 다시 연다
     const target = new URL(link.href);
     if (target.pathname === location.pathname && target.search === location.search && target.hash !== location.hash) {
