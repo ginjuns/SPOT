@@ -14,7 +14,7 @@
   --warn-bg: #fff0d4;
   --warn-text: #6b3b00;
   --fab-bg: #2b2118;          /* 물어보기 버튼 */
-  --card-line: transparent;   /* 카드는 테두리 대신 그림자 (또렷한 화면에서는 흰 테두리) */
+  --card-line: transparent;   /* 카드는 테두리 대신 그림자 */
   --shadow: 0 6px 18px rgba(120, 80, 40, 0.10);
   --radius: 18px;
   font-size: 18px;            /* 기본 글자 크기. 다른 크기는 모두 rem 으로 잡는다 */
@@ -144,15 +144,8 @@ p { margin: 0 0 10px; }
   text-decoration: none;
   cursor: pointer;
 }
-.hero-pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
-/* 아래쪽의 "또렷한 화면 링크 색" 규칙보다 우선하게 :not(.btn) 을 붙인다 */
-html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--text); }
 .hero-toggles { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .hero-top { flex-wrap: wrap; gap: 8px; }   /* 글씨를 키워 자리가 모자라면 설정 버튼이 아랫줄로 내려간다 */
-/* 그림만 있는 둥근 버튼 (또렷한 화면). 이름은 aria-label 로 읽어 준다 */
-.hero-pill.icon { justify-content: center; width: 44px; padding: 0; }
-.hero-pill.icon svg { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.hero-pill.icon[aria-pressed="true"] svg { fill: currentColor; }
 /* 시작 화면 검색창: 흰 알약 모양 상자 안에 입력칸과 찾기 버튼 */
 .hero .search-form {
   align-items: center;
@@ -196,7 +189,6 @@ html[data-size="2"] .row.tiles, html[data-size="3"] .row.tiles { grid-template-c
 .tiles .tile:nth-child(8) svg { background: #e5dbff; color: #6741d9; }   /* 문화·여가 */
 .tiles .tile:nth-child(9) svg { background: #c5f6fa; color: #0b7285; }   /* 안전·편의 */
 .tiles .tile:nth-child(10) svg { background: #e9fac8; color: #5c940d; }  /* 농사·어업 */
-html[data-contrast="1"] .tiles .tile svg { background: transparent; color: #ffe600; box-shadow: inset 0 0 0 2px #ffffff; }
 
 /* 이렇게 찾아보세요: 번호가 붙은 낱말 목록 */
 .popular {
@@ -323,9 +315,6 @@ html[data-contrast="1"] .tiles .tile svg { background: transparent; color: #ffe6
   box-shadow: 0 8px 20px rgba(43, 33, 24, 0.28);
 }
 .chat-fab:active { background: #4a3a2c; }
-/* 아래쪽의 "또렷한 화면 링크 색" 규칙보다 우선하게 :not(.btn) 을 붙인다 */
-html[data-contrast="1"] a.chat-fab:not(.btn) { color: #000000; border-color: #000000; box-shadow: 0 0 0 3px #ffffff; }
-html[data-contrast="1"] .chat-fab:active { background: #ccb800; }
 
 /* 떠 있는 버튼이 맨 아래 글을 가리지 않게 자리를 비워 둔다 */
 .page.has-fab { padding-bottom: 6.4rem; }
@@ -409,7 +398,7 @@ html[data-contrast="1"] .chat-fab:active { background: #ccb800; }
 
 [hidden] { display: none !important; }
 
-/* ---------- 화면 설정: 큰 글씨, 또렷한 화면(고대비) ---------- */
+/* ---------- 화면 설정: 글씨 크기 ---------- */
 
 /* 글씨 크기 4단계 (js/settings.js): 보통 18px, 조금 크게 20px, 크게 22px, 가장 크게 24px */
 html[data-size="1"] { font-size: 20px; }
@@ -421,32 +410,6 @@ html[data-size="3"] { font-size: 24px; }
 .font-name { font-size: 0.9rem; font-weight: 700; }
 .font-size button[disabled] { opacity: 0.45; cursor: default; }
 
-html[data-contrast="1"] {
-  --bg: #000000;
-  --surface: #000000;
-  --text: #ffffff;
-  --muted: #f0f0f0;
-  --line: #ffffff;
-  --primary: #ffe600;
-  --primary-text: #000000;
-  --soft: #1f1f1f;
-  --primary-dark: #ccb800;
-  --warn-bg: #ffe600;
-  --warn-text: #000000;
-  --fab-bg: #ffe600;
-  --card-line: #ffffff;
-  --shadow: none;
-}
-html[data-contrast="1"] .chat-fab { color: #000000; }
-html[data-contrast="1"] .btn:active { background: #333333; }
-html[data-contrast="1"] .btn-primary:active { background: #ccb800; }
-html[data-contrast="1"] .btn[disabled] { background: #000000; color: #bdbdbd; }
-html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
-
-.toggle { flex-direction: column; gap: 2px; }
-.toggle .state { font-size: 0.85rem; font-weight: 500; color: var(--muted); }
-.toggle[aria-pressed="true"] { border-color: var(--primary); border-width: 3px; }
-.toggle[aria-pressed="true"] .state { color: var(--primary); font-weight: 700; }
 
 /* ---------- 채팅 ---------- */
 
@@ -612,7 +575,6 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
     padding: 0 32px;
   }
   .site-logo { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.02em; color: var(--primary); text-decoration: none; }
-  html[data-contrast="1"] a.site-logo { color: var(--primary); }
   .site-menu { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
   .site-menu-btn {
     min-height: 60px;
@@ -675,8 +637,6 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
   .drop a:hover { background: var(--soft); color: var(--primary); text-decoration: underline; }
   .drop .muted { margin: 8px 12px 4px; white-space: normal; }
 
-  /* 시작 화면: 이름은 위쪽 메뉴에 있으므로 여기서는 빼고, 또렷한 화면 버튼만 오른쪽에 둔다 */
-  .hero .brand { display: none; }
-  .hero .font-size { display: none; }   /* 글씨 크기는 위쪽 메뉴 줄에 있다 */
-  .hero-top { justify-content: flex-end; }
+  /* 시작 화면: 이름과 글씨 크기는 위쪽 메뉴에 있으므로 맨 윗줄을 통째로 숨긴다 */
+  .hero-top { display: none; }
 }

@@ -8,15 +8,13 @@
   let panel = null;
   let frame = null;
 
-  // 큰 글씨·또렷한 화면 설정을 채팅 창 안에도 똑같이 적용한다
+  // 글씨 크기 설정을 채팅 창 안에도 똑같이 적용한다
   function syncSettings() {
     try {
       const inner = frame.contentDocument.documentElement;
-      ["data-size", "data-contrast"].forEach((name) => {
-        const value = document.documentElement.getAttribute(name);
-        if (value) inner.setAttribute(name, value);
-        else inner.removeAttribute(name);
-      });
+      const value = document.documentElement.getAttribute("data-size");
+      if (value) inner.setAttribute("data-size", value);
+      else inner.removeAttribute("data-size");
     } catch (e) {
       // 아직 채팅 화면을 불러오는 중이면 넘어간다 (불러온 뒤 load 에서 다시 맞춘다)
     }
@@ -56,7 +54,7 @@
     document.body.append(panel);
   }
 
-  // 채팅 창이 열려 있을 때 글씨 크기·또렷한 화면을 바꾸면 창 안도 바로 맞춘다 (js/settings.js 가 알린다)
+  // 채팅 창이 열려 있을 때 글씨 크기를 바꾸면 창 안도 바로 맞춘다 (js/settings.js 가 알린다)
   document.addEventListener("spot-settings", () => {
     if (frame) syncSettings();
   });

@@ -1,8 +1,9 @@
-// 글씨 크기·고대비 설정. 모든 화면의 <head>에서 먼저 불러서, 화면이 그려지기 전에 적용한다.
+// 글씨 크기 설정. 모든 화면의 <head>에서 먼저 불러서, 화면이 그려지기 전에 적용한다.
 // 설정만 localStorage 에 저장한다 (대화 내용은 저장하지 않는다). 저장이 막혀 있어도 동작한다.
+// (또렷한 화면(고대비)은 2026-11-18에 사용자 요청으로 뺐다)
 (function () {
   "use strict";
-  const KEYS = { size: "spot-size", contrast: "spot-contrast", oldBig: "spot-big" };
+  const KEYS = { size: "spot-size", oldBig: "spot-big" };
   const root = document.documentElement;
 
   // 글씨 크기 단계. 실제 크기는 style.css 의 html[data-size] 규칙 (18px · 20px · 22px · 24px)
@@ -36,11 +37,6 @@
     else root.removeAttribute("data-size");
   }
 
-  function applyContrast(on) {
-    if (on) root.setAttribute("data-contrast", "1");
-    else root.removeAttribute("data-contrast");
-  }
-
   // 설정이 바뀌었음을 알린다 (컴퓨터의 작은 채팅 창이 똑같이 맞추도록, js/fab.js)
   function changed() {
     document.dispatchEvent(new Event("spot-settings"));
@@ -48,7 +44,6 @@
 
   let size = readSize();
   applySize(size);
-  applyContrast(load(KEYS.contrast) === "1");
 
   // 홈 화면에 추가(PWA)를 위한 서비스 워커 등록. 지원하지 않는 브라우저에서는 그냥 넘어간다.
   if ("serviceWorker" in navigator) {
@@ -68,43 +63,22 @@
     });
   }
 
-  function showContrast() {
-    const on = root.hasAttribute("data-contrast");
-    document.querySelectorAll('[data-setting="contrast"]').forEach((button) => {
-      button.setAttribute("aria-pressed", on ? "true" : "false");
-      const state = button.querySelector(".state");
-      if (state) state.textContent = on ? "켜짐" : "꺼짐";
-    });
-  }
-
   // 버튼은 화면 안 어디에 있든(나중에 만들어진 위쪽 메뉴 포함) 여기서 한 번에 받는다
   //   <button data-font="down">작게</button> <span class="font-level"></span> <button data-font="up">크게</button>
-  //   <button data-setting="contrast">
   document.addEventListener("click", (event) => {
     const fontButton = event.target.closest("[data-font]");
-    if (fontButton) {
-      const next = size + (fontButton.getAttribute("data-font") === "up" ? 1 : -1);
-      if (next < 0 || next > MAX_SIZE) return;
-      size = next;
-      applySize(size);
-      save(KEYS.size, String(size));
-      showSize();
-      changed();
-      return;
-    }
-    const contrastButton = event.target.closest('[data-setting="contrast"]');
-    if (contrastButton) {
-      const on = !root.hasAttribute("data-contrast");
-      applyContrast(on);
-      save(KEYS.contrast, on ? "1" : "0");
-      showContrast();
-      changed();
-    }
+    if (!fontButton) return;
+    const next = size + (fontButton.getAttribute("data-font") === "up" ? 1 : -1);
+    if (next < 0 || next > MAX_SIZE) return;
+    size = next;
+    applySize(size);
+    save(KEYS.size, String(size));
+    showSize();
+    changed();
   });
 
   document.addEventListener("DOMContentLoaded", () => {
     showSize();
-    showContrast();
 
     // 인터넷이 끊기면 화면 위에 알린다. 다시 연결되면 저절로 사라진다.
     const banner = document.createElement("p");
