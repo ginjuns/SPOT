@@ -145,7 +145,8 @@ p { margin: 0 0 10px; }
 .hero-pill[aria-pressed="true"] { background: var(--primary-text); color: var(--primary); }
 /* 아래쪽의 "또렷한 화면 링크 색" 규칙보다 우선하게 :not(.btn) 을 붙인다 */
 html[data-contrast="1"] a.hero-pill:not(.btn) { color: var(--primary-text); }
-.hero-toggles { display: flex; gap: 8px; }
+.hero-toggles { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.hero-top { flex-wrap: wrap; gap: 8px; }   /* 글씨를 키워 자리가 모자라면 설정 버튼이 아랫줄로 내려간다 */
 /* 그림만 있는 둥근 버튼 (또렷한 화면). 이름은 aria-label 로 읽어 준다 */
 .hero-pill.icon { justify-content: center; width: 44px; padding: 0; }
 .hero-pill.icon svg { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -356,7 +357,15 @@ html[data-contrast="1"] .chat-fab:active { background: #ccb800; }
 
 /* ---------- 화면 설정: 큰 글씨, 또렷한 화면(고대비) ---------- */
 
-html[data-big="1"] { font-size: 24px; }
+/* 글씨 크기 4단계 (js/settings.js): 보통 18px, 조금 크게 20px, 크게 22px, 가장 크게 24px */
+html[data-size="1"] { font-size: 20px; }
+html[data-size="2"] { font-size: 22px; }
+html[data-size="3"] { font-size: 24px; }
+
+/* 글씨 크기 버튼 묶음: "글씨 [작게] [크게]" */
+.font-size { display: flex; align-items: center; gap: 6px; }
+.font-name { font-size: 0.9rem; font-weight: 700; }
+.font-size button[disabled] { opacity: 0.45; cursor: default; }
 
 html[data-contrast="1"] {
   --bg: #000000;
@@ -540,10 +549,11 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
   }
   .site-nav-inner {
     display: flex;
+    flex-wrap: wrap;            /* 글씨를 가장 크게 해도 화면 밖으로 나가지 않게 */
     align-items: center;
-    gap: 48px;
+    column-gap: 48px;
     max-width: 1184px;
-    min-height: 84px;
+    min-height: 72px;
     margin: 0 auto;
     padding: 0 32px;
   }
@@ -562,6 +572,31 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
     font-weight: 800;
     cursor: pointer;
   }
+  /* 메뉴 위의 얇은 줄: 오른쪽에 글씨 크기 */
+  .nav-util {
+    display: flex;
+    justify-content: flex-end;
+    max-width: 1184px;
+    margin: 0 auto;
+    padding: 8px 32px 0;
+  }
+  .nav-font { gap: 8px; }
+  .nav-font .font-name { color: var(--muted); }
+  .nav-font .font-level { min-width: 5.2em; text-align: center; font-weight: 700; color: var(--primary); }
+  .nav-pill {
+    min-height: 44px;
+    padding: 0 14px;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .nav-pill:hover:not([disabled]) { border-color: var(--primary); color: var(--primary); }
+
   .site-menu-item { position: relative; }
   .site-menu-item.open .site-menu-btn { color: var(--primary); border-bottom-color: var(--primary); }
   /* 펼침 상자: 마우스를 올린 메뉴 하나만, 그 이름 바로 아래에 뜬다 */
@@ -588,5 +623,6 @@ html[data-contrast="1"] a:not(.btn) { color: #ffe600; }
 
   /* 시작 화면: 이름은 위쪽 메뉴에 있으므로 파란 띠에서는 빼고, 화면 설정 버튼만 오른쪽에 둔다 */
   .hero .brand { display: none; }
+  .hero .font-size { display: none; }   /* 글씨 크기는 위쪽 메뉴 줄에 있다 */
   .hero-top { justify-content: flex-end; }
 }

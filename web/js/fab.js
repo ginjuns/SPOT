@@ -12,8 +12,9 @@
   function syncSettings() {
     try {
       const inner = frame.contentDocument.documentElement;
-      ["data-big", "data-contrast"].forEach((name) => {
-        if (document.documentElement.hasAttribute(name)) inner.setAttribute(name, "1");
+      ["data-size", "data-contrast"].forEach((name) => {
+        const value = document.documentElement.getAttribute(name);
+        if (value) inner.setAttribute(name, value);
         else inner.removeAttribute(name);
       });
     } catch (e) {
@@ -54,6 +55,11 @@
     panel.append(head, frame);
     document.body.append(panel);
   }
+
+  // 채팅 창이 열려 있을 때 글씨 크기·또렷한 화면을 바꾸면 창 안도 바로 맞춘다 (js/settings.js 가 알린다)
+  document.addEventListener("spot-settings", () => {
+    if (frame) syncSettings();
+  });
 
   fab.addEventListener("click", (event) => {
     if (!wide.matches) return;   // 휴대폰: 채팅 화면으로 이동

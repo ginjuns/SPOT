@@ -1,31 +1,54 @@
-// 큰 글씨·고대비 설정. 모든 화면의 <head>에서 먼저 불러서, 화면이 그려지기 전에 적용한다.
+// 글씨 크기·고대비 설정. 모든 화면의 <head>에서 먼저 불러서, 화면이 그려지기 전에 적용한다.
 // 설정만 localStorage 에 저장한다 (대화 내용은 저장하지 않는다). 저장이 막혀 있어도 동작한다.
 (function () {
   "use strict";
-  const KEYS = { big: "spot-big", contrast: "spot-contrast" };
+  const KEYS = { size: "spot-size", contrast: "spot-contrast", oldBig: "spot-big" };
   const root = document.documentElement;
 
-  function read(name) {
+  // 글씨 크기 단계. 실제 크기는 style.css 의 html[data-size] 규칙 (18px · 20px · 22px · 24px)
+  const SIZE_NAMES = ["보통", "조금 크게", "크게", "가장 크게"];
+  const MAX_SIZE = SIZE_NAMES.length - 1;
+
+  function load(key) {
     try {
-      return localStorage.getItem(KEYS[name]) === "1";
+      return localStorage.getItem(key);
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
-  function apply(name, on) {
-    if (on) root.setAttribute("data-" + name, "1");
-    else root.removeAttribute("data-" + name);
-  }
-
-  function set(name, on) {
-    apply(name, on);
+  function save(key, value) {
     try {
-      localStorage.setItem(KEYS[name], on ? "1" : "0");
+      localStorage.setItem(key, value);
     } catch (e) {
       // 저장이 안 되면 이번 화면에서만 적용된다
     }
   }
+
+  function readSize() {
+    const saved = parseInt(load(KEYS.size), 10);
+    if (saved >= 0 && saved <= MAX_SIZE) return saved;
+    return load(KEYS.oldBig) === "1" ? MAX_SIZE : 0;   // 예전 [큰 글씨]를 켜 두었던 사람은 가장 크게
+  }
+
+  function applySize(level) {
+    if (level > 0) root.setAttribute("data-size", String(level));
+    else root.removeAttribute("data-size");
+  }
+
+  function applyContrast(on) {
+    if (on) root.setAttribute("data-contrast", "1");
+    else root.removeAttribute("data-contrast");
+  }
+
+  // 설정이 바뀌었음을 알린다 (컴퓨터의 작은 채팅 창이 똑같이 맞추도록, js/fab.js)
+  function changed() {
+    document.dispatchEvent(new Event("spot-settings"));
+  }
+
+  let size = readSize();
+  applySize(size);
+  applyContrast(load(KEYS.contrast) === "1");
 
   // 홈 화면에 추가(PWA)를 위한 서비스 워커 등록. 지원하지 않는 브라우저에서는 그냥 넘어간다.
   if ("serviceWorker" in navigator) {
@@ -34,29 +57,54 @@
     });
   }
 
-  apply("big", read("big"));
-  apply("contrast", read("contrast"));
-
-  // 시작 화면의 전환 버튼: <button data-setting="big"> 처럼 쓴다
-  document.addEventListener("DOMContentLoaded", () => {
-    // 같은 설정의 버튼이 여러 개일 수 있으므로(위쪽 띠, 아래 설정) 누르면 모두 함께 바꿔 보여 준다
-    const buttons = document.querySelectorAll("[data-setting]");
-    const showAll = () => {
-      buttons.forEach((button) => {
-        const on = root.hasAttribute("data-" + button.getAttribute("data-setting"));
-        button.setAttribute("aria-pressed", on ? "true" : "false");
-        const state = button.querySelector(".state");
-        if (state) state.textContent = on ? "켜짐" : "꺼짐";
-      });
-    };
-    buttons.forEach((button) => {
-      const name = button.getAttribute("data-setting");
-      button.addEventListener("click", () => {
-        set(name, !root.hasAttribute("data-" + name));
-        showAll();
-      });
+  // 글씨 크기 버튼과 지금 단계 표시를 모두 맞춘다 (시작 화면과 위쪽 메뉴에 같은 버튼이 있을 수 있다)
+  function showSize() {
+    document.querySelectorAll("[data-font]").forEach((button) => {
+      const up = button.getAttribute("data-font") === "up";
+      button.disabled = up ? size >= MAX_SIZE : size <= 0;
     });
-    showAll();
+    document.querySelectorAll(".font-level").forEach((node) => {
+      node.textContent = SIZE_NAMES[size];
+    });
+  }
+
+  function showContrast() {
+    const on = root.hasAttribute("data-contrast");
+    document.querySelectorAll('[data-setting="contrast"]').forEach((button) => {
+      button.setAttribute("aria-pressed", on ? "true" : "false");
+      const state = button.querySelector(".state");
+      if (state) state.textContent = on ? "켜짐" : "꺼짐";
+    });
+  }
+
+  // 버튼은 화면 안 어디에 있든(나중에 만들어진 위쪽 메뉴 포함) 여기서 한 번에 받는다
+  //   <button data-font="down">작게</button> <span class="font-level"></span> <button data-font="up">크게</button>
+  //   <button data-setting="contrast">
+  document.addEventListener("click", (event) => {
+    const fontButton = event.target.closest("[data-font]");
+    if (fontButton) {
+      const next = size + (fontButton.getAttribute("data-font") === "up" ? 1 : -1);
+      if (next < 0 || next > MAX_SIZE) return;
+      size = next;
+      applySize(size);
+      save(KEYS.size, String(size));
+      showSize();
+      changed();
+      return;
+    }
+    const contrastButton = event.target.closest('[data-setting="contrast"]');
+    if (contrastButton) {
+      const on = !root.hasAttribute("data-contrast");
+      applyContrast(on);
+      save(KEYS.contrast, on ? "1" : "0");
+      showContrast();
+      changed();
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    showSize();
+    showContrast();
 
     // 인터넷이 끊기면 화면 위에 알린다. 다시 연결되면 저절로 사라진다.
     const banner = document.createElement("p");

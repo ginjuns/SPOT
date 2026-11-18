@@ -1,6 +1,6 @@
 // SPOT 서비스 워커: 화면 파일(HTML·CSS·JS·아이콘)만 캐시한다. API 응답은 캐시하지 않는다.
 // 화면 파일을 고쳐서 다시 배포할 때는 아래 버전 숫자를 올린다 (옛 캐시가 지워진다).
-const CACHE = "spot-v13";
+const CACHE = "spot-v14";
 
 const SCREEN_FILES = [
   "./",

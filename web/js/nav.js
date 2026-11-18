@@ -86,8 +86,25 @@
     top.addEventListener("click", () => open(index));
   });
 
+  // 메뉴 위의 얇은 줄 오른쪽: 글씨 크기 (복지로처럼. 누르기는 js/settings.js 가 처리한다)
+  const util = el("div", "nav-util");
+  const fontBox = el("div", "font-size nav-font");
+  fontBox.setAttribute("role", "group");
+  fontBox.setAttribute("aria-label", "글씨 크기");
+  const fontName = el("span", "font-name", "글씨 크기");
+  const level = el("span", "font-level");
+  level.setAttribute("aria-live", "polite");
+  const down = el("button", "nav-pill", "작게");
+  down.type = "button";
+  down.dataset.font = "down";
+  const up = el("button", "nav-pill", "크게");
+  up.type = "button";
+  up.dataset.font = "up";
+  fontBox.append(fontName, down, level, up);
+  util.append(fontBox);
+
   inner.append(logo, menu);
-  header.append(inner);
+  header.append(util, inner);
   document.body.prepend(header);
 
   // ---------- 열고 닫기 (한 번에 하나만) ----------
