@@ -104,3 +104,13 @@ def test_name_from_the_policys_own_db_text_is_not_a_problem():
     out = validate({"text": "찾았어요. 확인해 보세요.", "picks": [{"id": "T1", "one_line": "훈련 기간에 구직급여를 이어서 받아요."}]},
                    [extension], all_names=all_names)
     assert out["picks"][0]["one_line"] == "훈련 기간에 구직급여를 이어서 받아요."
+
+
+def test_target_cut_keeps_other_age_groups():
+    """앞 글자만 자르면 '○ 어르신' 무리가 잘려 어린이 전용처럼 보였다. 잘린 나이 무리 제목은 덧붙인다."""
+    target = ("○ 어린이 인플루엔자 국가예방접종 지원\n - 지원대상: 생후 6개월~14세 어린이" + " 설명" * 40 +
+              "\n○ 임신부 인플루엔자 국가예방접종 지원\n○ 어르신 인플루엔자 국가예방접종 지원\n - 65세 이상")
+    cut = answerer._cut_target(target, 120)
+    assert "그 밖의 대상" in cut and "어르신" in cut and "임신부" in cut
+    plain = "○ 관내 거주 농가\n○ 친환경 인증을 받은 농가"
+    assert answerer._cut_target(plain, 120) == answerer._cut(plain, 120)   # 나이 무리가 아니면 그대로

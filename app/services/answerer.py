@@ -6,6 +6,7 @@ LLM이 준 답은 그대로 믿지 않는다:
   - 안내 문장에 목록 밖 정책 이름이나 자격을 확정하는 말이 있으면 정해 둔 문장으로 바꾼다.
 """
 import json
+import re
 from functools import lru_cache
 
 from app import config, db
@@ -33,6 +34,25 @@ def _cut(text, limit):
     return text if len(text) <= limit else text[:limit] + "…"
 
 
+AGE_GROUP_WORDS = re.compile(r"어르신|노인|어린이|아동|청소년|임신부|임산부|청년|\d+\s*세")
+OTHER_GROUPS_LIMIT = 60
+
+
+def _cut_target(text, limit):
+    """지원 대상 글 줄이기. 앞 limit 자를 쓰고, 잘려 나간 뒤쪽에 다른 나이 무리의 ○ 항목이 있으면 제목만 덧붙인다.
+
+    앞에서부터 자르기만 하면 독감 예방접종(○ 어린이 … ○ 임신부 … ○ 어르신 …)이 어린이 전용처럼 보여
+    어르신 질문에서 빠졌다 (2026-11-19). 덧붙이는 것은 나이 무리 제목뿐이라 다른 정책의 글은 그대로다.
+    """
+    cut = _cut(text, limit)
+    lines = [" ".join(line.split()) for line in (text or "").splitlines()]
+    shown = " ".join((text or "").split())[:limit]
+    hidden = [line for line in lines if line.startswith("○") and line not in shown and AGE_GROUP_WORDS.search(line)]
+    if not hidden:
+        return cut
+    return f"{cut} (그 밖의 대상: {_cut(' '.join(hidden), OTHER_GROUPS_LIMIT)})"
+
+
 def build_user_prompt(situation, conditions, candidates):
     cond = [
         _label("age_group", conditions.get("age_group")),
@@ -47,7 +67,7 @@ def build_user_prompt(situation, conditions, candidates):
     limit = config.CANDIDATE_TEXT_LIMIT
     for c in candidates:
         lines.append(
-            f"[{c['id']}] {c['name']} / 대상: {_cut(c['target'], limit)} / 내용: {_cut(c['content'], limit)}"
+            f"[{c['id']}] {c['name']} / 대상: {_cut_target(c['target'], limit)} / 내용: {_cut(c['content'], limit)}"
         )
     lines.append("</후보 정책>")
     return "\n".join(lines)

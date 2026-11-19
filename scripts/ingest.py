@@ -250,6 +250,30 @@ def age_from_text(name, target):
         return None, None
     return age_min, age_max
 
+AGE_OVER = re.compile(r"(\d{1,3})\s*세\s*이상")
+AGE_BELOW = re.compile(r"(\d{1,3})\s*세\s*(?:이하|미만)")
+ELDER_AGE = 60     # 이 나이 이상을 어르신 무리로 본다
+CHILD_AGE = 19     # 이 나이 이하를 아이·청소년 무리로 본다
+
+
+def widen_for_other_groups(age_min, age_max, target):
+    """지원조건 코드에 한 나이 무리만 들어 있는데, 지원 대상 글에 다른 나이 무리가 따로 있으면 나이 제한을 푼다.
+
+    "인플루엔자 국가예방접종"은 어린이·임신부·65세 이상이 대상인데 코드에는 0~14세만 있어서 어르신에게
+    보이지 않았다. 관람료·이용료 감면은 반대로 65세 이상만 들어 있어 어린이 무리가 빠졌다 (2026-11-19).
+    받을 수 있는 사람에게 숨기는 것보다 넓게 보여 주고 신청처에서 확인하게 하는 쪽이 낫다.
+    자녀 나이가 글에 나오는 정책(18~44세 임산부 + "2세 미만 영아")은 어느 경우에도 걸리지 않는다.
+    """
+    text = re.sub(r"만\s*(?=\d)", "", target or "")
+    elders = [int(a) for a in AGE_OVER.findall(text) if int(a) >= ELDER_AGE]
+    children = [int(a) for a in AGE_BELOW.findall(text) if int(a) <= CHILD_AGE]
+    if age_max is not None and age_max < ELDER_AGE and elders:
+        return None, None
+    if age_min is not None and age_min >= ELDER_AGE and children:
+        return None, None
+    return age_min, age_max
+
+
 # 구비서류 칸에 "없다"는 뜻으로 적어 둔 값들 (이런 값은 보여 주지 않는다)
 NO_DOCUMENTS = {"해당없음", "없음", "-", "구비서류없음", "해당사항없음", "별도구비서류없음", "제출서류없음"}
 
@@ -313,6 +337,8 @@ def build_rows(raw):
         row.update(map_conditions(conditions.get(sid, {}), (target or "") + (criteria or ""), codes))
         if row["age_min"] is None and row["age_max"] is None:
             row["age_min"], row["age_max"] = age_from_text(row["name"], target)
+        else:
+            row["age_min"], row["age_max"] = widen_for_other_groups(row["age_min"], row["age_max"], target)
         if row["name"]:
             rows.append(row)
     return rows

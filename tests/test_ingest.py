@@ -105,3 +105,15 @@ def test_documents_drops_empty_markers():
     assert ingest.documents("구비서류 없음.") is None
     assert ingest.documents(None) is None
     assert ingest.documents("신분증, 주민등록등본") == "신분증, 주민등록등본"
+
+
+def test_widen_age_when_other_age_groups_are_listed():
+    f = ingest.widen_for_other_groups
+    flu = "○ 어린이: 생후 6개월~14세 어린이 ○ 임신부 ○ 어르신: 65세 이상 어르신"
+    assert f(None, 14, flu) == (None, None)            # 코드엔 어린이만 → 어르신도 보이게
+    discount = "○ 65세 이상 경로우대자 ○ 만 18세 이하 청소년"
+    assert f(65, None, discount) == (None, None)       # 코드엔 어르신만 → 아이 부모도 보이게
+    mother = "임신 중이거나 2세 미만 영아를 둔 산모"
+    assert f(18, 44, mother) == (18, 44)               # 자녀 나이일 뿐이면 그대로
+    assert f(65, None, "65세 이상 어르신") == (65, None)
+    assert f(19, 34, "19세 이상 34세 이하 청년") == (19, 34)
