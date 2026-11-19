@@ -111,6 +111,17 @@ def test_follow_up_with_only_conditions_keeps_previous_search_text(fake):
     assert r["conditions"]["need"] == "의료비" and r["conditions"]["age_group"] == "75plus"
 
 
+def test_new_question_in_other_field_replaces_previous_search_text(fake):
+    """분야가 '기타'여도 찾아볼 제도 이름이 있으면 새 질문이다 (앞의 병원비 질문으로 찾지 않는다)."""
+    fake["analysis"] = analysis(need="기타", has_terms=True, search_text="문화누리카드 공연 관람 지원")
+    r = client.post("/api/chat", json={
+        "message": "공연을 보러가는데 지원금 있나요?", "asked": True,
+        "conditions": {"need": "의료비", "search_text": "병원비 의료비 지원", "age_group": "75plus"},
+    }).json()
+    assert fake["search"][0][0].startswith("문화누리카드 공연 관람 지원") and "병원비" not in fake["search"][0][0]
+    assert r["conditions"]["need"] == "기타" and r["conditions"]["age_group"] == "75plus"
+
+
 def test_none_when_nothing_found(fake):
     fake["rows"] = []
     r = client.post("/api/chat", json={"message": "", "asked": True,

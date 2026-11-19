@@ -31,7 +31,9 @@ def merge_conditions(sent, analysis):
         for key in ("age_group", "gender", "region_code", "household")
     }
     # "75살이고 서울 살아요"처럼 조건만 덧붙인 말이면 앞에서 정한 분야·검색 문장을 그대로 둔다.
-    keep_previous = bool(sent.get("search_text")) and analysis.get("need") == "기타"
+    # 분야가 "기타"여도 찾아볼 제도 이름이 있으면 새 질문으로 본다 ("공연 보러 가는데 지원금" → 문화누리카드).
+    keep_previous = (bool(sent.get("search_text")) and analysis.get("need") == "기타"
+                     and not analysis.get("has_terms"))
     source = sent if keep_previous else analysis
     merged["for_child"] = bool(source.get("for_child"))
     merged["need"] = source.get("need")

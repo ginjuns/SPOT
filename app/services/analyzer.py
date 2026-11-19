@@ -227,8 +227,11 @@ def analyze(message, history=None):
         result = normalize(raw, message)
         # 검색 문장 = 제도 낱말 + 다듬은 문장 + 원래 질문.
         # 새 질문 12개로 시험했을 때 낱말을 앞에 두는 것이 가장 잘 맞았다 (6개 → 9개).
-        refined = " ".join(result.pop("terms") + [result["search_text"]])
+        terms = result.pop("terms")
+        refined = " ".join(terms + [result["search_text"]])
         result["search_text"] = with_question(refined, message)
-        return {**result, "source": "llm"}
+        # 찾아볼 제도 이름이 있으면 새 질문이다 ("75살이고 서울 살아요"처럼 조건만 말한 글과 가른다).
+        return {**result, "has_terms": bool(terms), "source": "llm"}
     except llm.LLMError:
-        return {**analyze_by_rules(message), "source": "rules"}
+        result = analyze_by_rules(message)
+        return {**result, "has_terms": expand(message) != message, "source": "rules"}
