@@ -136,3 +136,10 @@ def test_related_names_for_search_box():
     assert analyzer.related_names("기초연금") == []                # 이미 정책 이름이면 덧붙일 것이 없다
     assert analyzer.related_names("청년") == []
     assert analyzer.related_names(None) == []
+
+
+def test_culture_words_expand_to_culture_card():
+    """공연·영화 관람 질문은 '지원'과 관계없어 보여도 문화누리카드·관람료 할인으로 이어 찾는다."""
+    from app.services import analyzer as a
+    assert "문화누리카드" in a.expand("공연을 보러가는데 지원금 있나요?")
+    assert "문화누리" in a.related_names("영화")
