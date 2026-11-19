@@ -230,8 +230,9 @@ def analyze(message, history=None):
         terms = result.pop("terms")
         refined = " ".join(terms + [result["search_text"]])
         result["search_text"] = with_question(refined, message)
-        # 찾아볼 제도 이름이 있으면 새 질문이다 ("75살이고 서울 살아요"처럼 조건만 말한 글과 가른다).
-        return {**result, "has_terms": bool(terms), "source": "llm"}
+        # 찾아볼 제도 이름이 있거나 일상 표현 보완 규칙에 걸리면 새 질문이다
+        # ("75살이고 서울 살아요"처럼 조건만 말한 글과 가른다). LLM이 terms 를 비워 둘 때가 있어서 규칙도 본다.
+        return {**result, "has_terms": bool(terms) or expand(message) != message, "source": "llm"}
     except llm.LLMError:
         result = analyze_by_rules(message)
         return {**result, "has_terms": expand(message) != message, "source": "rules"}

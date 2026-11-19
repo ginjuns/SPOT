@@ -122,6 +122,24 @@ def test_new_question_in_other_field_replaces_previous_search_text(fake):
     assert r["conditions"]["need"] == "기타" and r["conditions"]["age_group"] == "75plus"
 
 
+def test_other_field_question_without_terms_or_conditions_is_new(fake):
+    """AI가 제도 이름을 비워 둬도, 조건을 하나도 말하지 않았으면 앞 질문을 이어 쓰지 않는다."""
+    fake["analysis"] = analysis(need="기타", has_terms=False, search_text="영화 관람 지원")
+    client.post("/api/chat", json={
+        "message": "영화 보러 가는데 지원금 있나요?", "asked": True,
+        "conditions": {"need": "의료비", "search_text": "병원비 의료비 지원"},
+    })
+    assert "병원비" not in fake["search"][0][0]
+
+
+def test_movie_question_counts_as_having_terms_by_rules(monkeypatch):
+    """LLM이 terms 를 비워 둬도 일상 표현 보완 규칙(영화 → 문화누리카드)에 걸리면 새 질문이다."""
+    from app.services import analyzer as a
+    monkeypatch.setattr(a.llm, "chat_json", lambda *args, **kw: {"need": "기타", "search_text": "영화 관람 지원", "terms": []})
+    assert a.analyze("영화 보러 가는데 지원금 있나요?")["has_terms"] is True
+    assert a.analyze("75살이고 서울 살아요")["has_terms"] is False
+
+
 def test_none_when_nothing_found(fake):
     fake["rows"] = []
     r = client.post("/api/chat", json={"message": "", "asked": True,
@@ -176,6 +194,22 @@ def test_none_when_ai_picks_nothing(fake):
     r = client.post("/api/chat", json={"message": "", "asked": True,
                                        "conditions": {"search_text": "저녁 메뉴 추천"}}).json()
     assert r["type"] == "none" and "policies" not in r
+
+
+def test_asks_again_once_when_ai_picks_nothing_but_candidate_is_close(fake, monkeypatch):
+    answers = [{"text": "없어요.", "picks": []}, {"text": "찾았어요.", "picks": [{"id": "SVC1", "one_line": "요약"}]}]
+    monkeypatch.setattr(answerer, "answer", lambda *args: answers.pop(0))
+    r = client.post("/api/chat", json={"message": "", "asked": True,
+                                       "conditions": {"search_text": "영화 관람 지원"}}).json()
+    assert r["type"] == "result" and answers == []   # 거리 0.1 후보가 있어서 한 번 더 물었다
+
+
+def test_no_retry_when_candidates_are_far(fake):
+    fake["rows"] = [{**ROW, "distance": 0.14}]
+    fake["answer_result"] = {"text": "없어요.", "picks": []}
+    r = client.post("/api/chat", json={"message": "", "asked": True,
+                                       "conditions": {"search_text": "저녁 메뉴"}}).json()
+    assert r["type"] == "none" and len(fake["answer"]) == 1
 
 
 def test_fallback_when_llm_is_down(fake):

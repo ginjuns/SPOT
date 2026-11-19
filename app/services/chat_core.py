@@ -3,6 +3,7 @@
 웹 채팅과 메신저(텔레그램·디스코드)가 함께 쓴다. HTTP와 상관없는 순수 로직만 둔다.
 서버는 대화를 저장하지 않는다. 이전 대화와 정해진 조건은 부르는 쪽이 매번 같이 보낸다.
 """
+from app import config
 from app.services import analyzer, answerer, llm, privacy, rate_limit, retriever
 
 MESSAGE_LIMIT = 300
@@ -31,9 +32,12 @@ def merge_conditions(sent, analysis):
         for key in ("age_group", "gender", "region_code", "household")
     }
     # "75살이고 서울 살아요"처럼 조건만 덧붙인 말이면 앞에서 정한 분야·검색 문장을 그대로 둔다.
-    # 분야가 "기타"여도 찾아볼 제도 이름이 있으면 새 질문으로 본다 ("공연 보러 가는데 지원금" → 문화누리카드).
+    # 앞 질문을 이어 쓰는 것은 아래를 모두 만족할 때만이다. 하나라도 아니면 새 질문으로 본다.
+    #  - 분야가 "기타"이고, 찾아볼 제도 이름도 없다 ("영화 보러 가는데 지원금" → 문화누리카드는 새 질문)
+    #  - 나이·지역·성별·가구 형태 중 하나라도 말했다 (조건을 말하지 않은 글은 조건만 덧붙인 말이 아니다)
+    told_condition = any(analysis.get(k) for k in ("age_group", "gender", "region_code", "region_text", "household"))
     keep_previous = (bool(sent.get("search_text")) and analysis.get("need") == "기타"
-                     and not analysis.get("has_terms"))
+                     and not analysis.get("has_terms") and told_condition)
     source = sent if keep_previous else analysis
     merged["for_child"] = bool(source.get("for_child"))
     merged["need"] = source.get("need")
@@ -104,6 +108,10 @@ def handle(req, client_key):
 
     try:
         answer = answerer.answer(conditions["search_text"], conditions, candidates)
+        # 아주 가까운 후보가 있는데 AI가 하나도 고르지 않으면 한 번만 다시 묻는다.
+        # (같은 질문에도 가끔 빈 picks 를 내서 "찾지 못했어요"가 나왔다. 2026-11-19 영화 질문)
+        if not answer["picks"] and min(c.get("distance", 1) for c in candidates) <= config.STRONG_DISTANCE:
+            answer = answerer.answer(conditions["search_text"], conditions, candidates)
     except llm.LLMError:
         return fallback(FALLBACK_TEXT, conditions)
     if not answer["picks"]:
