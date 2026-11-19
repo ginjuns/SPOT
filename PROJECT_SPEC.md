@@ -152,6 +152,7 @@ projectAI/
 │  │  ├─ policy.py          # GET  /api/policy/{id}, GET /api/policies
 │  │  └─ meta.py            # GET  /api/options, GET /api/health
 │  ├─ services/
+│  │  ├─ chat_core.py       # 채팅 처리 핵심 (분석 → 되묻기 → 검색 → 답변). 웹 채팅과 메신저가 함께 쓴다
 │  │  ├─ analyzer.py        # 질문 분석 (Groq → JSON)
 │  │  ├─ retriever.py       # 조건 필터 + 의미 검색
 │  │  ├─ answerer.py        # 답변 생성 + ID 검증

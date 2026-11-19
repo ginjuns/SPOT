@@ -34,7 +34,7 @@ class HistoryItem(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    # 글자 수(300자)는 쉬운 안내 문구로 답하려고 라우터에서 직접 검사한다.
+    # 글자 수(300자)는 쉬운 안내 문구로 답하려고 services/chat_core.py에서 직접 검사한다.
     message: str = Field(default="", max_length=5000)
     conditions: Conditions = Conditions()
     history: list[HistoryItem] = Field(default=[], max_length=50)

@@ -38,6 +38,7 @@
 
 - 웹은 모두 동작한다: 직접 찾기, 물어보기(AI 채팅), 정책 상세, 공유, 주민센터에서 보여주기, 글씨 크기 4단계, 말로 하기·소리로 듣기, 컴퓨터 화면 메뉴, "따뜻한 파스텔" 디자인.
 - 메신저 관련 코드는 **아직 하나도 없다.**
+- (2026-11-19) 5장 0단계 끝: 채팅 처리가 `app/services/chat_core.py`의 `handle`로 옮겨졌다. 빈 질문·300자 초과는 `{"type":"error","text"}`를 돌려주고, `routers/chat.py`가 400으로 바꾼다. 아래 설명의 `chat.py`는 이제 `chat_core.py`로 읽는다.
 
 ### 재사용할 채팅 로직 (`app/routers/chat.py`)
 - `handle(req, client_key)`가 핵심이다. `ChatRequest`(message, conditions, history, asked)를 받아 아래 넷 중 하나를 돌려준다.

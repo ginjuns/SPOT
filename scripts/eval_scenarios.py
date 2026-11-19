@@ -142,7 +142,7 @@ def eval_with_llm(only=None, pause=20):
 
     Groq 한도를 많이 쓰므로 하루 1~2번만 돌린다.
     """
-    from app.routers.chat import merge_conditions
+    from app.services.chat_core import merge_conditions
     from app.services import analyzer, answerer, llm
 
     scenarios = json.loads((config.DATA_DIR / "scenarios.json").read_text(encoding="utf-8"))

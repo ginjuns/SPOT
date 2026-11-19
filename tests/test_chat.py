@@ -145,6 +145,16 @@ def test_empty_message_without_search_text(fake):
     assert r.status_code == 400 and "error" in r.json()
 
 
+def test_core_returns_error_instead_of_raising(fake):
+    """메신저도 쓰도록 chat_core는 HTTP 오류를 던지지 않고 error 유형을 돌려준다."""
+    from app.models import ChatRequest
+    from app.services import chat_core
+    too_long = chat_core.handle(ChatRequest(message="가" * 301), "key")
+    empty = chat_core.handle(ChatRequest(message="  "), "key")
+    assert too_long == {"type": "error", "text": "조금만 짧게 말씀해 주세요."}
+    assert empty["type"] == "error" and fake["analyze"] == []
+
+
 def test_bad_condition_value_is_rejected(fake):
     r = client.post("/api/chat", json={"message": "병원비", "conditions": {"age_group": "100살"}})
     assert r.status_code == 400 and "error" in r.json()
