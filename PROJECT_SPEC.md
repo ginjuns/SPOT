@@ -150,6 +150,7 @@ projectAI/
 │  │  ├─ chat.py            # POST /api/chat
 │  │  ├─ search.py          # POST /api/search
 │  │  ├─ policy.py          # GET  /api/policy/{id}, GET /api/policies
+│  │  ├─ telegram.py        # POST /api/telegram/webhook (텔레그램 봇)
 │  │  └─ meta.py            # GET  /api/options, GET /api/health
 │  ├─ services/
 │  │  ├─ chat_core.py       # 채팅 처리 핵심 (분석 → 되묻기 → 검색 → 답변). 웹 채팅과 메신저가 함께 쓴다
@@ -168,6 +169,7 @@ projectAI/
 ├─ scripts/
 │  ├─ init_db.sql           # 테이블 생성 SQL
 │  ├─ ingest.py             # 공공데이터 수집 → DB 저장
+│  ├─ set_telegram_webhook.py # 텔레그램 웹훅·명령 등록 (배포 뒤 한 번)
 │  ├─ load_regions.py       # 시·군·구 코드 넣기
 │  ├─ eval_scenarios.py     # 시나리오 30개 자동 평가
 │  └─ sample_search.py      # 조회 정확도 확인용 표본 뽑기 (조건 5세트 × 20건)
@@ -625,6 +627,8 @@ GLOBAL_DAILY_CHAT_LIMIT=200  # 서비스 전체 하루 질문 수 (Groq 한도 �
 MAX_DISTANCE=0.15          # 의미 검색 거리 기준 (시나리오 평가로 정함)
 PUBLIC_BASE_URL=           # 배포 주소 (메신저 답의 [자세히 보기] 링크에 씀)
 MESSENGER_DAILY_LIMIT=100  # 메신저마다 하루 질문 수
+TELEGRAM_BOT_TOKEN=        # BotFather에서 받은 텔레그램 봇 토큰
+TELEGRAM_WEBHOOK_SECRET=   # 텔레그램 웹훅 비밀 문자열 (요청 헤더로 검사)
 ```
 - 배포 시에는 Render 서비스의 **Environment** 화면에 같은 이름으로 넣는다 (`DATABASE_URL`, `GROQ_API_KEY` 등. 수집용 `DATA_GO_KR_API_KEY`는 서버에 넣지 않는다).
 

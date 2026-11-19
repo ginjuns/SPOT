@@ -38,6 +38,9 @@ MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.15"))
 # 메신저(텔레그램·디스코드)
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "")   # 배포 주소. 메신저 답의 [자세히 보기] 링크에 쓴다
 MESSENGER_DAILY_LIMIT = int(os.getenv("MESSENGER_DAILY_LIMIT", "100"))   # 메신저마다 하루 질문 수
+# 텔레그램. 둘 중 하나라도 비어 있으면 텔레그램 경로는 404를 돌려준다 (웹은 영향 없음).
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")   # setWebhook 의 secret_token
 
 # 답변 생성에 넣는 후보 정책 글(지원 대상·지원 내용)의 최대 글자 수
 # 200자일 때 답변 1번에 3,000토큰을 써서 1분에 2번밖에 답하지 못했다. 120자로 줄였다.
