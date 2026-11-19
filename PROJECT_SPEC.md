@@ -151,6 +151,7 @@ projectAI/
 │  │  ├─ search.py          # POST /api/search
 │  │  ├─ policy.py          # GET  /api/policy/{id}, GET /api/policies
 │  │  ├─ telegram.py        # POST /api/telegram/webhook (텔레그램 봇)
+│  │  ├─ discord.py         # POST /api/discord/interactions (디스코드 슬래시 명령 봇)
 │  │  └─ meta.py            # GET  /api/options, GET /api/health
 │  ├─ services/
 │  │  ├─ chat_core.py       # 채팅 처리 핵심 (분석 → 되묻기 → 검색 → 답변). 웹 채팅과 메신저가 함께 쓴다
@@ -170,6 +171,7 @@ projectAI/
 │  ├─ init_db.sql           # 테이블 생성 SQL
 │  ├─ ingest.py             # 공공데이터 수집 → DB 저장
 │  ├─ set_telegram_webhook.py # 텔레그램 웹훅·명령 등록 (배포 뒤 한 번)
+│  ├─ register_discord_commands.py # 디스코드 명령 등록, 봇 초대 링크 (한 번)
 │  ├─ load_regions.py       # 시·군·구 코드 넣기
 │  ├─ eval_scenarios.py     # 시나리오 30개 자동 평가
 │  ├─ eval_daily.py         # 일상 질문 35개 평가 (복지 밖 분야: 공연, 보청기, 장례, 귀농, 법률상담 등)
@@ -633,6 +635,9 @@ PUBLIC_BASE_URL=           # 배포 주소 (메신저 답의 [자세히 보기] 
 MESSENGER_DAILY_LIMIT=100  # 메신저마다 하루 질문 수
 TELEGRAM_BOT_TOKEN=        # BotFather에서 받은 텔레그램 봇 토큰
 TELEGRAM_WEBHOOK_SECRET=   # 텔레그램 웹훅 비밀 문자열 (요청 헤더로 검사)
+DISCORD_APPLICATION_ID=    # 디스코드 앱 ID
+DISCORD_PUBLIC_KEY=        # 디스코드 요청 서명 검사용 공개키
+DISCORD_BOT_TOKEN=         # 명령 등록 스크립트에서만 씀 (서버에는 넣지 않아도 됨)
 ```
 - 배포 시에는 Render 서비스의 **Environment** 화면에 같은 이름으로 넣는다 (`DATABASE_URL`, `GROQ_API_KEY` 등. 수집용 `DATA_GO_KR_API_KEY`는 서버에 넣지 않는다).
 

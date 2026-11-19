@@ -235,11 +235,12 @@ def _run(key, state, message, now):
     return [_say(response["text"])]   # none
 
 
-def start(platform, user_id):
-    """/start 같은 처음 인사. 그 사용자의 조건을 지운다."""
+def start(platform, user_id, how=""):
+    """/start 같은 처음 인사. 그 사용자의 조건을 지운다. how: 플랫폼별 물어보는 방법 안내 (인사 끝에 붙인다)."""
     _forget(user_key(platform, user_id))
     examples = [[{"label": text, "data": f"e:{i}"}] for i, text in enumerate(EXAMPLES)]
-    return [_say(GREETING, examples)]
+    text = GREETING.replace("\n\n이렇게", f"\n\n{how}\n\n이렇게") if how else GREETING
+    return [_say(text, examples)]
 
 
 def on_text(platform, user_id, text, now=None, today=None):

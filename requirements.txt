@@ -16,3 +16,4 @@ groq
 python-dotenv
 pydantic
 pytest
+PyNaCl

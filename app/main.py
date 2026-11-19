@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import config, db
-from app.routers import chat, meta, policy, search, telegram
+from app.routers import chat, discord, meta, policy, search, telegram
 
 # 홈 화면에 추가(PWA) 설정 파일이 올바른 종류로 전달되게 한다
 mimetypes.add_type("application/manifest+json", ".webmanifest")
@@ -59,6 +59,7 @@ app.include_router(search.router)
 app.include_router(policy.router)
 app.include_router(meta.router)
 app.include_router(telegram.router)
+app.include_router(discord.router)
 
 # 정적 파일은 API 라우터보다 뒤에 등록한다.
 app.mount("/", StaticFiles(directory=config.WEB_DIR, html=True), name="web")

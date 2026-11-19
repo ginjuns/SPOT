@@ -41,6 +41,10 @@ MESSENGER_DAILY_LIMIT = int(os.getenv("MESSENGER_DAILY_LIMIT", "100"))   # 메�
 # 텔레그램. 둘 중 하나라도 비어 있으면 텔레그램 경로는 404를 돌려준다 (웹은 영향 없음).
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")   # setWebhook 의 secret_token
+# 디스코드. 둘 중 하나라도 비어 있으면 디스코드 경로는 404를 돌려준다. 봇 토큰은 명령 등록 스크립트에서만 쓴다.
+DISCORD_APPLICATION_ID = os.getenv("DISCORD_APPLICATION_ID", "")
+DISCORD_PUBLIC_KEY = os.getenv("DISCORD_PUBLIC_KEY", "")   # 요청 서명 검사용
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 
 # 답변 생성에 넣는 후보 정책 글(지원 대상·지원 내용)의 최대 글자 수
 # 200자일 때 답변 1번에 3,000토큰을 써서 1분에 2번밖에 답하지 못했다. 120자로 줄였다.
