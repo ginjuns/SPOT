@@ -153,6 +153,7 @@ projectAI/
 │  │  └─ meta.py            # GET  /api/options, GET /api/health
 │  ├─ services/
 │  │  ├─ chat_core.py       # 채팅 처리 핵심 (분석 → 되묻기 → 검색 → 답변). 웹 채팅과 메신저가 함께 쓴다
+│  │  ├─ messenger.py       # 메신저 공통 처리 (조건 30분 기억, 메신저 하루 한도, 되묻기 버튼, 답 글 만들기)
 │  │  ├─ analyzer.py        # 질문 분석 (Groq → JSON)
 │  │  ├─ retriever.py       # 조건 필터 + 의미 검색
 │  │  ├─ answerer.py        # 답변 생성 + ID 검증
@@ -622,6 +623,8 @@ EMBEDDING_THREADS=1        # 서버는 1. 내 PC에서 수집할 때는 코어 �
 DAILY_CHAT_LIMIT=30        # 사용자 1명당 하루 질문 수
 GLOBAL_DAILY_CHAT_LIMIT=200  # 서비스 전체 하루 질문 수 (Groq 한도 확인 후 조정)
 MAX_DISTANCE=0.15          # 의미 검색 거리 기준 (시나리오 평가로 정함)
+PUBLIC_BASE_URL=           # 배포 주소 (메신저 답의 [자세히 보기] 링크에 씀)
+MESSENGER_DAILY_LIMIT=100  # 메신저마다 하루 질문 수
 ```
 - 배포 시에는 Render 서비스의 **Environment** 화면에 같은 이름으로 넣는다 (`DATABASE_URL`, `GROQ_API_KEY` 등. 수집용 `DATA_GO_KR_API_KEY`는 서버에 넣지 않는다).
 

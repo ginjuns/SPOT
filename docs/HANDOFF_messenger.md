@@ -39,6 +39,7 @@
 - 웹은 모두 동작한다: 직접 찾기, 물어보기(AI 채팅), 정책 상세, 공유, 주민센터에서 보여주기, 글씨 크기 4단계, 말로 하기·소리로 듣기, 컴퓨터 화면 메뉴, "따뜻한 파스텔" 디자인.
 - 메신저 관련 코드는 **아직 하나도 없다.**
 - (2026-11-19) 5장 0단계 끝: 채팅 처리가 `app/services/chat_core.py`의 `handle`로 옮겨졌다. 빈 질문·300자 초과는 `{"type":"error","text"}`를 돌려주고, `routers/chat.py`가 400으로 바꾼다. 아래 설명의 `chat.py`는 이제 `chat_core.py`로 읽는다.
+- (2026-11-19) 1단계 끝: `app/services/messenger.py` + `tests/test_messenger.py`. 연결 파일이 쓸 함수는 `start(플랫폼, 사용자ID)`, `on_text(플랫폼, 사용자ID, 글)`, `on_button(플랫폼, 사용자ID, 누름 코드)`이고, 셋 다 말 목록 `[{"text", "buttons": [[{"label","data"} 또는 {"label","url"}]]}]`을 돌려준다. 결과는 안내 문장 1개 + 정책마다 1개(링크 버튼 포함)로 나뉜다. 시·도는 16곳, 시·군·구는 한 시·도에 최대 31곳이다(`data/regions.csv` 기준, DB의 region 테이블과 같은 내용). 시·도를 고르면 우선 시·도 코드로 정해 두고, 시·군·구를 건너뛰면 시·도로 찾는다. 고른 조건과 "되물었음" 표시는 웹 채팅처럼 30분 동안 다음 질문에도 쓴다.
 
 ### 재사용할 채팅 로직 (`app/routers/chat.py`)
 - `handle(req, client_key)`가 핵심이다. `ChatRequest`(message, conditions, history, asked)를 받아 아래 넷 중 하나를 돌려준다.
