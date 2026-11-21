@@ -209,3 +209,12 @@ def test_every_button_fits_telegram_callback_limit():
     for reply in ask_buttons:
         for d in datas(reply):
             assert len(d.encode()) <= 64
+
+
+def test_greeting_is_not_a_question():
+    messenger.reset()
+    for text in ("안녕하세요", "안녕하세요!", "안녕~", "하이 ㅎㅎ"):
+        replies = messenger.on_text("telegram", 1, text)
+        assert replies[0]["text"].startswith("안녕하세요, SPOT이에요.")
+    assert not messenger.is_greeting("안녕하세요 병원비 지원이 있나요?")
+    assert messenger._daily == {}   # 인사는 하루 질문 수에 넣지 않는다

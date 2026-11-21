@@ -123,3 +123,8 @@ def test_policy_results_become_one_carousel(monkeypatch):
     assert len(outputs[1]["carousel"]["items"]) == 5
     assert outputs[1]["carousel"]["items"][0]["title"] == "1. 어르신 병원비 지원"
     assert outputs[2]["simpleText"]["text"] == messenger.CONFIRM_TEXT
+
+
+def test_greeting_shows_welcome(fake):
+    client.post("/api/kakao/skill", json=body("안녕하세요"), headers=HEADERS)
+    assert fake["messenger"][0][0] == "start"

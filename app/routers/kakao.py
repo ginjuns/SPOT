@@ -173,7 +173,7 @@ def replies_for(body, now=None):
         replies = messenger.on_button(PLATFORM, user, code, now=now)
     elif text in RESET_WORDS:
         replies = messenger.on_button(PLATFORM, user, "r", now=now)
-    elif text in HELP_WORDS:   # 빈 말 = 웰컴 블록 (대화창에 처음 들어옴)
+    elif text in HELP_WORDS or messenger.is_greeting(text):   # 빈 말 = 웰컴 블록 (대화창에 처음 들어옴)
         replies = messenger.start(PLATFORM, user, HOW_TO_ASK)
     else:
         replies = messenger.on_text(PLATFORM, user, text, now=now)

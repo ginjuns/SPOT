@@ -64,7 +64,8 @@ GREETING = (
     "이름이나 전화번호는 적지 않으셔도 돼요. 대화는 이 메신저 회사 서버에 남을 수 있어요.\n\n"
     "이렇게 물어보셔도 돼요:"
 )
-RESET_TEXT = "처음부터 다시 할게요. 궁금한 점을 적어 주세요."
+GREETING_WORDS = {"안녕", "안녕하세요", "안녕하십니까", "하이", "hi", "hello", "반가워요", "반갑습니다", "처음 왔어요"}
+RESET_TEXT ="처음부터 다시 할게요. 궁금한 점을 적어 주세요."
 EXPIRED_TEXT = "시간이 조금 지나서 앞의 내용을 잊었어요. 궁금한 점을 다시 적어 주세요."
 EMPTY_TEXT = "궁금한 점을 글로 적어 주세요."
 ASK_AGE_TEXT = "나이대를 골라 주세요."
@@ -243,6 +244,12 @@ def start(platform, user_id, how=""):
     return [_say(text, examples)]
 
 
+def is_greeting(text):
+    """"안녕하세요" 같은 인사만 적은 글인지. 인사는 질문으로 찾지 않고 처음 인사로 답한다."""
+    word = (text or "").strip().rstrip("!~.?^ ㅎㅋ")
+    return word in GREETING_WORDS
+
+
 def on_text(platform, user_id, text, now=None, today=None):
     """사용자가 보낸 글 = 질문."""
     now = now or time.time()
@@ -250,6 +257,8 @@ def on_text(platform, user_id, text, now=None, today=None):
     text = (text or "").strip()
     if not text:
         return [_say(EMPTY_TEXT)]
+    if is_greeting(text):
+        return start(platform, user_id)
     if not _count_question(platform, today):
         return [_say(DAILY_LIMIT_TEXT, _link_row(("웹에서 찾아보기", _web(""))))]
     key = user_key(platform, user_id)

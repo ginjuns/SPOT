@@ -124,7 +124,7 @@ def process(event):
     text = (content.get("text") or "").strip()
     if text in RESET_WORDS:
         replies = messenger.on_button(PLATFORM, user, "r")
-    elif text in HELP_WORDS:
+    elif text in HELP_WORDS or messenger.is_greeting(text):
         replies = messenger.start(PLATFORM, user, HOW_TO_ASK)
     elif not text:
         replies = [{"text": ONLY_TEXT, "buttons": []}]
