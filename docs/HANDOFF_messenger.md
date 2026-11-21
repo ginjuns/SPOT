@@ -140,8 +140,22 @@ DISCORD_BOT_TOKEN=          # 명령 등록 스크립트에서만 씀 (서버에
 ## 8. 이번 범위 밖: 네이버 톡톡·카카오톡 조사 메모 (2026-11-18)
 
 - **카카오톡**: 카카오톡 채널 + 카카오 i 오픈빌더 + 스킬 서버. 운영에 카카오 승인이 필요하다는 후기가 있다. 스킬 응답에 시간 제한(5초로 알려짐, 공식 수치는 확인 못 함)이 있어 AI 답변에는 **AI 챗봇 콜백**(`useCallback: true`, `callbackUrl`로 나중에 답)을 써야 한다. 콜백은 봇 테스트 화면에서는 제대로 안 되고 배포 후 시험해야 한다. 챗봇 요금 정책은 확인하지 못했다. [AI 챗봇 콜백 가이드](https://kakaobusiness.gitbook.io/main/tool/chatbot/skill_guide/ai_chatbot_callback_guide)
-- **네이버 톡톡**: 파트너센터 → 개발자도구 → 챗봇 API 신청. 웹훅으로 받고 "보내기 API"로 따로 답하므로 시간 제약이 적다. 요금 정책은 확인하지 못했다. [navertalk/chatbot-api](https://github.com/navertalk/chatbot-api)
+- **네이버 톡톡**: (2026-11-21) 연결 파일을 만들었다. 아래 8-1 참고.
 - 4장의 `messenger.py` 공통 처리를 잘 만들어 두면, 나중에 이 둘은 연결 파일만 더하면 된다.
+
+### 8-1. 네이버 톡톡 (2026-11-21, `app/routers/navertalk.py`, `tests/test_navertalk.py`)
+- 문서: [navertalk/chatbot-api](https://github.com/navertalk/chatbot-api) README (2026-11-21 확인). 요금 이야기는 문서에 없다. 신청 화면에서 유료 항목이 있는지 사용자가 확인한다.
+- 경로: `POST /api/navertalk/webhook/{NAVERTALK_WEBHOOK_SECRET}`. 네이버 톡톡은 **요청 서명을 주지 않는다**. 그래서 비밀 문자열을 주소 끝에 넣고, 틀리면 403을 돌려준다. 접속 기록(`uvicorn.access`)에는 비밀 문자열을 `***`로 가려 남긴다.
+- 웹훅은 3초 안에 연결되고 5초 안에 답해야 한다. 그래서 본문 없이 200을 바로 돌려주고, 처리는 뒤에서 한 뒤 **보내기 API**(`POST https://gw.talk.naver.com/chatbot/v1/event`, 헤더 `Authorization: <인증 값>`)로 답한다. 처리하는 동안 `typingOn`을 보낸다.
+- 이벤트: `open`(대화창 들어옴)이면 인사를 보낸다. `send`에서 `textContent.inputType == "button"`이고 `code`가 있으면 버튼 누름으로, 아니면 질문으로 처리한다. "처음부터"는 조건 지우기, "안내"는 인사로 처리한다. 사진 같은 다른 내용에는 "글로 적어 주세요"라고 답한다. `leave`, `friend`, `echo`에는 답하지 않는다 (`echo`에 답하면 끝없이 돈다).
+- 버튼: `compositeContent`의 `TEXT` 버튼(`code`에 누름 코드)과 `LINK` 버튼을 쓴다. 메시지 하나에 버튼은 10개까지라서 시·도(17개)와 시·군·구(최대 32개)는 여러 메시지로 나눈다. 버튼 이름은 18자까지라서, 예시 질문처럼 긴 이름은 글에 전부 적고 버튼에는 앞부분만 쓴다. 버튼이 붙은 글은 1000자까지, 버튼 없는 글은 10000자까지다.
+- 같은 이벤트를 두 번 보내는지, 버튼 누름에 이벤트 번호가 있는지는 문서에 없다. 그래서 텔레그램처럼 겹친 것을 거르는 일은 하지 않는다 (`TODO(확인)`: 실제 계정에서 확인).
+- 등록 순서 (사용자가 함):
+  1. https://partner.talk.naver.com/ 에서 내계정관리 > 새로운 톡톡 계정 만들기 (서비스 연결은 "나중에 하기"). 시험용이면 "개인"을 고르고, 프로필 이름 앞에 `[테스트]`를 붙이면 검색에 나오지 않는다. 검수가 끝나면 문자가 온다.
+  2. 계정관리 > 개발자도구 > 챗봇 API 설정에서 약관에 동의하고 신청한다.
+  3. 보내기 API에서 인증 값을 만들어 Render Environment의 `NAVERTALK_AUTH_KEY`에 넣는다. 비밀 문자열을 만들어 `NAVERTALK_WEBHOOK_SECRET`에 넣는다: `python -c "import secrets; print(secrets.token_urlsafe(24))"`.
+  4. Webhook의 "이벤트 받을 URL"에 `{배포 주소}/api/navertalk/webhook/{비밀 문자열}`을 넣고, 이벤트에서 open과 send를 켠다.
+- 알려진 한계: 서버가 잠들어 있으면 3초 안에 연결되지 않아 첫 글이 실패할 수 있다 (디스코드와 같다).
 
 ## 9. 참고 문서
 

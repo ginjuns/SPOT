@@ -152,6 +152,7 @@ projectAI/
 │  │  ├─ policy.py          # GET  /api/policy/{id}, GET /api/policies
 │  │  ├─ telegram.py        # POST /api/telegram/webhook (텔레그램 봇)
 │  │  ├─ discord.py         # POST /api/discord/interactions (디스코드 슬래시 명령 봇)
+│  │  ├─ navertalk.py       # POST /api/navertalk/webhook/{비밀} (네이버 톡톡 챗봇)
 │  │  └─ meta.py            # GET  /api/options, GET /api/health
 │  ├─ services/
 │  │  ├─ chat_core.py       # 채팅 처리 핵심 (분석 → 되묻기 → 검색 → 답변). 웹 채팅과 메신저가 함께 쓴다
@@ -641,6 +642,8 @@ TELEGRAM_WEBHOOK_SECRET=   # 텔레그램 웹훅 비밀 문자열 (요청 헤더
 DISCORD_APPLICATION_ID=    # 디스코드 앱 ID
 DISCORD_PUBLIC_KEY=        # 디스코드 요청 서명 검사용 공개키
 DISCORD_BOT_TOKEN=         # 명령 등록 스크립트에서만 씀 (서버에는 넣지 않아도 됨)
+NAVERTALK_AUTH_KEY=        # 네이버 톡톡 보내기 API 인증 값
+NAVERTALK_WEBHOOK_SECRET=  # 네이버 톡톡 웹훅 주소 끝에 붙이는 비밀 문자열 (요청 서명이 없어서)
 ```
 - 배포 시에는 Render 서비스의 **Environment** 화면에 같은 이름으로 넣는다 (`DATABASE_URL`, `GROQ_API_KEY` 등. 수집용 `DATA_GO_KR_API_KEY`는 서버에 넣지 않는다).
 
