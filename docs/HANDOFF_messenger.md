@@ -159,7 +159,7 @@ DISCORD_BOT_TOKEN=          # 명령 등록 스크립트에서만 씀 (서버에
 
 ### 8-2. 카카오톡 (2026-11-21, `app/routers/kakao.py`, `tests/test_kakao.py`)
 - 문서: [스킬 가이드](https://kakaobusiness.gitbook.io/main/tool/chatbot/skill_guide) (응답 형식, AI 챗봇 콜백, 스킬 만들기). 2026-11-21에 확인했다. 요금과 운영 승인 이야기는 문서에 없다. 사용자가 관리자센터에서 확인한다.
-- 경로: `POST /api/kakao/skill`. 카카오는 요청 서명을 주지 않는다. 오픈빌더 스킬 설정의 "헤더값"에 `X-Spot-Secret: {KAKAO_SKILL_SECRET}`을 넣게 하고, 틀리면 403을 돌려준다 (`TODO(확인)`: 헤더값 입력 형식).
+- 경로: `POST /api/kakao/skill`. 카카오는 요청 서명을 주지 않는다. 오픈빌더 스킬 설정의 "헤더값"에 `X-Spot-Secret: {KAKAO_SKILL_SECRET}`을 넣게 하고, 틀리면 403을 돌려준다. 오픈빌더 화면(2026-11-21 확인)은 "헤더값 입력"에 Key와 Value 칸이 따로 있다. Key에는 `X-Spot-Secret`, Value에는 비밀 문자열을 넣는다. Test URL을 비워 두면 운영 URL로 시험하므로, "테스트 헤더값 입력"에도 같은 Key와 Value를 넣는다.
 - 스킬은 **5초 안에** 답해야 한다. 블록에 **AI 챗봇 콜백**을 켜면 요청에 `userRequest.callbackUrl`이 온다. 그러면 `{"version":"2.0","useCallback":true,"data":{"text":"기다려 주세요"}}`로 바로 답하고, 뒤에서 처리한 뒤 callbackUrl로 응답을 **한 번** POST한다 (5분 안). callbackUrl이 없으면 바로 처리해서 답한다. 이때 AI 답변은 5초를 넘길 수 있다.
 - 콜백은 봇 테스트 화면에서는 시험 토큰이라 거절될 수 있다. 배포한 채널에서 시험한다.
 - 응답 제한: 말풍선 3개, 바로가기 버튼 10개, 캐러셀 카드 10장, 카드 버튼 3개, 버튼 이름 14자, simpleText 1000자, 캐러셀 안 textCard 설명 128자.

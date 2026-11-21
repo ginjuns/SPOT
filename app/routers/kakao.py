@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/kakao")
 logger = logging.getLogger("benefit")
 
 PLATFORM = "kakao"
-SECRET_HEADER = "x-spot-secret"   # 오픈빌더 스킬의 헤더값 이름. TODO(확인): 실제 오픈빌더 화면에서 넣는 형식
+SECRET_HEADER = "x-spot-secret"   # 오픈빌더 스킬 "헤더값 입력"의 Key (Value 에 비밀 문자열)
 OUTPUT_LIMIT = 3                  # 응답 하나에 말풍선 3개까지
 QUICK_LIMIT = 10                  # 바로가기 버튼 10개까지
 CAROUSEL_LIMIT = 10               # 캐러셀 카드 10장까지
