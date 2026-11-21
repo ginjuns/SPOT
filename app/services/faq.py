@@ -18,7 +18,10 @@ TOPICS = json.loads((config.DATA_DIR / "faq.json").read_text(encoding="utf-8"))
 BY_ID = {t["id"]: t for t in TOPICS}
 NATION_LIMIT = 3   # 전국 정책 몇 건
 LOCAL_LIMIT = 2    # 사는 지역 정책 몇 건
-RESULT_TEXT = "'{title}' 관련 지원을 찾았어요. 자격은 신청하는 곳에서 최종 확인해 주세요."
+# 여러 가지를 이어서 묻는 말. 한 주제 낱말만 걸려도 다른 걱정이 같이 있으니 AI가 판단한다
+# ("아들이 취직을 못 해서 걱정이에요 그리고 저도 아파요").
+SEVERAL_THINGS = ["그리고", "게다가", "뿐만 아니라", "그 밖에도", "그밖에도"]
+RESULT_TEXT ="'{title}' 관련 지원을 찾았어요. 자격은 신청하는 곳에서 최종 확인해 주세요."
 
 
 def _squash(text):
@@ -26,23 +29,24 @@ def _squash(text):
     return "".join((text or "").split()).lower()
 
 
-_KEYS = [(t["id"], [_squash(k) for k in t["keys"]]) for t in TOPICS]
+# 낱말 하나 = 띄어쓰기를 뺀 조각 목록. "일하다+다쳤"처럼 +로 이으면 조각이 모두 있어야 걸린다.
+_KEYS = [(t["id"], [[_squash(p) for p in k.split("+")] for k in t["keys"]]) for t in TOPICS]
 
 
 def matched_topics(message):
     """질문에 낱말이 들어 있는 주제 ID 목록."""
     text = _squash(message)
-    return [tid for tid, keys in _KEYS if any(k in text for k in keys)]
+    return [tid for tid, keys in _KEYS if any(all(p in text for p in parts) for parts in keys)]
 
 
 def match(message):
     """질문에 걸린 주제가 하나면 그 주제. 없거나 여럿이면 None (AI가 판단한다).
 
-    여럿이 걸리면 단계(level)가 가장 높은 주제만 남긴다: 0 넓음 ("병원비") < 1 보통 < 2 좁음.
+    여럿이 걸리면 단계(level)가 가장 높은 주제만 남긴다: -1 아주 넓음("병원비") < 0 넓음 < 1 보통(기본) < 2 좁음.
     "무릎 수술비"는 "큰 병원비"(넓음)와 "무릎 관절 수술"(보통)에 둘 다 걸리는데, 좁은 쪽이 맞다.
     """
     hits = matched_topics(message)
-    if not hits:
+    if not hits or any(w in message for w in SEVERAL_THINGS):
         return None
     top = max(BY_ID[h].get("level", 1) for h in hits)
     hits = [h for h in hits if BY_ID[h].get("level", 1) == top]

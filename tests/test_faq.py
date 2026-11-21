@@ -27,7 +27,7 @@ def test_topic_fields_are_valid():
     assert len(ids) == len(set(ids))
     for t in faq.TOPICS:
         assert t["need"] in analyzer.NEEDS and t["keys"] and t["names"] and t["questions"]
-        assert t.get("level", 1) in (0, 1, 2)
+        assert t.get("level", 1) in (-1, 0, 1, 2)
 
 
 def test_matching_rules():
@@ -36,6 +36,7 @@ def test_matching_rules():
     assert faq.match("문화재 관람 무료인가요?")["id"] == "heritage"      # "문화재" 안의 "화재"에 걸리지 않는다
     assert faq.match("75살이고 서울 살아요") is None                     # 조건만 말한 글은 AI로
     assert faq.match("보청기랑 휠체어 둘 다 필요해요") is None           # 두 주제가 같은 단계로 걸리면 AI로
+    assert faq.match("아들이 취직을 못 해요 그리고 저도 아파요") is None  # 여러 가지를 이어서 물으면 AI로
 
 
 @pytest.fixture
