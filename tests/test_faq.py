@@ -39,6 +39,26 @@ def test_matching_rules():
     assert faq.match("아들이 취직을 못 해요 그리고 저도 아파요") is None  # 여러 가지를 이어서 물으면 AI로
 
 
+def test_age_group_check():
+    """이름·지원 대상 글에 나이 무리가 적혀 있으면 사용자 나이대와 맞을 때만 보여 준다 (75세에게 학교 급식비 X)."""
+    school = {"name": "유·초·중·특수학교 친환경급식비 지원", "target": "도내 유ㆍ초ㆍ중ㆍ고ㆍ특수학교 전체 학생"}
+    infertility = {"name": "난임 부부 심리상담", "target": "○ 난임 부부"}
+    elder = {"name": "노인맞춤돌봄서비스", "target": "○ 65세 이상 기초연금수급자"}
+    flu = {"name": "인플루엔자 국가예방접종 지원", "target": "○ 어린이 ... ○ 65세 이상 어르신"}
+    kpass = {"name": "K-패스", "target": "만 19세 이상의 국민 - 청년층: 만19~34세"}
+    plain = {"name": "에너지바우처", "target": "소득기준 및 세대원 특성 기준을 모두 충족하는 세대"}
+    assert not faq.fits_age(school, "75plus", False)
+    assert faq.fits_age(school, "75plus", True)          # 손주를 위한 질문이면 아이 대상 정책도 보여 준다
+    assert not faq.fits_age(infertility, "75plus", False)
+    assert faq.fits_age(infertility, "35_49", False)
+    assert not faq.fits_age(elder, "19_34", False)
+    assert faq.fits_age(flu, "75plus", False)            # 여러 무리가 같이 적혀 있으면 그중 하나만 맞아도 된다
+    assert faq.fits_age(kpass, "35_49", False)           # "국민"(누구나)이 있으면 무리 검사를 하지 않는다
+    assert faq.fits_age(plain, "u19", False)             # 무리가 적혀 있지 않으면 보여 준다
+    assert faq.fits_age(school, None, False)             # 나이를 모르면 거르지 않는다
+    assert faq.age_groups("대학생 기숙사", "") == {"youth"}   # "대학생"의 "학생"을 아이 무리로 보지 않는다
+
+
 @pytest.fixture
 def fake(monkeypatch):
     calls = {"analyze": [], "answer": [], "faq": []}
@@ -73,6 +93,12 @@ def test_faq_asks_then_uses_buttons_without_ai(fake):
 def test_age_and_region_in_text_are_used(fake):
     r = client.post("/api/chat", json={"message": "75살인데 임플란트 비용이 걱정이에요"}).json()
     assert r["type"] == "ask" and r["ask"] == ["region"] and r["conditions"]["age_group"] == "75plus"
+
+
+def test_child_words_in_question_set_for_child(fake):
+    client.post("/api/chat", json={"message": "손주가 태권도 다니는데 비용이 부담돼요", "asked": True,
+                                   "conditions": {"age_group": "75plus"}})
+    assert fake["faq"][-1][0] == "sports_voucher" and fake["faq"][-1][1]["for_child"] is True
 
 
 def test_no_matching_policy_falls_back_to_ai(fake):

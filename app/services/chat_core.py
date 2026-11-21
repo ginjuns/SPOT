@@ -87,7 +87,8 @@ def handle(req, client_key):
         conditions.update(
             age_group=sent.get("age_group") or rules["age_group"],
             region_code=sent.get("region_code") or rules["region_code"],
-            for_child=bool(topic.get("for_child")), need=topic["need"],
+            # 아이를 위한 질문인지: 주제가 아이 주제이거나, 글에 "아이·손주" 같은 말이 있으면 ("아이가 태권도장을 다니는데")
+            for_child=bool(topic.get("for_child")) or rules["for_child"], need=topic["need"],
             search_text=topic["search_text"], faq=topic["id"],
         )
     elif message:
