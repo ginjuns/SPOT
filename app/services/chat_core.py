@@ -3,7 +3,7 @@
 웹 채팅과 메신저(텔레그램·디스코드·네이버 톡톡·카카오톡)가 함께 쓴다. HTTP와 상관없는 순수 로직만 둔다.
 서버는 대화를 저장하지 않는다. 이전 대화와 정해진 조건은 부르는 쪽이 매번 같이 보낸다.
 """
-from app.services import analyzer, answerer, llm, privacy, rate_limit, retriever
+from app.services import analyzer, answerer, faq, llm, privacy, rate_limit, retriever
 
 MESSAGE_LIMIT = 300
 HISTORY_LIMIT = 6
@@ -69,19 +69,33 @@ def handle(req, client_key):
     if not message and not sent.get("search_text"):
         return error("궁금한 점을 말씀해 주세요.")
 
-    limit = rate_limit.check(client_key, is_question=bool(message))
+    masked = False
+    topic = None
+    if message:
+        message, masked = privacy.mask(message)
+        topic = faq.match(message)   # 자주 묻는 질문이면 AI 없이 답한다
+    # AI를 쓰지 않는 자주 묻는 질문은 전체 한도(Groq 보호용)를 덜 쓰도록 재호출처럼 센다.
+    limit = rate_limit.check(client_key, is_question=bool(message) and not topic)
     if limit != rate_limit.OK:
         text = USER_LIMIT_TEXT if limit == rate_limit.USER_LIMIT else FALLBACK_TEXT
         return fallback(text, {k: sent.get(k) for k in ("age_group", "gender", "region_code", "household")})
 
-    masked = False
-    if message:
-        message, masked = privacy.mask(message)
+    if topic:
+        # 나이·지역은 버튼으로 고른 값이 먼저, 없으면 글에서 낱말로 찾는다 ("75살", "서울 강남구").
+        rules = analyzer.analyze_by_rules(message)
+        conditions = {k: sent.get(k) for k in ("gender", "household")}
+        conditions.update(
+            age_group=sent.get("age_group") or rules["age_group"],
+            region_code=sent.get("region_code") or rules["region_code"],
+            for_child=bool(topic.get("for_child")), need=topic["need"],
+            search_text=topic["search_text"], faq=topic["id"],
+        )
+    elif message:
         history = [
             {"role": h.role, "text": privacy.mask(h.text[:HISTORY_TEXT_LIMIT])[0]}
             for h in req.history[-HISTORY_LIMIT:]
         ]
-        conditions = merge_conditions(sent, analyzer.analyze(message, history))
+        conditions = {**merge_conditions(sent, analyzer.analyze(message, history)), "faq": None}
     else:
         # 버튼으로 조건만 고른 호출: 분석(LLM)을 건너뛰고 바로 검색한다.
         conditions = sent
@@ -93,6 +107,16 @@ def handle(req, client_key):
     )
     if missing and not req.asked:
         return {"type": "ask", "text": ASK_TEXT[missing] + notice, "ask": list(missing), "conditions": conditions}
+
+    topic = faq.BY_ID.get(conditions.get("faq") or "")
+    if topic:
+        cards = faq.policies(topic, conditions)
+        if cards:   # 맞는 정책이 없으면 아래의 의미 검색 + AI 답변으로 넘어간다
+            text = faq.result_text(topic)
+            if not conditions["region_code"]:
+                text += " " + REGION_HINT
+            return {"type": "result", "text": text + notice, "policies": cards, "conditions": conditions,
+                    "via": "faq"}
 
     candidates = retriever.search_semantic(
         analyzer.expand(conditions["search_text"]),

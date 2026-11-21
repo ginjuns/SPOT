@@ -19,7 +19,9 @@ def chat(req: ChatRequest, request: Request):
     started = time.perf_counter()
     response = chat_core.handle(req, rate_limit.client_key(request))
     # 질문 내용은 남기지 않는다. 결과 유형과 걸린 시간만 남긴다.
-    logger.info("chat %s %dms", response["type"], (time.perf_counter() - started) * 1000)
+    # via=faq: 자주 묻는 질문으로 AI 없이 답했다 (AI 호출이 얼마나 줄었는지 보려고 남긴다).
+    logger.info("chat %s%s %dms", response["type"], " faq" if response.get("via") == "faq" else "",
+                (time.perf_counter() - started) * 1000)
     if response["type"] == "error":
         raise HTTPException(400, response["text"])
     return response

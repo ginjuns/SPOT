@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app import config
-from app.services import analyzer, answerer, llm, rate_limit, retriever
+from app.services import analyzer, answerer, faq, llm, rate_limit, retriever
 
 client = TestClient(app)  # with 를 쓰지 않으므로 DB 연결을 열지 않는다
 
@@ -47,6 +47,8 @@ def fake(monkeypatch):
 
     monkeypatch.setattr(retriever, "search_semantic", fake_search)
     monkeypatch.setattr(answerer, "answer", fake_answer)
+    # 이 파일은 AI 경로를 시험한다. 자주 묻는 질문은 tests/test_faq.py 에서 따로 본다.
+    monkeypatch.setattr(faq, "match", lambda message: None)
     rate_limit.reset()
     yield calls
     rate_limit.reset()

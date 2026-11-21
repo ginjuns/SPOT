@@ -26,6 +26,7 @@ class Conditions(BaseModel):
     for_child: Optional[bool] = None   # 아이를 위한 지원을 묻는 질문인지 (서버가 분석해서 준 값)
     need: Optional[str] = Field(default=None, max_length=20)
     search_text: Optional[str] = Field(default=None, max_length=600)
+    faq: Optional[str] = Field(default=None, max_length=40)   # 자주 묻는 질문 주제 (data/faq.json 의 id)
 
 
 class HistoryItem(BaseModel):
