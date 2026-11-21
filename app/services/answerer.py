@@ -134,6 +134,20 @@ def validate(raw, candidates, all_names=None):
     return {"text": text, "picks": picks}
 
 
+CLOSE_PICKS = 3
+CLOSE_TEXT = "질문과 가까운 지원 {count}건을 찾았어요. " + FINAL_CHECK
+
+
+def close_picks(candidates):
+    """AI가 하나도 고르지 않았을 때 쓰는 답: 질문과 아주 가까운 후보(STRONG_DISTANCE 이하)만 최대 3건.
+
+    한 줄 요약도 AI 글이 아니라 DB 요약에서 만든다. 가까운 후보가 없으면 picks 가 비어 "찾지 못했어요"가 된다.
+    """
+    close = [c for c in candidates if c.get("distance", 1) <= config.STRONG_DISTANCE][:CLOSE_PICKS]
+    picks = [{"id": c["id"], "one_line": retriever.one_line(c["summary"])} for c in close]
+    return {"text": CLOSE_TEXT.format(count=len(picks)), "picks": picks}
+
+
 def answer(situation, conditions, candidates):
     """후보 정책 중 상황에 맞는 것을 고른다. LLM이 안 되면 llm.LLMError 가 그대로 올라간다."""
     raw = llm.chat_json(

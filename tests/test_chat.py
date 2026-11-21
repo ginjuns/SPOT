@@ -190,18 +190,22 @@ def test_bad_condition_value_is_rejected(fake):
 
 
 def test_none_when_ai_picks_nothing(fake):
+    fake["rows"] = [{**ROW, "distance": 0.14}]   # 관계없는 질문의 후보는 멀다
     fake["answer_result"] = {"text": "맞는 지원이 없어요.", "picks": []}
     r = client.post("/api/chat", json={"message": "", "asked": True,
                                        "conditions": {"search_text": "저녁 메뉴 추천"}}).json()
     assert r["type"] == "none" and "policies" not in r
 
 
-def test_asks_again_once_when_ai_picks_nothing_but_candidate_is_close(fake, monkeypatch):
-    answers = [{"text": "없어요.", "picks": []}, {"text": "찾았어요.", "picks": [{"id": "SVC1", "one_line": "요약"}]}]
-    monkeypatch.setattr(answerer, "answer", lambda *args: answers.pop(0))
+def test_close_candidate_is_shown_when_ai_picks_nothing(fake, monkeypatch):
+    calls = []
+    monkeypatch.setattr(answerer, "answer", lambda *args: calls.append(1) or {"text": "없어요.", "picks": []})
     r = client.post("/api/chat", json={"message": "", "asked": True,
                                        "conditions": {"search_text": "영화 관람 지원"}}).json()
-    assert r["type"] == "result" and answers == []   # 거리 0.1 후보가 있어서 한 번 더 물었다
+    # 거리 0.1 후보가 있어서 AI에게 다시 묻지 않고 그 후보를 보여 준다. 카드 내용은 DB 값이다.
+    assert r["type"] == "result" and len(calls) == 1
+    assert [p["id"] for p in r["policies"]] == ["SVC1"] and r["policies"][0]["name"] == "재난적 의료비 지원"
+    assert "최종 확인" in r["text"]
 
 
 def test_no_retry_when_candidates_are_far(fake):

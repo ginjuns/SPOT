@@ -1,9 +1,8 @@
 """채팅 처리 핵심: 질문 분석 → 되묻기 → 검색 → 답변 생성.
 
-웹 채팅과 메신저(텔레그램·디스코드)가 함께 쓴다. HTTP와 상관없는 순수 로직만 둔다.
+웹 채팅과 메신저(텔레그램·디스코드·네이버 톡톡·카카오톡)가 함께 쓴다. HTTP와 상관없는 순수 로직만 둔다.
 서버는 대화를 저장하지 않는다. 이전 대화와 정해진 조건은 부르는 쪽이 매번 같이 보낸다.
 """
-from app import config
 from app.services import analyzer, answerer, llm, privacy, rate_limit, retriever
 
 MESSAGE_LIMIT = 300
@@ -108,12 +107,13 @@ def handle(req, client_key):
 
     try:
         answer = answerer.answer(conditions["search_text"], conditions, candidates)
-        # 아주 가까운 후보가 있는데 AI가 하나도 고르지 않으면 한 번만 다시 묻는다.
-        # (같은 질문에도 가끔 빈 picks 를 내서 "찾지 못했어요"가 나왔다. 2026-11-19 영화 질문)
-        if not answer["picks"] and min(c.get("distance", 1) for c in candidates) <= config.STRONG_DISTANCE:
-            answer = answerer.answer(conditions["search_text"], conditions, candidates)
     except llm.LLMError:
         return fallback(FALLBACK_TEXT, conditions)
+    if not answer["picks"]:
+        # 아주 가까운 후보가 있는데 AI가 하나도 고르지 않으면, 그 후보들을 그대로 보여 준다.
+        # 같은 질문에도 AI가 가끔 빈 picks 를 내서 "찾지 못했어요"가 나왔다 (2026-11-19, 11-21 영화 질문).
+        # 한 번 더 묻던 방식은 두 번 다 비기도 하고 토큰을 두 배로 써서 바꿨다. 카드 내용은 모두 DB 값이다.
+        answer = answerer.close_picks(candidates)
     if not answer["picks"]:
         return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}
 

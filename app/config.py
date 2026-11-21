@@ -34,7 +34,7 @@ DAILY_CHAT_LIMIT = int(os.getenv("DAILY_CHAT_LIMIT", "30"))
 GLOBAL_DAILY_CHAT_LIMIT = int(os.getenv("GLOBAL_DAILY_CHAT_LIMIT", "200"))
 # 시나리오 평가(2026-11-14)로 정한 값: 맞는 정책은 0.08~0.15, 관계없는 질문의 후보는 0.15 이상이었다.
 MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.15"))
-# 이보다 가까운 후보가 있는데 답변 AI가 하나도 고르지 않으면 한 번 더 묻는다 (맞는 정책은 0.08~0.15였다).
+# 이보다 가까운 후보가 있는데 답변 AI가 하나도 고르지 않으면 그 후보를 그대로 보여 준다 (맞는 정책은 0.08~0.15였다).
 STRONG_DISTANCE = 0.10
 
 # 메신저(텔레그램·디스코드)
