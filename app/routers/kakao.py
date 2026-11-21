@@ -207,8 +207,10 @@ def run_callback(url, body):
 async def skill(request: Request, background: BackgroundTasks):
     if not config.KAKAO_SKILL_SECRET:
         raise HTTPException(404, "찾으시는 화면이 없어요.")
-    sent = request.headers.get(SECRET_HEADER, "")
-    if not hmac.compare_digest(sent.encode(), config.KAKAO_SKILL_SECRET.encode()):
+    sent = request.headers.get(SECRET_HEADER)
+    if sent is None or not hmac.compare_digest(sent.strip().encode(), config.KAKAO_SKILL_SECRET.strip().encode()):
+        # 값은 남기지 않고, 헤더가 없었는지 달랐는지만 남긴다 (오픈빌더 설정을 고칠 때 쓴다).
+        logger.warning("kakao 403 %s", "no-header" if sent is None else "wrong-secret")
         raise HTTPException(403, "허용되지 않은 요청이에요.")
     try:
         body = await request.json()
