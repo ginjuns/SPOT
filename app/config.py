@@ -50,6 +50,8 @@ DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 # 네이버 톡톡. 둘 중 하나라도 비어 있으면 네이버 톡톡 경로는 404를 돌려준다.
 NAVERTALK_AUTH_KEY = os.getenv("NAVERTALK_AUTH_KEY", "")             # 파트너센터 > 챗봇 API 설정 > 보내기 API 인증 값
 NAVERTALK_WEBHOOK_SECRET = os.getenv("NAVERTALK_WEBHOOK_SECRET", "")  # 웹훅 주소 끝에 붙이는 비밀 문자열
+# 카카오톡 채널 챗봇. 비어 있으면 카카오 경로는 404를 돌려준다.
+KAKAO_SKILL_SECRET = os.getenv("KAKAO_SKILL_SECRET", "")   # 오픈빌더 스킬 헤더값(X-Spot-Secret)에 넣는 비밀 문자열
 
 # 답변 생성에 넣는 후보 정책 글(지원 대상·지원 내용)의 최대 글자 수
 # 200자일 때 답변 1번에 3,000토큰을 써서 1분에 2번밖에 답하지 못했다. 120자로 줄였다.

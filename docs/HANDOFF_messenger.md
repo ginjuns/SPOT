@@ -139,7 +139,7 @@ DISCORD_BOT_TOKEN=          # 명령 등록 스크립트에서만 씀 (서버에
 
 ## 8. 이번 범위 밖: 네이버 톡톡·카카오톡 조사 메모 (2026-11-18)
 
-- **카카오톡**: 카카오톡 채널 + 카카오 i 오픈빌더 + 스킬 서버. 운영에 카카오 승인이 필요하다는 후기가 있다. 스킬 응답에 시간 제한(5초로 알려짐, 공식 수치는 확인 못 함)이 있어 AI 답변에는 **AI 챗봇 콜백**(`useCallback: true`, `callbackUrl`로 나중에 답)을 써야 한다. 콜백은 봇 테스트 화면에서는 제대로 안 되고 배포 후 시험해야 한다. 챗봇 요금 정책은 확인하지 못했다. [AI 챗봇 콜백 가이드](https://kakaobusiness.gitbook.io/main/tool/chatbot/skill_guide/ai_chatbot_callback_guide)
+- **카카오톡**: (2026-11-21) 연결 파일을 만들었다. 아래 8-2 참고. 처음 조사 메모: 카카오톡 채널 + 카카오 i 오픈빌더 + 스킬 서버. 운영에 카카오 승인이 필요하다는 후기가 있다. 스킬 응답에 시간 제한(5초로 알려짐, 공식 수치는 확인 못 함)이 있어 AI 답변에는 **AI 챗봇 콜백**(`useCallback: true`, `callbackUrl`로 나중에 답)을 써야 한다. 콜백은 봇 테스트 화면에서는 제대로 안 되고 배포 후 시험해야 한다. 챗봇 요금 정책은 확인하지 못했다. [AI 챗봇 콜백 가이드](https://kakaobusiness.gitbook.io/main/tool/chatbot/skill_guide/ai_chatbot_callback_guide)
 - **네이버 톡톡**: (2026-11-21) 연결 파일을 만들었다. 아래 8-1 참고.
 - 4장의 `messenger.py` 공통 처리를 잘 만들어 두면, 나중에 이 둘은 연결 파일만 더하면 된다.
 
@@ -156,6 +156,25 @@ DISCORD_BOT_TOKEN=          # 명령 등록 스크립트에서만 씀 (서버에
   3. 보내기 API에서 인증 값을 만들어 Render Environment의 `NAVERTALK_AUTH_KEY`에 넣는다. 비밀 문자열을 만들어 `NAVERTALK_WEBHOOK_SECRET`에 넣는다: `python -c "import secrets; print(secrets.token_urlsafe(24))"`.
   4. Webhook의 "이벤트 받을 URL"에 `{배포 주소}/api/navertalk/webhook/{비밀 문자열}`을 넣고, 이벤트에서 open과 send를 켠다.
 - 알려진 한계: 서버가 잠들어 있으면 3초 안에 연결되지 않아 첫 글이 실패할 수 있다 (디스코드와 같다).
+
+### 8-2. 카카오톡 (2026-11-21, `app/routers/kakao.py`, `tests/test_kakao.py`)
+- 문서: [스킬 가이드](https://kakaobusiness.gitbook.io/main/tool/chatbot/skill_guide) (응답 형식, AI 챗봇 콜백, 스킬 만들기). 2026-11-21에 확인했다. 요금과 운영 승인 이야기는 문서에 없다. 사용자가 관리자센터에서 확인한다.
+- 경로: `POST /api/kakao/skill`. 카카오는 요청 서명을 주지 않는다. 오픈빌더 스킬 설정의 "헤더값"에 `X-Spot-Secret: {KAKAO_SKILL_SECRET}`을 넣게 하고, 틀리면 403을 돌려준다 (`TODO(확인)`: 헤더값 입력 형식).
+- 스킬은 **5초 안에** 답해야 한다. 블록에 **AI 챗봇 콜백**을 켜면 요청에 `userRequest.callbackUrl`이 온다. 그러면 `{"version":"2.0","useCallback":true,"data":{"text":"기다려 주세요"}}`로 바로 답하고, 뒤에서 처리한 뒤 callbackUrl로 응답을 **한 번** POST한다 (5분 안). callbackUrl이 없으면 바로 처리해서 답한다. 이때 AI 답변은 5초를 넘길 수 있다.
+- 콜백은 봇 테스트 화면에서는 시험 토큰이라 거절될 수 있다. 배포한 채널에서 시험한다.
+- 응답 제한: 말풍선 3개, 바로가기 버튼 10개, 캐러셀 카드 10장, 카드 버튼 3개, 버튼 이름 14자, simpleText 1000자, 캐러셀 안 textCard 설명 128자.
+  - 정책 카드: textCard 캐러셀 하나로 묶는다. 제목은 정책 이름, 버튼은 [자세히 보기]와 [원문 보기] 링크다. "최종 확인" 문구는 카드 밖 글로 뺀다.
+  - 고르는 버튼: 10개 이하면 바로가기 버튼으로 보낸다. 시·도(17개)와 시·군·구(최대 32개)는 카드 3개씩 캐러셀로 보내고(30개까지), 남는 것은 바로가기 버튼으로 보낸다.
+  - 이어진 글 말풍선은 하나로 합친다.
+- 버튼은 `action: "message"`, `messageText`=버튼 이름 전체, `extra.code`=누름 코드다. 누름은 `action.clientExtra.code`로 받는다. 그 값이 없으면, 그 사용자에게 마지막으로 보여 준 버튼 이름과 같은 말인지 보고 코드를 찾는다 (메모리 30분, 버튼 이름만 기억하고 대화 글은 기억하지 않는다). 그래서 시·군·구 이름을 직접 적어도 된다.
+- 빈 말(웰컴 블록), "안내"는 인사로, "처음부터"는 조건 지우기로 처리한다.
+- 등록 순서 (사용자가 함):
+  1. 카카오톡 채널 관리자센터(https://center-pf.kakao.com)에서 채널을 만든다.
+  2. 카카오 i 오픈빌더(https://chatbot.kakao.com)에서 봇을 만들고 채널을 연결한다 (개발 채널, 운영 채널).
+  3. 스킬 탭에서 스킬을 만든다. URL에는 `{배포 주소}/api/kakao/skill`을 넣고, 헤더값에는 `X-Spot-Secret`과 비밀 문자열을 넣는다. 같은 비밀 문자열을 Render Environment의 `KAKAO_SKILL_SECRET`에 넣는다.
+  4. **폴백 블록**과 **웰컴 블록**에 이 스킬을 연결한다. 응답은 "스킬데이터로 사용"으로 하고, 블록 더보기(…) > Callback 설정을 켠다.
+  5. 배포한다 (최대 30분). 채널에서 직접 시험한다.
+- `TODO(확인)`: 폴백 블록에 스킬을 연결할 수 있는지는 문서에 적혀 있지 않다. 안 되면 모든 말을 받는 블록을 따로 만든다.
 
 ## 9. 참고 문서
 
