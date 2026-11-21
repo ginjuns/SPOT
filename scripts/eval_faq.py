@@ -31,7 +31,7 @@ def main():
     lines = []
     for s in items:
         topic = faq.match(s["q"])
-        cards = faq.policies(topic, {**COND, "for_child": topic.get("for_child")}) if topic else []
+        cards = faq.policies(topic, {**COND, "for_child": faq.for_child(topic, s["q"])}, s["q"]) if topic else []
         names = [c["name"] for c in cards]
         if not cards:   # 주제가 없거나 맞는 정책이 없으면 실제로도 AI로 넘어간다
             kind = "넘김"

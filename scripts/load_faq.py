@@ -68,7 +68,8 @@ def check_scenarios():
     hit = right = 0
     for s in items:
         topic = faq.match(s["question"])
-        cards = faq.policies(topic, s.get("conditions") or {}) if topic else []
+        cond = {**(s.get("conditions") or {}), "for_child": faq.for_child(topic, s["question"])} if topic else {}
+        cards = faq.policies(topic, cond, s["question"]) if topic else []
         if not cards:
             continue
         hit += 1

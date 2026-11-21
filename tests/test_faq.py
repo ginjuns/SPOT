@@ -59,14 +59,23 @@ def test_age_group_check():
     assert faq.age_groups("대학생 기숙사", "") == {"youth"}   # "대학생"의 "학생"을 아이 무리로 보지 않는다
 
 
+def test_special_group_policies_go_last_unless_asked():
+    params = {}
+    assert "ILIKE" in faq.special_rank(params, "치과 치료비")          # 장애 이야기가 없으면 장애인 정책은 뒤로
+    assert any(v == "%장애%" for v in params.values())
+    params = {}
+    faq.special_rank(params, "장애가 있는데 치과 치료비")
+    assert not any(v == "%장애%" for v in params.values())               # 장애를 말했으면 미루지 않는다
+
+
 @pytest.fixture
 def fake(monkeypatch):
     calls = {"analyze": [], "answer": [], "faq": []}
     monkeypatch.setattr(analyzer, "analyze", lambda *a, **k: calls["analyze"].append(a) or {})
     monkeypatch.setattr(answerer, "answer", lambda *a, **k: calls["answer"].append(a) or {"text": "", "picks": []})
     monkeypatch.setattr(retriever, "search_semantic", lambda *a, **k: [])
-    monkeypatch.setattr(faq, "policies", lambda topic, cond: calls["faq"].append((topic["id"], dict(cond))) or
-                        calls.get("cards", [CARD]))
+    monkeypatch.setattr(faq, "policies", lambda topic, cond, message="": calls["faq"].append((topic["id"], dict(cond)))
+                        or calls.get("cards", [CARD]))
     rate_limit.reset()
     yield calls
     rate_limit.reset()

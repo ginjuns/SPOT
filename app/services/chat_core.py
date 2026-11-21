@@ -87,8 +87,7 @@ def handle(req, client_key):
         conditions.update(
             age_group=sent.get("age_group") or rules["age_group"],
             region_code=sent.get("region_code") or rules["region_code"],
-            # 아이를 위한 질문인지: 주제가 아이 주제이거나, 글에 "아이·손주" 같은 말이 있으면 ("아이가 태권도장을 다니는데")
-            for_child=bool(topic.get("for_child")) or rules["for_child"], need=topic["need"],
+            for_child=faq.for_child(topic, message), need=topic["need"],
             search_text=topic["search_text"], faq=topic["id"],
         )
     elif message:
@@ -111,7 +110,7 @@ def handle(req, client_key):
 
     topic = faq.BY_ID.get(conditions.get("faq") or "")
     if topic:
-        cards = faq.policies(topic, conditions)
+        cards = faq.policies(topic, conditions, message)
         if cards:   # 맞는 정책이 없으면 아래의 의미 검색 + AI 답변으로 넘어간다
             text = faq.result_text(topic)
             if not conditions["region_code"]:

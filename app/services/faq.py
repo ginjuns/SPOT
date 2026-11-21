@@ -73,7 +73,7 @@ def name_order(params, count):
 GROUP_WORDS = {
     "youth": ["청년", "대학생", "대학원생", "대학(원)생"],   # "대학생"의 "학생"이 아이 무리로 잡히지 않게 먼저 지운다
     "child": ["아동", "어린이", "영유아", "영아", "유아", "초등", "중학생", "고등학생", "고교생", "청소년", "학생",
-              "소년소녀", "자녀"],
+              "소년소녀"],   # "자녀"는 넣지 않는다: "자녀를 둔 부모"는 부모가 받는 정책이다
     "elder": ["노인", "어르신", "경로", "고령"],
     "pregnant": ["임산부", "임신부", "산모", "난임", "임신"],
 }
@@ -108,15 +108,40 @@ def fits_age(row, age_group, for_child):
     groups = age_groups(row["name"], row.get("target"))
     if not groups:
         return True
-    allowed = USER_GROUPS[age_group] | ({"child"} if for_child else set())
+    # 아이를 위한 질문이면 아이·청년(대학생 자녀 등록금) 무리도 맞는 것으로 본다
+    allowed = USER_GROUPS[age_group] | ({"child", "youth"} if for_child else set())
     return bool(groups & allowed)
 
 
-def policies(topic, conditions):
+# 특정 대상 전용 정책. 질문이나 주제에 그 말이 없으면 뒤로 미룬다 (빼지는 않는다. 다른 정책이 없으면 보여 준다).
+# 장애 이야기가 없는 치과 질문에 "장애인 치과치료비"가 먼저 나왔다 (2026-11-21).
+SPECIAL_GROUPS = [
+    ["장애"],
+    ["국가유공자", "유공자", "보훈", "제대군인", "참전"],
+    ["북한이탈", "탈북"],
+    ["다문화", "결혼이민", "외국인"],
+    ["건설노동자", "건설근로자"],
+    ["농업인", "어업", "어업인", "농어업", "농가", "축산"],
+    ["산재"],
+]
+
+
+def special_rank(params, context):
+    """특정 대상 전용 정책이면 1, 아니면 0 인 SQL. context(질문·주제 글)에 그 대상의 말이 있으면 미루지 않는다."""
+    words = [w for group in SPECIAL_GROUPS if not any(w in context for w in group) for w in group]
+    if not words:
+        return "0"
+    for i, w in enumerate(words):
+        params[f"sp{i}"] = retriever.like_pattern(w)
+    return "CASE WHEN " + " OR ".join(f"name ILIKE %(sp{i})s" for i in range(len(words))) + " THEN 1 ELSE 0 END"
+
+
+def policies(topic, conditions, message=""):
     """주제의 이름 낱말이 들어간 정책을 조건으로 걸러서: 전국 정책 3건 + 사는 지역 정책 2건.
 
-    - 순서: 앞에 적은 이름 낱말 → 주제 검색 문장과 뜻이 가까운 순 (조회수 순이면 "국토교통부 전세보증금"처럼
-      이름에 낱말만 우연히 들어간 정책이 위로 올라왔다)
+    - 순서: 특정 대상 전용 정책은 뒤로(special_rank) → 앞에 적은 이름 낱말 → 주제 검색 문장과 뜻이 가까운 순
+      (조회수 순이면 "국토교통부 전세보증금"처럼 이름에 낱말만 우연히 들어간 정책이 위로 올라왔다)
+    - message: 사용자 질문 (버튼으로 고른 뒤의 재호출에는 없다. 질문 글은 저장하지 않으므로 주제 글만 본다)
     - 뜻이 먼 정책(MAX_DISTANCE 초과)은 이름 낱말이 맞아도 뺀다
     - 나이 무리가 맞지 않는 정책은 뺀다 (fits_age)
     """
@@ -131,9 +156,11 @@ def policies(topic, conditions):
     params.update(name_params)
     params["v"] = embed_query(expand(topic["search_text"]))
     params["max_distance"] = config.MAX_DISTANCE
-    order = name_order(params, len(topic["names"]))
-    base = (f"SELECT {retriever.CARD_COLUMNS}, target FROM policy WHERE for_person AND {where} AND ({names}) "
-            "AND embedding <=> %(v)s <= %(max_distance)s")
+    context = " ".join([message or "", topic["title"], topic["search_text"], " ".join(topic["keys"])])
+    special = special_rank(params, context)
+    order = f"{special}, {name_order(params, len(topic['names']))}"
+    base = (f"SELECT {retriever.CARD_COLUMNS}, target, {special} AS special FROM policy "
+            f"WHERE for_person AND {where} AND ({names}) AND embedding <=> %(v)s <= %(max_distance)s")
     distance = "embedding <=> %(v)s"
 
     def pick(rows, limit):
@@ -147,7 +174,16 @@ def policies(topic, conditions):
         rows += pick(db.query(
             f"{base} AND region_code IS NOT NULL "
             f"ORDER BY length(region_code) DESC, {order}, {distance}, id LIMIT 20", params), LOCAL_LIMIT)
+    # 특정 대상 전용 정책만 남았으면(장애 이야기가 없는 치과 질문에 장애인 치과치료비만) AI가 판단하게 넘긴다
+    if all(r["special"] for r in rows):
+        return []
     return [retriever.to_card(r) for r in rows]
+
+
+def for_child(topic, message):
+    """아이를 위한 질문인지: 주제가 아이 주제이거나, 글에 "아이·손주" 같은 말이 있으면 ("아이가 태권도장을 다니는데")."""
+    from app.services.analyzer import analyze_by_rules
+    return bool(topic.get("for_child")) or analyze_by_rules(message)["for_child"]
 
 
 def result_text(topic):
