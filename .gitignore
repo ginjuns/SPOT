@@ -14,3 +14,6 @@ data/raw/
 # 편집기
 .vscode/
 .idea/
+
+# 내 컴퓨터 전용 Claude Code 설정
+.claude/settings.local.json
