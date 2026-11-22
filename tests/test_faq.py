@@ -60,6 +60,16 @@ def test_age_group_check():
     assert faq.age_groups("대학생 기숙사", "") == {"youth"}   # "대학생"의 "학생"을 아이 무리로 보지 않는다
 
 
+def test_age_groups_also_read_summary():
+    """지원 대상 글 앞부분에 어린이만 있어도 요약에 어르신이 있으면 어르신에게 보인다 (독감 예방접종)."""
+    flu = {"name": "인플루엔자 국가예방접종 지원", "summary": "어린이, 임신부, 어르신 등 대상으로 예방접종 지원",
+           "target": "○ 어린이 인플루엔자 국가예방접종 지원 - 지원대상: 생후 6개월~14세 어린이 " + "가" * 80 + " ○ 어르신"}
+    assert faq.fits_age(flu, "75plus", False)
+    # "국민연금"의 "국민"처럼 요약에 있는 말로는 누구나 받는 정책으로 보지 않는다
+    credit = {"name": "실업크레딧 지원", "summary": "구직급여 수급자의 국민연금 보험료 지원", "target": "18세 이상 청년"}
+    assert not faq.fits_age(credit, "75plus", False)
+
+
 def test_special_group_policies_go_last_unless_asked():
     params = {}
     assert "ILIKE" in faq.special_rank(params, "치과 치료비")          # 장애 이야기가 없으면 장애인 정책은 뒤로

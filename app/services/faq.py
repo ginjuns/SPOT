@@ -87,11 +87,17 @@ HEAD_LENGTH = 80   # 지원 대상 글에서 볼 앞부분 글자 수 (뒤쪽은
 EVERYONE_WORDS = ["국민", "누구나", "전 연령", "제한 없", "제한없"]
 
 
-def age_groups(name, target):
-    """정책 이름 + 지원 대상 글 앞부분에 나오는 나이 무리. 누구나 받는 정책이면 빈 집합."""
-    text = (name or "") + " " + " ".join((target or "").split())[:HEAD_LENGTH]
-    if any(w in text for w in EVERYONE_WORDS):
+def age_groups(name, target, summary=""):
+    """정책 이름 + 지원 대상 글 앞부분 + 요약 앞부분에 나오는 나이 무리. 누구나 받는 정책이면 빈 집합.
+
+    요약도 본다: 독감 예방접종은 지원 대상 글 앞 80자에 "어린이"만 있고 "어르신"은 뒤에 있어서
+    75세에게 빠졌다. 요약에는 "어린이, 임신부, 어르신 등"이 다 적혀 있다 (2026-11-22).
+    누구나 받는다는 말은 요약에서는 보지 않는다 ("국민연금 보험료"의 "국민"이 잘못 걸리지 않게).
+    """
+    head = (name or "") + " " + " ".join((target or "").split())[:HEAD_LENGTH]
+    if any(w in head for w in EVERYONE_WORDS):
         return set()
+    text = head + " " + " ".join((summary or "").split())[:HEAD_LENGTH]
     found = set()
     for group, words in GROUP_WORDS.items():
         if any(w in text for w in words):
@@ -105,7 +111,7 @@ def fits_age(row, age_group, for_child):
     """나이 무리가 적혀 있으면 사용자 나이대와 맞는 무리일 때만 True. 적혀 있지 않거나 나이를 모르면 True."""
     if not age_group:
         return True
-    groups = age_groups(row["name"], row.get("target"))
+    groups = age_groups(row["name"], row.get("target"), row.get("summary"))
     if not groups:
         return True
     # 아이를 위한 질문이면 아이·청년(대학생 자녀 등록금) 무리도 맞는 것으로 본다
