@@ -202,6 +202,25 @@
     speakingButton = null;
   }
 
+  // 읽기 전에 글을 다듬는다. 정책 자료의 기호(■, ○, ㅇ, - 등)를 그대로 넘기면
+  // 기기에 따라 "검은 네모", "물결"처럼 소리 내어 읽는다.
+  function speakable(text) {
+    return String(text || "")
+      .split("\n")
+      .map((line) => line
+        .replace(/^\s*(?:[-*·ㆍ•]|ㅇ(?=\s)|\d+\.(?=\s))\s*/, "")   // 줄 앞의 글머리 기호 ("- 신분증", "ㅇ 공통서류")
+        .replace(/[■□▪▫●○◎◆◇▶▷►※★☆]/g, " ")
+        .replace(/(^|\s)ㅇ(?=\s)/g, "$1")   // 줄 가운데의 "ㅇ" 글머리 ("준비할 서류: ㅇ 공통서류")
+        .replace(/\|\|/g, ", ")
+        .replace(/\s*~\s*/g, "부터 ")
+        .replace(/\s+/g, " ")
+        .trim())
+      .filter((line) => line)
+      // 줄이 바뀌는 곳에서 조금 쉬어 읽도록 문장 끝 표시를 붙인다
+      .map((line) => (/[.?!,:]$/.test(line) ? line : line + "."))
+      .join(" ");
+  }
+
   // getText: 누를 때 읽을 글을 돌려주는 함수
   function speakButton(getText, className) {
     if (!canSpeak) return null;
@@ -215,7 +234,7 @@
         node.textContent = "이 기기에는 한국어 목소리가 없어요";
         return;
       }
-      const talk = new SpeechSynthesisUtterance(getText());
+      const talk = new SpeechSynthesisUtterance(speakable(getText()));
       talk.lang = "ko-KR";
       if (voice) talk.voice = voice;
       talk.rate = 0.9;   // 조금 천천히
