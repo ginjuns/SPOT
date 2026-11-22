@@ -28,6 +28,8 @@
   let conditions = { age_group: null, gender: null, region_code: null, household: null, need: null, search_text: null };
   let history = [];
   let asked = false;
+  // 방금 보여 드린 카드의 정책 ID. "서류는 뭐가 필요해요?"처럼 이어서 물으면 서버가 이 정책들로 답한다.
+  let shown = [];
   let options = null;
   let busy = false;
 
@@ -63,7 +65,7 @@
     }, 6000);
     let data;
     try {
-      data = await api.post("/api/chat", { message, conditions, history, asked });
+      data = await api.post("/api/chat", { message, conditions, history, asked, shown });
     } catch (e) {
       clearTimeout(slow);
       waiting.remove();
@@ -83,7 +85,7 @@
     bubble("bot", data.text);
     remember("assistant", data.text);
     // 답변 아래 [소리로 듣기]: 안내 문장과 찾은 지원의 이름을 읽는다
-    const names = (data.policies || []).map((p, i) => i + 1 + "번, " + p.name + ".");
+    const names = data.type === "info" ? [] : (data.policies || []).map((p, i) => i + 1 + "번, " + p.name + ".");
     const speak = speakButton(() => [data.text].concat(names).join(" "));
     if (speak) log.append(speak);
 
@@ -92,7 +94,20 @@
       askNext(data.ask.slice());
       return;
     }
+    if (data.type === "info") {
+      // 이어서 물은 것(서류, 신청 방법 등)은 글로 보여 주고, 정책마다 [자세히 보기]를 둔다
+      const box = el("div", "stack");
+      data.policies.forEach((p) => {
+        const link = el("a", "btn btn-quiet", p.name + " 자세히 보기");
+        link.href = "policy.html?id=" + encodeURIComponent(p.id);
+        box.append(link);
+      });
+      log.append(box);
+      bubble("bot", "더 궁금한 점이 있으면 아래에 적어 주세요.");
+      return;
+    }
     if (data.type === "result") {
+      shown = data.policies.map((p) => p.id).slice(0, 5);
       const box = el("div", "stack results");
       data.policies.forEach((p) => box.append(policyCard(p)));
       box.append(resultActions(conditions, data.policies.map((p) => p.id)));

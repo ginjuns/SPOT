@@ -13,7 +13,8 @@
   e:0             예시 질문
   r               처음부터
 
-대화 글은 저장하지 않는다. 사용자별로 "정해진 조건"만 메모리에 30분 동안 기억한다.
+대화 글은 저장하지 않는다. 사용자별로 "정해진 조건"과 방금 보여 준 정책 ID만 메모리에 30분 동안 기억한다
+(정책 ID는 "서류는 뭐가 필요해요?"처럼 이어서 묻는 질문에 답하려고 쓴다).
 """
 import csv
 import datetime
@@ -79,7 +80,7 @@ PLAIN_PERIODS = {"상시신청", "접수기관 별 상이", "연중"}
 
 _lock = threading.Lock()
 _salt = secrets.token_bytes(16)
-_states = {}          # 사용자 키 → {"conditions", "asked", "pending", "expires"}
+_states = {}          # 사용자 키 → {"conditions", "asked", "pending", "shown", "expires"}
 _daily = {}           # (날짜, 플랫폼) → 오늘 질문 수
 
 
@@ -212,7 +213,8 @@ def _search_link(conditions):
 def _run(key, state, message, now):
     """chat_core.handle 을 부르고 결과를 말 목록으로 바꾼다. 대화 글(history)은 넘기지 않는다."""
     try:
-        req = ChatRequest(message=message, conditions=state["conditions"], asked=state["asked"])
+        req = ChatRequest(message=message, conditions=state["conditions"], asked=state["asked"],
+                          shown=state.get("shown", []))
     except ValidationError:
         _forget(key)
         return [_say(EXPIRED_TEXT)]
@@ -228,9 +230,15 @@ def _run(key, state, message, now):
         state["pending"] = list(response["ask"])
         _save(key, state, now)
         return [_say(response["text"]), _ask(state["pending"][0])]
+    if kind == "result":
+        state["shown"] = [p["id"] for p in response["policies"][:5]]
     _save(key, {**state, "pending": []}, now)
     if kind == "result":
         return _result(response)
+    if kind == "info":   # 보여 드린 정책을 이어서 물었다 (서류, 신청 방법 등)
+        links = [(f"{i}번 자세히 보기" if len(response["policies"]) > 1 else "자세히 보기",
+                  _web("policy.html", {"id": p["id"]})) for i, p in enumerate(response["policies"], 1)]
+        return [_say(response["text"], [row for pair in links for row in _link_row(pair)])]
     if kind == "fallback":
         return [_say(response["text"], _link_row(("직접 찾아보기", _search_link(response.get("conditions")))))]
     return [_say(response["text"])]   # none

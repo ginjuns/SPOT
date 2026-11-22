@@ -3,7 +3,7 @@
 웹 채팅과 메신저(텔레그램·디스코드·네이버 톡톡·카카오톡)가 함께 쓴다. HTTP와 상관없는 순수 로직만 둔다.
 서버는 대화를 저장하지 않는다. 이전 대화와 정해진 조건은 부르는 쪽이 매번 같이 보낸다.
 """
-from app.services import analyzer, answerer, faq, llm, privacy, rate_limit, retriever
+from app.services import analyzer, answerer, faq, followup, llm, privacy, rate_limit, retriever
 
 MESSAGE_LIMIT = 300
 HISTORY_LIMIT = 6
@@ -67,7 +67,7 @@ def error(text):
 
 
 def handle(req, client_key):
-    """ChatRequest를 받아 ask / result / none / fallback / error 중 하나를 돌려준다.
+    """ChatRequest를 받아 ask / result / info / none / fallback / error 중 하나를 돌려준다.
 
     웹(/api/chat)과 메신저가 함께 쓴다. 대화 글은 저장하지 않는다.
     """
@@ -82,6 +82,14 @@ def handle(req, client_key):
     topic = None
     if message:
         message, masked = privacy.mask(message)
+        # 보여 드린 정책을 이어서 묻는 질문("서류는 뭐가 필요해요?")이면 AI 없이 DB 값으로 답한다.
+        info = followup.answer(message, req.shown) if req.shown else None
+        if info:
+            limited = _over_limit(client_key, False, sent)   # AI를 안 쓰므로 재호출처럼 센다
+            if limited:
+                return limited
+            notice = " " + privacy.NOTICE if masked else ""
+            return {**info, "text": info["text"] + notice, "conditions": sent}
         topic = faq.match(message)   # 자주 묻는 질문이면 AI 없이 답한다
     # AI를 쓰지 않는 자주 묻는 질문은 전체 한도(Groq 보호용)를 덜 쓰도록 재호출처럼 센다.
     faq_question = bool(message) and bool(topic)
