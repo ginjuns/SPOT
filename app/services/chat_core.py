@@ -52,6 +52,15 @@ def fallback(text, conditions=None):
     return response
 
 
+def _over_limit(client_key, is_question, conditions):
+    """하루 한도를 넘었으면 fallback 응답, 아니면 None (횟수를 1 올린다)."""
+    limit = rate_limit.check(client_key, is_question=is_question)
+    if limit == rate_limit.OK:
+        return None
+    text = USER_LIMIT_TEXT if limit == rate_limit.USER_LIMIT else FALLBACK_TEXT
+    return fallback(text, {k: conditions.get(k) for k in ("age_group", "gender", "region_code", "household")})
+
+
 def error(text):
     """잘못된 질문(빈 글, 너무 긴 글). 웹은 400 오류로, 메신저는 안내 글로 바꿔 보여 준다."""
     return {"type": "error", "text": text}
@@ -75,10 +84,10 @@ def handle(req, client_key):
         message, masked = privacy.mask(message)
         topic = faq.match(message)   # 자주 묻는 질문이면 AI 없이 답한다
     # AI를 쓰지 않는 자주 묻는 질문은 전체 한도(Groq 보호용)를 덜 쓰도록 재호출처럼 센다.
-    limit = rate_limit.check(client_key, is_question=bool(message) and not topic)
-    if limit != rate_limit.OK:
-        text = USER_LIMIT_TEXT if limit == rate_limit.USER_LIMIT else FALLBACK_TEXT
-        return fallback(text, {k: sent.get(k) for k in ("age_group", "gender", "region_code", "household")})
+    faq_question = bool(message) and bool(topic)
+    limited = _over_limit(client_key, bool(message) and not topic, sent)
+    if limited:
+        return limited
 
     if topic:
         # 나이·지역은 버튼으로 고른 값이 먼저, 없으면 글에서 낱말로 찾는다 ("75살", "서울 강남구").
@@ -117,14 +126,23 @@ def handle(req, client_key):
                 text += " " + REGION_HINT
             return {"type": "result", "text": text + notice, "policies": cards, "conditions": conditions,
                     "via": "faq"}
+        if faq_question:
+            # 처음에는 AI를 안 쓸 줄 알고 재호출로 셌지만, 이제 답변 AI를 쓰므로 질문 1번으로 다시 센다.
+            limited = _over_limit(client_key, True, conditions)
+            if limited:
+                return limited
 
+    age_group, for_child = conditions["age_group"], bool(conditions.get("for_child"))
     candidates = retriever.search_semantic(
         analyzer.expand(conditions["search_text"]),
-        age_group=conditions["age_group"],
+        age_group=age_group,
         gender=conditions["gender"],
         region_code=conditions["region_code"],
         household=conditions["household"],
-        for_child=bool(conditions.get("for_child")),
+        for_child=for_child,
+        # DB의 나이 칸은 느슨하므로 이름·지원 대상 글의 나이 무리(아동·청년·노인·임산부)로 한 번 더 거른다.
+        # 답변 AI가 판단할 몫이 줄고, 빠진 자리는 나이가 맞는 후보로 채운다.
+        keep=lambda row: faq.fits_age(row, age_group, for_child),
     )
     if not candidates:
         return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}
@@ -137,7 +155,9 @@ def handle(req, client_key):
         # 아주 가까운 후보가 있는데 AI가 하나도 고르지 않으면, 그 후보들을 그대로 보여 준다.
         # 같은 질문에도 AI가 가끔 빈 picks 를 내서 "찾지 못했어요"가 나왔다 (2026-11-19, 11-21 영화 질문).
         # 한 번 더 묻던 방식은 두 번 다 비기도 하고 토큰을 두 배로 써서 바꿨다. 카드 내용은 모두 DB 값이다.
-        answer = answerer.close_picks(candidates)
+        # 질문에 그 대상 이야기가 없는 특정 대상 전용 정책(장애인, 국가유공자 등)은 AI 판단 없이 보여 주지 않는다.
+        context = " ".join([message, conditions["search_text"] or ""])
+        answer = answerer.close_picks([c for c in candidates if not faq.is_special(c["name"], context)])
     if not answer["picks"]:
         return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}
 

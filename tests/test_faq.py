@@ -4,6 +4,7 @@ import datetime
 import pytest
 from fastapi.testclient import TestClient
 
+from app import config
 from app.main import app
 from app.services import analyzer, answerer, faq, rate_limit, retriever
 
@@ -87,6 +88,23 @@ def test_faq_question_is_answered_without_ai(fake):
     assert r["policies"][0]["name"] == "통합문화이용권(문화누리카드)"
     assert "최종 확인" in r["text"] and r["conditions"]["faq"] == "culture_card"
     assert fake["analyze"] == [] and fake["answer"] == []   # AI를 한 번도 부르지 않았다
+
+
+def test_faq_miss_that_goes_to_ai_counts_as_question(fake, monkeypatch):
+    """자주 묻는 질문인데 맞는 정책이 없어 AI로 넘어가면 질문 1번으로 센다 (Groq 한도 보호)."""
+    monkeypatch.setattr(config, "DAILY_CHAT_LIMIT", 1)
+    fake["cards"] = []
+    body = {"message": "영화 한 편 보고 싶은데 돈이 없어요", "asked": True}
+    assert client.post("/api/chat", json=body).json()["type"] == "none"
+    r = client.post("/api/chat", json=body).json()
+    assert r["type"] == "fallback" and "오늘 질문 횟수를 다 쓰셨어요" in r["text"]
+    assert len(fake["answer"]) == 0   # 한도를 넘은 두 번째에는 AI까지 가지 않았다 (첫 번째는 후보가 없어 AI 전에 끝남)
+
+
+def test_is_special():
+    assert faq.is_special("장애인 치과치료비 지원", "치과 치료비")
+    assert not faq.is_special("장애인 치과치료비 지원", "장애가 있어요 치과")
+    assert not faq.is_special("어르신 틀니 지원", "치과 치료비")
 
 
 def test_faq_asks_then_uses_buttons_without_ai(fake):

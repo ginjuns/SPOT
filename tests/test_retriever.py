@@ -25,7 +25,45 @@ def test_search_semantic_keeps_filter_and_drops_far(monkeypatch):
     # 지역을 모르면 전국 정책만 찾는다
     assert "region_code IS NULL" in seen["sql"] and "region_code =" not in seen["sql"]
     assert "embedding <=> %(query_vec)s" in seen["sql"]
-    assert seen["params"]["age_lo"] == 75 and seen["params"]["limit"] == 8
+    assert seen["params"]["age_lo"] == 75 and "LIMIT 20" in seen["sql"]   # 빠질 몫까지 넉넉히 가져온다
+
+
+def _fake_semantic(monkeypatch, nation, local):
+    """전체 검색은 nation + local 을 가까운 순으로, 지역만 찾는 검색은 local 을 돌려준다."""
+    def fake_query(sql, params):
+        rows = local if "region_code IS NOT NULL" in sql else sorted(nation + local, key=lambda r: r["distance"])
+        return [dict(r) for r in rows]
+
+    monkeypatch.setattr(retriever.db, "query", fake_query)
+    monkeypatch.setattr("app.services.embedder.embed_query", lambda text: np.zeros(384, dtype=np.float32))
+
+
+def test_local_policies_get_seats(monkeypatch):
+    """사는 곳을 골랐으면 전국 정책이 아무리 가까워도 지역 정책을 3건까지 넣는다 (가장 먼 전국 정책이 빠진다)."""
+    nation = [{"id": f"n{i}", "distance": 0.05 + i * 0.001, "region_code": None} for i in range(10)]
+    local = [{"id": f"l{i}", "distance": 0.12 + i * 0.001, "region_code": "18101"} for i in range(4)]
+    _fake_semantic(monkeypatch, nation, local)
+    rows = retriever.search_semantic("병원비", region_code="18101")
+    assert [r["id"] for r in rows] == ["n0", "n1", "n2", "n3", "n4", "l0", "l1", "l2"]
+    # 지역을 모르면 그대로 가까운 순 (전국 정책만)
+    _fake_semantic(monkeypatch, nation, [])
+    assert [r["id"] for r in retriever.search_semantic("병원비")] == [f"n{i}" for i in range(8)]
+
+
+def test_local_seats_skip_far_policies(monkeypatch):
+    nation = [{"id": f"n{i}", "distance": 0.05, "region_code": None} for i in range(8)]
+    local = [{"id": "l0", "distance": 0.12, "region_code": "18"}, {"id": "far", "distance": 0.4, "region_code": "18"}]
+    _fake_semantic(monkeypatch, nation, local)
+    ids = [r["id"] for r in retriever.search_semantic("병원비", region_code="18101")]
+    assert "l0" in ids and "far" not in ids and len(ids) == 8
+
+
+def test_keep_filters_before_cutting(monkeypatch):
+    """keep 으로 빠진 자리는 다음 후보로 채운다."""
+    nation = [{"id": f"n{i}", "distance": 0.05 + i * 0.001, "region_code": None} for i in range(10)]
+    _fake_semantic(monkeypatch, nation, [])
+    rows = retriever.search_semantic("병원비", keep=lambda r: r["id"] not in ("n0", "n1"))
+    assert [r["id"] for r in rows] == [f"n{i}" for i in range(2, 10)]
 
 
 def test_no_region_means_nationwide_only():

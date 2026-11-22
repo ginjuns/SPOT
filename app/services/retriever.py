@@ -5,7 +5,8 @@ PAGE_SIZE = 10
 CANDIDATE_LIMIT = 8  # 의미 검색으로 고르는 후보 수
 
 # 의미 검색 후보에 필요한 열 (답변 생성에 지원 대상·지원 내용을 쓴다)
-CANDIDATE_COLUMNS = "id, name, agency, summary, target, content, has_income_rule, url, apply_period, collected_at"
+CANDIDATE_COLUMNS = ("id, name, agency, summary, target, content, has_income_rule, url, apply_period, "
+                     "collected_at, region_code")
 
 # 나이대 → (가장 어린 나이, 가장 많은 나이)
 AGE_RANGES = {
@@ -104,25 +105,51 @@ def drop_far(rows, max_distance):
     return [r for r in rows if r["distance"] <= max_distance]
 
 
+LOCAL_SLOTS = 3    # 사는 곳을 골랐을 때 후보에 꼭 넣을 지역(시·도, 시·군·구) 정책 수
+EXTRA_FETCH = 12   # keep 으로 빠질 몫까지 넉넉히 가져온다
+
+
 def search_semantic(search_text, age_group=None, gender=None, region_code=None, household=None,
-                    limit=CANDIDATE_LIMIT, max_distance=None, for_child=False):
+                    limit=CANDIDATE_LIMIT, max_distance=None, for_child=False, keep=None):
     """채팅 검색: 조건으로 거른 정책 중에서 질문과 뜻이 가까운 순으로 고른다.
 
     돌려주는 행에는 distance(코사인 거리, 작을수록 가까움)가 들어 있다.
     max_distance 를 주지 않으면 config.MAX_DISTANCE 를 쓴다.
+    keep: 행을 받아 남길지 정하는 함수 (채팅은 나이 무리 검사 faq.fits_age 를 준다).
+    사는 곳을 골랐으면 지역 정책을 LOCAL_SLOTS 건까지 꼭 넣는다. 전국 정책이 많은 주제에서
+    가까운 순으로만 고르면 구청·시청 정책이 후보에 아예 들지 못했다. 이때 가장 먼 전국 정책이 빠진다.
     """
     from app.services.embedder import embed_query  # 모델은 처음 쓸 때만 불러온다
 
     where, params = build_filter(age_group, gender, region_code, household, for_child=bool(for_child))
     params["query_vec"] = embed_query(search_text)
-    params["limit"] = limit
-    rows = db.query(
-        f"SELECT {CANDIDATE_COLUMNS}, embedding <=> %(query_vec)s AS distance "
-        f"FROM policy WHERE {where} AND embedding IS NOT NULL "
-        "ORDER BY distance, id LIMIT %(limit)s",
-        params,
-    )
-    return drop_far(rows, config.MAX_DISTANCE if max_distance is None else max_distance)
+    max_distance = config.MAX_DISTANCE if max_distance is None else max_distance
+
+    def fetch(extra_where, count):
+        rows = db.query(
+            f"SELECT {CANDIDATE_COLUMNS}, embedding <=> %(query_vec)s AS distance "
+            f"FROM policy WHERE {where}{extra_where} AND embedding IS NOT NULL "
+            f"ORDER BY distance, id LIMIT {int(count)}",
+            params,
+        )
+        return [r for r in drop_far(rows, max_distance) if keep is None or keep(r)]
+
+    rows = fetch("", limit + EXTRA_FETCH)[:limit]
+    if not region_code:
+        return rows
+    local_count = sum(r.get("region_code") is not None for r in rows)
+    if local_count >= LOCAL_SLOTS:
+        return rows
+    ids = {r["id"] for r in rows}
+    local = [r for r in fetch(" AND region_code IS NOT NULL", LOCAL_SLOTS + EXTRA_FETCH) if r["id"] not in ids]
+    local = local[:LOCAL_SLOTS - local_count]
+    if not local:
+        return rows
+    # 가장 먼 전국 정책부터 지역 정책에 자리를 내준다
+    nation = [r for r in rows if r.get("region_code") is None]
+    drop = {r["id"] for r in nation[::-1][:max(0, len(rows) + len(local) - limit)]}
+    merged = [r for r in rows if r["id"] not in drop] + local
+    return sorted(merged, key=lambda r: (r["distance"], r["id"]))
 
 
 def search_by_conditions(age_group=None, gender=None, region_code=None, household=None, page=1,

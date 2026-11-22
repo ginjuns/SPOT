@@ -126,6 +126,12 @@ SPECIAL_GROUPS = [
 ]
 
 
+def is_special(name, context):
+    """특정 대상 전용 정책인데 context(질문·검색 문장)에 그 대상의 말이 없는지."""
+    return any(any(w in (name or "") for w in group) and not any(w in (context or "") for w in group)
+               for group in SPECIAL_GROUPS)
+
+
 def special_rank(params, context):
     """특정 대상 전용 정책이면 1, 아니면 0 인 SQL. context(질문·주제 글)에 그 대상의 말이 있으면 미루지 않는다."""
     words = [w for group in SPECIAL_GROUPS if not any(w in context for w in group) for w in group]

@@ -31,9 +31,10 @@ def fake(monkeypatch):
         calls["analyze"].append((message, history))
         return calls.get("analysis") or analysis()
 
-    def fake_search(search_text, **cond):
+    def fake_search(search_text, keep=None, **cond):
         calls["search"].append((search_text, cond))
-        return calls.get("rows", [ROW])
+        calls["keep"] = keep
+        return [r for r in calls.get("rows", [ROW]) if keep is None or keep(r)]
 
     monkeypatch.setattr(analyzer, "analyze", fake_analyze)
     def fake_answer(situation, conditions, candidates):
@@ -208,6 +209,28 @@ def test_close_candidate_is_shown_when_ai_picks_nothing(fake, monkeypatch):
     assert r["type"] == "result" and len(calls) == 1
     assert [p["id"] for p in r["policies"]] == ["SVC1"] and r["policies"][0]["name"] == "재난적 의료비 지원"
     assert "최종 확인" in r["text"]
+
+
+def test_candidates_for_other_age_groups_are_left_out(fake):
+    """75세 질문에 '학교 급식비'처럼 다른 나이 무리 정책은 AI에 넘기지도, 보여 주지도 않는다."""
+    school = {**ROW, "id": "SVC2", "name": "학교 급식비 지원", "target": "초등학생"}
+    fake["rows"] = [school, ROW]
+    r = client.post("/api/chat", json={"message": "", "asked": True, "conditions": {
+        "age_group": "75plus", "region_code": "18101", "search_text": "병원비 의료비 지원"}}).json()
+    assert fake["answer"][0][1] == ["SVC1"] and [p["id"] for p in r["policies"]] == ["SVC1"]
+
+
+def test_close_candidates_skip_special_group_policies(fake):
+    """AI가 아무것도 안 골랐을 때, 질문에 장애 이야기가 없으면 장애인 전용 정책은 그대로 보여 주지 않는다."""
+    disabled = {**ROW, "id": "SVC3", "name": "장애인 치과치료비 지원", "distance": 0.05}
+    fake["rows"] = [disabled, ROW]
+    fake["answer_result"] = {"text": "없어요.", "picks": []}
+    r = client.post("/api/chat", json={"message": "", "asked": True,
+                                       "conditions": {"search_text": "치과 치료비"}}).json()
+    assert [p["id"] for p in r["policies"]] == ["SVC1"]
+    r = client.post("/api/chat", json={"message": "", "asked": True,
+                                       "conditions": {"search_text": "장애가 있는데 치과 치료비"}}).json()
+    assert [p["id"] for p in r["policies"]] == ["SVC3", "SVC1"]
 
 
 def test_no_retry_when_candidates_are_far(fake):
