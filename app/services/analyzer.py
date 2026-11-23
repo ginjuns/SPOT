@@ -158,6 +158,17 @@ def build_user_prompt(message, history):
 
 # ---------- 규칙 기반 분석 ----------
 
+# "애가", "애를", "애 "(아이)는 앞 글자가 한글이면 다른 낱말의 일부다.
+# "장애 판정을 받았어요"가 아이를 위한 질문으로 잡혀 75세에게 장애아동수당이 나왔다 (2026-11-23).
+CHILD_AE = re.compile(r"(?<![가-힣])애(?:가|를|\s|$)")
+
+
+def mentions_child(message):
+    """아이를 위한 질문인지 (data/keywords.json 의 for_child 낱말)."""
+    words = [w for w in KEYWORDS["for_child"] if not w.startswith("애")]
+    return any(w in message for w in words) or bool(CHILD_AE.search(message))
+
+
 def analyze_by_rules(message):
     """LLM 없이 낱말로만 분석한다. 확실한 것만 채운다."""
     def pick(table):
@@ -175,7 +186,7 @@ def analyze_by_rules(message):
         "region_text": None,
         "region_code": resolve_region(message, strict=True),
         "household": pick(KEYWORDS["household"]),
-        "for_child": any(w in message for w in KEYWORDS["for_child"]),
+        "for_child": mentions_child(message),
         "search_text": " ".join(message.split()),
     }
 

@@ -6,7 +6,7 @@ CANDIDATE_LIMIT = 8  # 의미 검색으로 고르는 후보 수
 
 # 의미 검색 후보에 필요한 열 (답변 생성에 지원 대상·지원 내용을 쓴다)
 CANDIDATE_COLUMNS = ("id, name, agency, summary, target, content, has_income_rule, url, apply_period, "
-                     "collected_at, region_code")
+                     "collected_at, region_code, tag_ages, tag_special")
 
 # 나이대 → (가장 어린 나이, 가장 많은 나이)
 AGE_RANGES = {

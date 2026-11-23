@@ -150,7 +150,7 @@ def handle(req, client_key):
         for_child=for_child,
         # DB의 나이 칸은 느슨하므로 이름·지원 대상 글의 나이 무리(아동·청년·노인·임산부)로 한 번 더 거른다.
         # 답변 AI가 판단할 몫이 줄고, 빠진 자리는 나이가 맞는 후보로 채운다.
-        keep=lambda row: faq.fits_age(row, age_group, for_child),
+        keep=lambda row: faq.fits_age(row, age_group, for_child, " ".join([message, conditions["search_text"] or ""])),
     )
     if not candidates:
         return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}
@@ -165,7 +165,8 @@ def handle(req, client_key):
         # 한 번 더 묻던 방식은 두 번 다 비기도 하고 토큰을 두 배로 써서 바꿨다. 카드 내용은 모두 DB 값이다.
         # 질문에 그 대상 이야기가 없는 특정 대상 전용 정책(장애인, 국가유공자 등)은 AI 판단 없이 보여 주지 않는다.
         context = " ".join([message, conditions["search_text"] or ""])
-        answer = answerer.close_picks([c for c in candidates if not faq.is_special(c["name"], context)])
+        answer = answerer.close_picks([c for c in candidates
+                                       if not faq.is_special(c["name"], context, c.get("tag_special"))])
     if not answer["picks"]:
         return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}
 

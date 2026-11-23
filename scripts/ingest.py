@@ -195,8 +195,23 @@ class RegionResolver:
 
 def embedding_text(row):
     """임베딩에 넣을 글. 길면 모델이 앞에서부터 512토큰까지만 쓴다."""
-    parts = [row["name"], row["summary"], row["target"], row["content"]]
+    # 꼬리표의 일상 표현("나라에서 매달 주는 돈")은 맨 뒤에 붙인다. 512토큰을 넘으면 잘리지만,
+    # 지원 대상·내용이 아주 긴 정책은 원래 글만으로도 뜻이 충분하다.
+    parts = [row["name"], row["summary"], row["target"], row["content"], row.get("tag_words")]
     return "\n".join(p for p in parts if p)
+
+
+def add_tags(rows):
+    """정책 검색용 꼬리표(data/policy_tags.tsv, app/services/tags.py)를 행에 붙인다. 없는 정책은 NULL."""
+    from app.services import tags
+
+    missing = 0
+    for row in rows:
+        row["tag_ages"], row["tag_special"], row["tag_words"] = tags.for_row(row)
+        # 꼬리표는 개인·가구 대상 정책에만 만들었다 (기업·단체 대상은 채팅 나이 검사와 상관없다)
+        missing += row["tag_ages"] is None and row["for_person"]
+    print(f"꼬리표: {len(rows)}건 중 붙인 정책 {sum(r['tag_ages'] is not None for r in rows)}건, "
+          f"꼬리표가 없는 개인 대상 정책 {missing}건" + (" (새로 생긴 정책이면 꼬리표를 만들어 data/policy_tags.tsv에 더하기)" if missing else ""))
 
 
 AGE_FROM = re.compile(r"(\d{1,3})\s*세\s*이상")
@@ -368,6 +383,7 @@ COLUMNS = [
     "id", "name", "agency", "category", "summary", "target", "criteria", "content",
     "how_to_apply", "apply_place", "apply_period", "documents", "contact", "url", "region_code", "age_min", "age_max",
     "gender", "household", "has_income_rule", "for_person", "views", "collected_at",
+    "tag_ages", "tag_special", "tag_words",
 ]
 
 
@@ -414,6 +430,7 @@ def main():
     print("2) 정리하는 중")
     rows = build_rows(load_raw())
     print(f"정책 {len(rows)}건")
+    add_tags(rows)
     print_stats(rows)
     if args.dry_run:
         return

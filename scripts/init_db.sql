@@ -37,6 +37,10 @@ ALTER TABLE policy ADD COLUMN IF NOT EXISTS for_person BOOLEAN NOT NULL DEFAULT 
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS apply_period TEXT;
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS documents TEXT;
+-- 정책 검색용 꼬리표 (data/policy_tags.tsv, 2026-11-23). 검색에만 쓰고 화면에는 보이지 않는다.
+ALTER TABLE policy ADD COLUMN IF NOT EXISTS tag_ages TEXT[];     -- 받는 사람 나이 무리: child, youth, middle, elder, pregnant, parent, all
+ALTER TABLE policy ADD COLUMN IF NOT EXISTS tag_special TEXT[];  -- 특정 대상 전용: disabled, veteran, defector, multicultural, farmer, injured_worker
+ALTER TABLE policy ADD COLUMN IF NOT EXISTS tag_words TEXT;      -- 어르신이 평소에 할 법한 말 (의미 검색 글에 붙인다)
 
 CREATE INDEX IF NOT EXISTS idx_policy_region ON policy (region_code);
 -- 벡터 인덱스(HNSW)는 만들지 않는다. 이유는 PROJECT_SPEC.md 6장 참고.

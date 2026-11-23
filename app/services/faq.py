@@ -12,7 +12,7 @@ data/faq.json 에 주제마다 "확실한 낱말"(keys)과 "보여 줄 정책 �
 import json
 
 from app import config, db
-from app.services import retriever
+from app.services import retriever, tags
 
 TOPICS = json.loads((config.DATA_DIR / "faq.json").read_text(encoding="utf-8"))
 BY_ID = {t["id"]: t for t in TOPICS}
@@ -107,10 +107,16 @@ def age_groups(name, target, summary=""):
     return found
 
 
-def fits_age(row, age_group, for_child):
-    """나이 무리가 적혀 있으면 사용자 나이대와 맞는 무리일 때만 True. 적혀 있지 않거나 나이를 모르면 True."""
+def fits_age(row, age_group, for_child, context=""):
+    """나이 무리가 적혀 있으면 사용자 나이대와 맞는 무리일 때만 True. 적혀 있지 않거나 나이를 모르면 True.
+
+    정책에 꼬리표(tag_ages, services/tags.py)가 있으면 꼬리표로 판단한다. 없으면 이름·글의 낱말로 본다.
+    context: 질문 글 (장애 이야기를 했으면 장애인 정책은 나이와 상관없이 보여 준다)
+    """
     if not age_group:
         return True
+    if row.get("tag_ages"):
+        return tags.fits(row["tag_ages"], row.get("tag_special"), row["name"], age_group, for_child, context)
     groups = age_groups(row["name"], row.get("target"), row.get("summary"))
     if not groups:
         return True
@@ -127,25 +133,43 @@ SPECIAL_GROUPS = [
     ["북한이탈", "탈북"],
     ["다문화", "결혼이민", "외국인"],
     ["건설노동자", "건설근로자"],
-    ["농업인", "어업", "어업인", "농어업", "농가", "축산"],
-    ["산재"],
+    # 농사 이야기를 한 질문이면 농업인 전용 정책을 미루지 않는다 ("트랙터 빌려 쓸 수 있는 곳" → 농기계 임대)
+    ["농업인", "어업", "어업인", "농어업", "농가", "축산", "농사", "농기계", "트랙터", "영농", "귀농", "귀어",
+     "양봉", "어민", "어선"],
+    ["산재", "진폐"],
 ]
+# SPECIAL_GROUPS 와 같은 순서의 꼬리표 값 (tags.SPECIALS). 건설노동자는 꼬리표가 없어 이름 낱말로만 본다.
+SPECIAL_CODES = ["disabled", "veteran", "defector", "multicultural", None, "farmer", "injured_worker"]
 
 
-def is_special(name, context):
-    """특정 대상 전용 정책인데 context(질문·검색 문장)에 그 대상의 말이 없는지."""
-    return any(any(w in (name or "") for w in group) and not any(w in (context or "") for w in group)
-               for group in SPECIAL_GROUPS)
+def _unmentioned(context):
+    """context(질문·주제 글)에 말이 나오지 않은 특정 대상 묶음의 번호."""
+    return [i for i, group in enumerate(SPECIAL_GROUPS) if not any(w in (context or "") for w in group)]
+
+
+def is_special(name, context, tag_special=None):
+    """특정 대상 전용 정책인데 context(질문·검색 문장)에 그 대상의 말이 없는지.
+
+    이름 낱말("장애인 치과치료비")이나 꼬리표(tag_special)로 본다. 꼬리표는 이름에 대상이 드러나지 않는
+    전용 정책("발달재활서비스", "LPG 세금인상분 지원")도 잡는다.
+    """
+    codes = set(tag_special or [])
+    return any(any(w in (name or "") for w in SPECIAL_GROUPS[i]) or SPECIAL_CODES[i] in codes
+               for i in _unmentioned(context))
 
 
 def special_rank(params, context):
     """특정 대상 전용 정책이면 1, 아니면 0 인 SQL. context(질문·주제 글)에 그 대상의 말이 있으면 미루지 않는다."""
-    words = [w for group in SPECIAL_GROUPS if not any(w in context for w in group) for w in group]
+    groups = _unmentioned(context)
+    words = [w for i in groups for w in SPECIAL_GROUPS[i]]
+    codes = [SPECIAL_CODES[i] for i in groups if SPECIAL_CODES[i]]
     if not words:
         return "0"
     for i, w in enumerate(words):
         params[f"sp{i}"] = retriever.like_pattern(w)
-    return "CASE WHEN " + " OR ".join(f"name ILIKE %(sp{i})s" for i in range(len(words))) + " THEN 1 ELSE 0 END"
+    params["spc"] = codes
+    by_name = " OR ".join(f"name ILIKE %(sp{i})s" for i in range(len(words)))
+    return f"CASE WHEN {by_name} OR tag_special && %(spc)s::text[] THEN 1 ELSE 0 END"
 
 
 def policies(topic, conditions, message=""):
@@ -171,13 +195,13 @@ def policies(topic, conditions, message=""):
     context = " ".join([message or "", topic["title"], topic["search_text"], " ".join(topic["keys"])])
     special = special_rank(params, context)
     order = f"{special}, {name_order(params, len(topic['names']))}"
-    base = (f"SELECT {retriever.CARD_COLUMNS}, target, {special} AS special FROM policy "
+    base = (f"SELECT {retriever.CARD_COLUMNS}, target, tag_ages, tag_special, {special} AS special FROM policy "
             f"WHERE for_person AND {where} AND ({names}) AND embedding <=> %(v)s <= %(max_distance)s")
     distance = "embedding <=> %(v)s"
 
     def pick(rows, limit):
         age, for_child = conditions.get("age_group"), bool(conditions.get("for_child"))
-        return [r for r in rows if fits_age(r, age, for_child)][:limit]
+        return [r for r in rows if fits_age(r, age, for_child, context)][:limit]
 
     # 나이 무리 검사로 빠질 몫까지 넉넉히 가져온 뒤 고른다
     rows = pick(db.query(f"{base} AND region_code IS NULL ORDER BY {order}, {distance}, id LIMIT 20", params),

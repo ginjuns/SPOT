@@ -143,3 +143,13 @@ def test_culture_words_expand_to_culture_card():
     from app.services import analyzer as a
     assert "문화누리카드" in a.expand("공연을 보러가는데 지원금 있나요?")
     assert "문화누리" in a.related_names("영화")
+
+
+def test_child_word_inside_other_word_is_not_a_child():
+    """"장애 판정", "장애가 있어요"의 "애 ", "애가"는 아이가 아니다."""
+    from app.services.analyzer import mentions_child
+    assert not mentions_child("장애 판정을 받았어요. 매달 나오는 돈이 있나요?")
+    assert not mentions_child("장애가 있어서 일을 못 해요")
+    assert mentions_child("애가 아파요")
+    assert mentions_child("우리 애 학원비가 걱정이에요")
+    assert mentions_child("손주 학비")
