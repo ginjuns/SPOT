@@ -20,6 +20,7 @@ import csv
 import datetime
 import hashlib
 import json
+import re
 import secrets
 import threading
 import time
@@ -172,6 +173,12 @@ def _ask(item):
     return _ask_age() if item == "age_group" else _ask_sido()
 
 
+def past_period(period, today=None):
+    """적힌 연도가 모두 지난해 이전인 신청 기간인지 ("2022.10.16 ~ 2022.11.22"). 웹 카드(web/js/api.js)와 같은 규칙."""
+    years = [int(y) for y in re.findall(r"20\d\d", period or "")]
+    return bool(years) and all(y < (today or datetime.date.today()).year for y in years)
+
+
 def policy_text(number, policy):
     """정책 하나를 글로. 내용은 DB 값 그대로이고, AI가 쓴 것은 한 줄 요약(one_line)뿐이다."""
     lines = [f"{number}. {policy['name']}"]
@@ -182,7 +189,7 @@ def policy_text(number, policy):
     if policy.get("has_income_rule"):
         lines.append("※ 소득 기준 있음")
     period = (policy.get("apply_period") or "").strip()
-    if period and len(period) <= 30 and period not in PLAIN_PERIODS:
+    if period and len(period) <= 30 and period not in PLAIN_PERIODS and not past_period(period):
         lines.append(f"신청 기간: {period}")
     if policy.get("collected_at"):
         lines.append(f"자료 기준일: {policy['collected_at']}")

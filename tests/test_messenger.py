@@ -218,3 +218,12 @@ def test_greeting_is_not_a_question():
         assert replies[0]["text"].startswith("안녕하세요, SPOT이에요.")
     assert not messenger.is_greeting("안녕하세요 병원비 지원이 있나요?")
     assert messenger._daily == {}   # 인사는 하루 질문 수에 넣지 않는다
+
+
+def test_past_apply_period_is_not_shown_on_card():
+    """원본에 옛 기간이 남은 정책은 카드에 신청 기간을 보여 주지 않는다."""
+    d = datetime.date(2026, 11, 23)
+    assert messenger.past_period("2022.10.16 ~ 2022.11.22", d)
+    assert not messenger.past_period("2026. 6. 15. ~ 2026. 12. 31.", d)
+    assert not messenger.past_period("매년 1월", d)
+    assert "신청 기간" not in messenger.policy_text(1, {**CARD, "apply_period": "2022.07.11 ~ 2022.08.25"})

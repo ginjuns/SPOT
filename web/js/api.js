@@ -82,8 +82,12 @@
     const oneLine = realText(policy.one_line);
     if (oneLine) card.append(el("p", "", oneLine));
     // 신청 기간이 정해져 있으면 카드에서 바로 보여 준다 (늘 신청할 수 있는 것, 긴 설명은 상세 화면에서)
+    // 적힌 연도가 모두 지난해 이전이면("2022.10.16 ~ 2022.11.22") 카드에는 보여 주지 않는다.
+    // 원본 자료에 옛 기간이 그대로 남은 정책이 있다. 정책을 숨기지는 않고, 상세 화면에는 원문 그대로 보여 준다.
     const period = (policy.apply_period || "").trim();
-    if (period && period.length <= 30 && !/^(상시신청|접수기관 별 상이|연중)$/.test(period)) {
+    const years = period.match(/20\d\d/g);
+    const past = years && years.every((y) => Number(y) < new Date().getFullYear());
+    if (period && !past && period.length <= 30 && !/^(상시신청|접수기관 별 상이|연중)$/.test(period)) {
       card.append(el("p", "period", "신청 기간: " + period));
     }
 
