@@ -33,9 +33,16 @@ def _squash(text):
 _KEYS = [(t["id"], [[_squash(p) for p in k.split("+")] for k in t["keys"]]) for t in TOPICS]
 
 
+# 주제 낱말을 품고 있지만 뜻이 다른 흔한 말. 낱말을 찾기 전에 지운다.
+# "이가 다 빠져서 밥을 제대로 못 씹어요"가 "제대"(군 제대)에 걸려 제대군인 정책이 나왔다 (2026-11-23).
+FALSE_FRIENDS = ["제대로"]
+
+
 def matched_topics(message):
     """질문에 낱말이 들어 있는 주제 ID 목록."""
     text = _squash(message)
+    for word in FALSE_FRIENDS:
+        text = text.replace(word, " ")
     return [tid for tid, keys in _KEYS if any(all(p in text for p in parts) for parts in keys)]
 
 

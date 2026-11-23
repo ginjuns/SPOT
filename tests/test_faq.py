@@ -152,3 +152,8 @@ def test_new_ai_question_clears_previous_topic(fake, monkeypatch):
     r = client.post("/api/chat", json={"message": "다른 걸 물어볼게요", "asked": True,
                                        "conditions": {"faq": "culture_card"}}).json()
     assert r["conditions"]["faq"] is None
+
+
+def test_false_friend_word_does_not_match():
+    """"제대로"의 "제대"는 군 제대가 아니다."""
+    assert "veterans_job" not in faq.matched_topics("이가 다 빠져서 밥을 제대로 못 씹어요")
