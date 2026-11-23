@@ -144,8 +144,11 @@ def normalize(raw, message):
     }
 
 
-def build_user_prompt(message, history):
+def build_user_prompt(message, history, known=None):
+    """known: 버튼으로 이미 고른 조건의 보기 좋은 글 (예: "나이대 75세 이상"). 어르신이면 노인 전용 제도를 먼저 떠올리게 한다."""
     lines = []
+    if known:
+        lines.append(f"<알려진 조건>{known}</알려진 조건>")
     if history:
         lines.append("<이전 대화>")
         for turn in history[-6:]:
@@ -239,13 +242,23 @@ def with_question(search_text, message):
     return f"{search_text}. {question}"
 
 
-def analyze(message, history=None):
+def known_text(age_group):
+    """버튼으로 고른 나이대를 분석 AI에게 알려 줄 글. 없으면 None."""
+    labels = {o["value"]: o["label"] for o in json.loads(
+        (config.DATA_DIR / "options.json").read_text(encoding="utf-8"))["age_group"]}
+    return f"나이대 {labels[age_group]}" if age_group in labels else None
+
+
+def analyze(message, history=None, age_group=None):
     """사용자 글을 분석한다. message 와 history 는 개인정보를 가린 뒤에 넘겨야 한다.
 
+    age_group: 버튼으로 이미 고른 나이대. 분석 AI에게 알려 주어 그 나이 전용 제도 이름을 먼저 떠올리게 한다
+    (75세에게 "누가 가끔 들여다봐 주면" → 노인맞춤돌봄. 모르면 긴급돌봄·아이돌봄을 붙였다, 2026-11-23).
     돌려주는 dict 의 "source" 는 "llm" 또는 "rules" (LLM이 안 돼서 규칙으로 대신한 경우).
     """
     try:
-        raw = llm.chat_json(config.GROQ_MODEL_ANALYZE, PROMPT, build_user_prompt(message, history))
+        raw = llm.chat_json(config.GROQ_MODEL_ANALYZE, PROMPT,
+                            build_user_prompt(message, history, known_text(age_group)))
         result = normalize(raw, message)
         # 검색 문장 = 제도 낱말 + 다듬은 문장 + 원래 질문.
         # 새 질문 12개로 시험했을 때 낱말을 앞에 두는 것이 가장 잘 맞았다 (6개 → 9개).

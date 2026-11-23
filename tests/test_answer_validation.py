@@ -114,3 +114,10 @@ def test_target_cut_keeps_other_age_groups():
     assert "그 밖의 대상" in cut and "어르신" in cut and "임신부" in cut
     plain = "○ 관내 거주 농가\n○ 친환경 인증을 받은 농가"
     assert answerer._cut_target(plain, 120) == answerer._cut(plain, 120)   # 나이 무리가 아니면 그대로
+
+
+def test_one_line_does_not_confirm_eligibility():
+    """한 줄 요약의 "받을 수 있어요"는 "받을 수 있는지 확인해 볼 만해요"로 바꾼다."""
+    from app.services.answerer import soften
+    assert soften("300만원까지 지원받을 수 있어요.") == "300만원까지 지원받을 수 있는지 확인해 볼 만해요."
+    assert soften("기차표를 30% 할인해요.") == "기차표를 30% 할인해요."

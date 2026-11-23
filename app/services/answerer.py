@@ -23,6 +23,22 @@ MIN_NAME_LENGTH = 4   # 이보다 짧은 정책 이름은 보통 낱말과 겹�
 CONFIRMING_WORDS = ["받을 수 있습니다", "받으실 수 있습니다", "받을 수 있어요", "받으실 수 있어요",
                     "대상입니다", "대상이에요", "자격이 됩니다", "자격이 돼요", "해당됩니다"]
 FINAL_CHECK = "자격은 신청하는 곳에서 최종 확인해 주세요."
+# 한 줄 요약에서 자격을 확정하는 말은 "확인해 볼 만해요"로 바꾼다. 안내 문장(text)은 정해 둔 문장으로 바꾸지만,
+# 한 줄 요약은 정책마다 내용이 있어서 말끝만 고친다 ("300만원까지 지원받을 수 있어요" → "...지원받을 수 있는지 확인해 볼 만해요").
+SOFTEN = [
+    ("받으실 수 있습니다", "받으실 수 있는지 확인해 볼 만해요"), ("받을 수 있습니다", "받을 수 있는지 확인해 볼 만해요"),
+    ("받으실 수 있어요", "받으실 수 있는지 확인해 볼 만해요"), ("받을 수 있어요", "받을 수 있는지 확인해 볼 만해요"),
+    ("대상입니다", "대상인지 확인해 볼 만해요"), ("대상이에요", "대상인지 확인해 볼 만해요"),
+    ("자격이 됩니다", "자격이 되는지 확인해 볼 만해요"), ("자격이 돼요", "자격이 되는지 확인해 볼 만해요"),
+    ("해당됩니다", "해당하는지 확인해 볼 만해요"),
+]
+
+
+def soften(text):
+    """자격을 확정하는 말끝을 "확인해 볼 만해요"로 바꾼다."""
+    for hard, soft in SOFTEN:
+        text = text.replace(hard, soft)
+    return text
 
 
 def _label(group, value):
@@ -113,7 +129,7 @@ def validate(raw, candidates, all_names=None):
             continue
         seen.add(pid)
         one_line = item.get("one_line")
-        one_line = _cut(one_line, ONE_LINE_LIMIT) if isinstance(one_line, str) else ""
+        one_line = soften(_cut(one_line, ONE_LINE_LIMIT)) if isinstance(one_line, str) else ""
         if not one_line or mentions_outside_policy(one_line, [by_id[pid]], all_names):
             one_line = retriever.one_line(by_id[pid]["summary"])
         picks.append({"id": pid, "one_line": one_line})

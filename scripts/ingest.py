@@ -193,6 +193,15 @@ class RegionResolver:
         return UNKNOWN
 
 
+LOCAL_ONLY = re.compile(r"주변지역|사업장\s*주변|발전소\s*주변|[가-힣]+[시군구]\s+[가-힣]+[읍면동]\s*주민")
+
+
+def local_only(name, target):
+    """특정 지역 주민만 받는 정책인지: 이름이나 지원 대상 글 앞 80자에 "주변지역", "서천군 서면 주민" 같은 말이 있다."""
+    head = " ".join((target or "").split())[:80]
+    return bool(LOCAL_ONLY.search(name or "") or LOCAL_ONLY.search(head))
+
+
 def embedding_text(row):
     """임베딩에 넣을 글. 길면 모델이 앞에서부터 512토큰까지만 쓴다."""
     # 꼬리표의 일상 표현("나라에서 매달 주는 돈")은 맨 뒤에 붙인다. 512토큰을 넘으면 잘리지만,
@@ -346,8 +355,10 @@ def build_rows(raw):
             "collected_at": collected_at,
             "_agency_type": s.get("소관기관유형"),
         }
-        # "발전소 주변지역 장학금"처럼 특정 지역 주민만 받는 공공기관 정책은 전국 정책으로 두지 않는다
-        if row["region_code"] is None and "주변지역" in (row["name"] or ""):
+        # "발전소 주변지역 장학금"처럼 특정 지역 주민만 받는 공공기관 정책은 전국 정책으로 두지 않는다.
+        # 이름에 없어도 지원 대상 글 앞부분에 적혀 있으면 같다 (2026-11-23, "신서천발전본부 주택용 전기요금 지원"
+        # → 대상 "충남 서천군 서면 주민". 전기요금을 물은 모든 사람에게 나왔다).
+        if row["region_code"] is None and local_only(row["name"], target):
             row["region_code"] = UNKNOWN
         row.update(map_conditions(conditions.get(sid, {}), (target or "") + (criteria or ""), codes))
         if row["age_min"] is None and row["age_max"] is None:

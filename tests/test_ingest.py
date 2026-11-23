@@ -117,3 +117,11 @@ def test_widen_age_when_other_age_groups_are_listed():
     assert f(18, 44, mother) == (18, 44)               # 자녀 나이일 뿐이면 그대로
     assert f(65, None, "65세 이상 어르신") == (65, None)
     assert f(19, 34, "19세 이상 34세 이하 청년") == (19, 34)
+
+
+def test_local_only_policy_is_not_nationwide():
+    """특정 지역 주민만 받는 공공기관 정책: 이름이나 지원 대상 글에 그 지역이 적혀 있다."""
+    from scripts.ingest import local_only
+    assert local_only("신서천발전본부 주택용 전기요금 지원", "충남 서천군 서면 주민의 주택용 및 산업용 전력고객")
+    assert local_only("발전소 주변지역 장학금", "")
+    assert not local_only("에너지바우처", "생계·의료급여 수급 가구")

@@ -27,7 +27,7 @@ def analysis(**over):
 def fake(monkeypatch):
     calls = {"analyze": [], "search": [], "answer": []}
 
-    def fake_analyze(message, history=None):
+    def fake_analyze(message, history=None, **kw):
         calls["analyze"].append((message, history))
         return calls.get("analysis") or analysis()
 

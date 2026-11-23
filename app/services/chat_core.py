@@ -112,7 +112,8 @@ def handle(req, client_key):
             {"role": h.role, "text": privacy.mask(h.text[:HISTORY_TEXT_LIMIT])[0]}
             for h in req.history[-HISTORY_LIMIT:]
         ]
-        conditions = {**merge_conditions(sent, analyzer.analyze(message, history)), "faq": None}
+        analysis = analyzer.analyze(message, history, age_group=sent.get("age_group"))
+        conditions = {**merge_conditions(sent, analysis), "faq": None}
     else:
         # 버튼으로 조건만 고른 호출: 분석(LLM)을 건너뛰고 바로 검색한다.
         conditions = sent
