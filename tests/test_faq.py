@@ -157,3 +157,10 @@ def test_new_ai_question_clears_previous_topic(fake, monkeypatch):
 def test_false_friend_word_does_not_match():
     """"제대로"의 "제대"는 군 제대가 아니다."""
     assert "veterans_job" not in faq.matched_topics("이가 다 빠져서 밥을 제대로 못 씹어요")
+
+
+def test_broad_topic_is_left_to_ai():
+    """넓은 주제(큰 병원비 등)는 낱말이 걸려도 바로 답하지 않는다. 좁은 주제와 함께 걸리면 좁은 쪽으로 답한다."""
+    q = "눈앞이 뿌옇게 흐려져서 병원에서 수술하라는데 수술비가 걱정이에요"
+    assert faq.match(q)["id"] == "big_medical" and faq.pick(q) is None
+    assert faq.pick("무릎 수술비가 걱정이에요")["id"] == "knee_surgery"

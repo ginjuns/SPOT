@@ -49,7 +49,7 @@ def fake(monkeypatch):
     monkeypatch.setattr(retriever, "search_semantic", fake_search)
     monkeypatch.setattr(answerer, "answer", fake_answer)
     # 이 파일은 AI 경로를 시험한다. 자주 묻는 질문은 tests/test_faq.py 에서 따로 본다.
-    monkeypatch.setattr(faq, "match", lambda message: None)
+    monkeypatch.setattr(faq, "pick", lambda message: None)
     rate_limit.reset()
     yield calls
     rate_limit.reset()

@@ -23,7 +23,7 @@ SHOWN = 5
 
 
 def run(q, age):
-    topic = faq.match(q)
+    topic = faq.pick(q)
     if topic:
         cards = faq.policies(topic, {"age_group": age, "for_child": faq.for_child(topic, q)}, q)
         if cards:

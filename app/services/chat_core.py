@@ -90,7 +90,7 @@ def handle(req, client_key):
                 return limited
             notice = " " + privacy.NOTICE if masked else ""
             return {**info, "text": info["text"] + notice, "conditions": sent}
-        topic = faq.match(message)   # 자주 묻는 질문이면 AI 없이 답한다
+        topic = faq.pick(message)   # 자주 묻는 질문이면 AI 없이 답한다 (넓은 주제는 빼고)
     # AI를 쓰지 않는 자주 묻는 질문은 전체 한도(Groq 보호용)를 덜 쓰도록 재호출처럼 센다.
     faq_question = bool(message) and bool(topic)
     limited = _over_limit(client_key, bool(message) and not topic, sent)

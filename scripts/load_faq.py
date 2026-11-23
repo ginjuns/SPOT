@@ -53,7 +53,7 @@ def check_scenarios():
     items = json.loads((ROOT / "data" / "scenarios_daily.json").read_text(encoding="utf-8"))
     hit = right = 0
     for s in items:
-        topic = faq.match(s["question"])
+        topic = faq.pick(s["question"])
         names = [p["name"] for p in faq.policies(topic, {})] if topic else []
         if not names:   # 주제가 없거나 맞는 정책이 없으면 실제 채팅에서도 AI로 넘어간다
             continue
@@ -67,7 +67,7 @@ def check_scenarios():
     items = json.loads((ROOT / "data" / "scenarios.json").read_text(encoding="utf-8"))
     hit = right = 0
     for s in items:
-        topic = faq.match(s["question"])
+        topic = faq.pick(s["question"])
         cond = {**(s.get("conditions") or {}), "for_child": faq.for_child(topic, s["question"])} if topic else {}
         cards = faq.policies(topic, cond, s["question"]) if topic else []
         if not cards:

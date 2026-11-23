@@ -94,7 +94,7 @@ def test_chat_answers_follow_up_without_ai(no_ai):
 
 
 def test_chat_without_shown_is_a_new_question(no_ai, monkeypatch):
-    monkeypatch.setattr(faq, "match", lambda message: None)
+    monkeypatch.setattr(faq, "pick", lambda message: None)
     r = client.post("/api/chat", json={"message": "어디서 신청해요?"}).json()
     assert r["type"] == "ask" and no_ai == ["analyze"]
 

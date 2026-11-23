@@ -60,6 +60,25 @@ def match(message):
     return BY_ID[hits[0]] if len(hits) == 1 else None
 
 
+# 이 단계 이상인 주제만 AI 없이 바로 답한다. 넓은 주제(-1 아주 넓음, 0 넓음: "큰 병원비", "생활비", "보훈")는
+# 낱말 하나("수술비", "형편이 어려", "참전")로 걸려도 질문이 실제로 묻는 것이 더 구체적인 경우가 많았다
+# ("눈이 흐려 수술하라는데 수술비" → 큰 병원비, 실제로는 개안수술. "중학생 아들 학교 돈이 부담, 형편이 어려워" → 생활비,
+# 실제로는 교육급여). 꼬리표를 보지 않고 쓴 새 시험 60개에서 AI 없이 틀린 답 6개 중 3개가 이런 경우였다 (2026-11-23).
+# 넓은 주제는 고르기(match)에는 그대로 쓰고(좁은 주제와 함께 걸리면 좁은 쪽을 고르려고), 바로 답하지만 않는다.
+MIN_ANSWER_LEVEL = 1
+
+
+def answerable(topic):
+    """AI 없이 바로 답할 주제인지 (넓은 주제는 AI가 판단한다)."""
+    return bool(topic) and topic.get("level", 1) >= MIN_ANSWER_LEVEL
+
+
+def pick(message):
+    """채팅에서 AI 없이 바로 답할 주제. 없으면 None (AI가 판단한다)."""
+    topic = match(message)
+    return topic if answerable(topic) else None
+
+
 def name_filter(names):
     """정책 이름에 낱말 중 하나라도 들어 있는지 보는 SQL 조각."""
     params = {f"faq{i}": retriever.like_pattern(n) for i, n in enumerate(names)}
