@@ -131,7 +131,7 @@ def validate(raw, candidates, all_names=None):
         one_line = item.get("one_line")
         one_line = soften(_cut(one_line, ONE_LINE_LIMIT)) if isinstance(one_line, str) else ""
         if not one_line or mentions_outside_policy(one_line, [by_id[pid]], all_names):
-            one_line = retriever.one_line(by_id[pid]["summary"])
+            one_line = retriever.one_line(by_id[pid]["summary"]) or retriever.one_line(by_id[pid].get("content"))
         picks.append({"id": pid, "one_line": one_line})
         if len(picks) == MAX_PICKS:
             break
@@ -160,7 +160,7 @@ def close_picks(candidates):
     한 줄 요약도 AI 글이 아니라 DB 요약에서 만든다. 가까운 후보가 없으면 picks 가 비어 "찾지 못했어요"가 된다.
     """
     close = [c for c in candidates if c.get("distance", 1) <= config.STRONG_DISTANCE][:CLOSE_PICKS]
-    picks = [{"id": c["id"], "one_line": retriever.one_line(c["summary"])} for c in close]
+    picks = [{"id": c["id"], "one_line": retriever.one_line(c["summary"]) or retriever.one_line(c.get("content"))} for c in close]
     return {"text": CLOSE_TEXT.format(count=len(picks)), "picks": picks}
 
 

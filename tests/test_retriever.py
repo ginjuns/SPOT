@@ -207,3 +207,11 @@ def test_minor_group_leaves_out_adult_policies():
     assert params["age_lo"] == 0 and params["age_hi"] == 17
     _, params = build_filter(age_group="19_34")
     assert params["age_hi"] == 34
+
+
+def test_one_line_skips_bullets_and_empty_summary():
+    assert one_line("ㅇ 공연 및 전시 기획사에서 기부한 티켓") == "공연 및 전시 기획사에서 기부한 티켓"
+    assert one_line("상동") == ""
+    card = retriever.to_card({"id": "a", "name": "n", "agency": "g", "summary": "상동", "content": "본인저축액에 정부 매칭",
+                              "has_income_rule": False, "url": "", "collected_at": None})
+    assert card["one_line"] == "본인저축액에 정부 매칭"

@@ -164,3 +164,8 @@ def test_broad_topic_is_left_to_ai():
     q = "눈앞이 뿌옇게 흐려져서 병원에서 수술하라는데 수술비가 걱정이에요"
     assert faq.match(q)["id"] == "big_medical" and faq.pick(q) is None
     assert faq.pick("무릎 수술비가 걱정이에요")["id"] == "knee_surgery"
+
+
+def test_adult_diaper_is_not_baby_diaper_topic():
+    assert "diaper" not in faq.matched_topics("보행기랑 어른 기저귀 같은 거 싸게 살 수 있는 방법 있어요?")
+    assert "diaper" in faq.matched_topics("아기 기저귀 값이 너무 비싸요")

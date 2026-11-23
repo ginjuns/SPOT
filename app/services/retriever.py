@@ -1,4 +1,6 @@
 """조건 필터 + 의미 검색."""
+import re
+
 from app import config, db
 
 PAGE_SIZE = 10
@@ -18,7 +20,7 @@ AGE_RANGES = {
     "75plus": (75, 120),
 }
 
-CARD_COLUMNS = "id, name, agency, summary, has_income_rule, url, apply_period, collected_at"
+CARD_COLUMNS = "id, name, agency, summary, content, has_income_rule, url, apply_period, collected_at"
 
 
 CHILD_AGE_MAX = 18
@@ -74,11 +76,19 @@ def like_pattern(term):
     return "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
+# 요약 자리에 들어 있어도 뜻이 없는 말 (웹 api.js 의 EMPTY_WORDS 와 같다)
+EMPTY_SUMMARY = re.compile(r"^(상동|상동함|위와 같음|-+|없음|해당없음|해당 없음|\.)$")
+# 줄 앞의 글머리 기호. "ㅇ"은 원문에서 글머리로 쓰인다 ("ㅇ 공연 및 전시 기획사에서…")
+BULLETS = "○◯❍●•◦▶▷□■ㅇ-·ㆍ* "
+
+
 def one_line(summary, limit=70):
-    """LLM을 쓰지 않는 카드의 한 줄 요약: DB 요약의 첫 줄 앞부분."""
+    """LLM을 쓰지 않는 카드의 한 줄 요약: DB 요약의 첫 줄 앞부분. 뜻이 없는 말("상동")이면 빈 글."""
     if not summary:
         return ""
-    line = summary.strip().split("\n")[0].lstrip("○-·ㆍ* ").strip()
+    line = summary.strip().split("\n")[0].lstrip(BULLETS).strip()
+    if EMPTY_SUMMARY.match(line):
+        return ""
     if len(line) <= limit:
         return line
     cut = line[:limit]
@@ -92,7 +102,8 @@ def to_card(row):
         "id": row["id"],
         "name": row["name"],
         "agency": row["agency"],
-        "one_line": one_line(row["summary"]),
+        # 요약이 "상동"처럼 뜻이 없으면 지원 내용 앞부분을 대신 쓴다 (청년내일저축계좌 요약이 "상동"이었다)
+        "one_line": one_line(row["summary"]) or one_line(row.get("content")),
         "has_income_rule": row["has_income_rule"],
         "url": row["url"],
         "apply_period": row.get("apply_period"),   # 신청 기간 ("상시신청", "매년 1월" 등)
