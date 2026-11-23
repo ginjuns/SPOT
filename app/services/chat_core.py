@@ -141,6 +141,7 @@ def handle(req, client_key):
                 return limited
 
     age_group, for_child = conditions["age_group"], bool(conditions.get("for_child"))
+    said = " ".join([message, conditions["search_text"] or ""])
     candidates = retriever.search_semantic(
         analyzer.expand(conditions["search_text"]),
         age_group=age_group,
@@ -150,7 +151,9 @@ def handle(req, client_key):
         for_child=for_child,
         # DB의 나이 칸은 느슨하므로 이름·지원 대상 글의 나이 무리(아동·청년·노인·임산부)로 한 번 더 거른다.
         # 답변 AI가 판단할 몫이 줄고, 빠진 자리는 나이가 맞는 후보로 채운다.
-        keep=lambda row: faq.fits_age(row, age_group, for_child, " ".join([message, conditions["search_text"] or ""])),
+        keep=lambda row: faq.fits_age(row, age_group, for_child, said),
+        # 가게·사업·농사 이야기가 없으면 기업·소상공인·단체만 받는 지원은 찾지 않는다
+        person_only=not analyzer.mentions_business(said),
     )
     if not candidates:
         return {"type": "none", "text": NONE_TEXT + notice, "conditions": conditions}

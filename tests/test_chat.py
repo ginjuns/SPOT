@@ -77,7 +77,7 @@ def test_button_call_skips_analysis_and_searches(fake):
     assert fake["analyze"] == []  # LLM을 다시 부르지 않는다
     assert fake["search"] == [("병원비 의료비 지원", {"age_group": "75plus", "gender": None,
                                                "region_code": "18101", "household": None,
-                                               "for_child": False})]
+                                               "for_child": False, "person_only": True})]
     assert r["type"] == "result" and r["policies"][0]["id"] == "SVC1"
     # 한 줄 요약만 AI가 쓴 글이고, 나머지 카드 내용은 DB 값이다
     assert r["policies"][0]["one_line"] == "AI가 쓴 한 줄 요약"
@@ -282,3 +282,9 @@ def test_global_daily_limit(fake, monkeypatch):
     client.post("/api/chat", json={"message": "병원비"})
     r = client.post("/api/chat", json={"message": "병원비"}, headers={"X-Forwarded-For": "203.0.113.9"}).json()
     assert r["type"] == "fallback" and "버튼으로" in r["text"]
+
+def test_business_question_also_searches_business_support(fake):
+    """가게·사업 이야기가 없으면 개인·가구 대상 지원만, 있으면 소상공인 지원도 찾는다."""
+    client.post("/api/chat", json={"message": "", "asked": True, "conditions": {"search_text": "어머니 돌봄 휴가"}})
+    client.post("/api/chat", json={"message": "", "asked": True, "conditions": {"search_text": "가게 장사가 안돼요"}})
+    assert fake["search"][0][1]["person_only"] is True and fake["search"][1][1]["person_only"] is False

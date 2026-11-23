@@ -48,16 +48,36 @@ def load():
     return table
 
 
-def normalize(name, age_max, ages, special):
+# 지원 대상 글 앞부분에 따로 적힌 무리. 꼬리표를 만들 때 "DB 나이 코드와 어긋나지 않게" 규칙을 따르다 보니,
+# 코드가 좁게 잘못 들어간 정책(교통약자 이동지원 65세 이상인데 글에는 장애인·임산부)은 꼬리표도 좁아졌다.
+# 글에 적힌 무리는 더해 준다 (넓히기만 한다. 숨기는 쪽보다 보여 주는 쪽이 안전하다).
+TEXT_GROUPS = {
+    "elder": re.compile(r"어르신|노인|65세\s*이상"),
+    "pregnant": re.compile(r"임산부|임신부"),
+    "child": re.compile(r"아동|어린이|영유아|청소년|초등학생|중학생|고등학생"),
+    "youth": re.compile(r"청년|대학생"),
+}
+DISABLED_TARGET = re.compile(r"장애인|장애아")
+TARGET_HEAD = 150
+
+
+def normalize(name, age_max, ages, special, target=""):
     """꼬리표를 만든 에이전트마다 기준이 조금씩 갈린 경우를 규칙으로 맞춘다.
 
     - 효도·효행·봉양 수당: 나이 코드는 모시는 어르신 나이지만 돈은 모시는 자녀가 받는다 → 중장년·어르신
     - 자립준비청년·보호종료 아동: 나이 코드가 17~18세로 들어간 것이 많지만 실제로는 18세 이후 청년이 받는다 → 청년 더함
     - 손주 돌봄·조손 가정: 아이 정책이어도 돈이나 도움은 조부모가 받는다 → 중장년·어르신 더함
     - 청년 정책인데 나이 코드가 39세처럼 35세를 넘으면 중장년(35~49세)에게도 보이게 한다
+    - 지원 대상 글 앞부분에 따로 적힌 무리(어르신·임산부·아동·청년)는 더한다
+    - 지원 대상 글에 장애인이 있으면 어른 무리를 더한다 (장애는 나이와 상관없다. 이름이 아이 대상이면 빼고)
     - "누구나"(all)는 다른 무리와 함께 적지 않는다
     """
     ages = set(ages)
+    head = " ".join((target or "").split())[:TARGET_HEAD]
+    if ages and "all" not in ages:
+        ages |= {group for group, pattern in TEXT_GROUPS.items() if pattern.search(head)}
+        if DISABLED_TARGET.search(head) and not CHILD_NAME.search(name or ""):
+            ages |= {"youth", "middle", "elder"}
     if FILIAL.search(name or "") and "장수" not in (name or ""):
         ages = {"middle", "elder"}
     if LEAVING_CARE.search(name or ""):
@@ -78,7 +98,7 @@ def for_row(row):
     if not found:
         return None, None, None
     ages, special, words = found
-    ages, special = normalize(row.get("name"), row.get("age_max"), ages, special)
+    ages, special = normalize(row.get("name"), row.get("age_max"), ages, special, row.get("target"))
     return ages, special, " ".join(words) or None
 
 

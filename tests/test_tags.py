@@ -22,6 +22,11 @@ def test_normalize_rules():
     assert tags.normalize("청년 월세", 34, ["youth"], [])[0] == ["youth"]
     # all 은 혼자
     assert tags.normalize("시민안전보험", None, ["all", "child"], [])[0] == ["all"]
+    # 나이 코드(65세 이상) 때문에 좁게 붙은 꼬리표도 글에 적힌 대상(장애인·임산부)으로 넓힌다
+    assert tags.normalize("교통약자 이동지원", 120, ["elder"], [], "65세 이상 어르신, 장애인, 임산부 등 교통약자")[0] \
+        == ["youth", "middle", "elder", "pregnant"]
+    # 이름이 아이 대상이면 장애인 글이 있어도 어른 무리를 더하지 않는다
+    assert tags.normalize("장애아동수당", 17, ["child", "parent"], [], "18세 미만 장애아동")[0] == ["child", "parent"]
 
 
 def test_fits():

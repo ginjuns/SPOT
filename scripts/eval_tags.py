@@ -33,6 +33,7 @@ def run(q, age):
     rows = retriever.search_semantic(
         analyzer.expand(q), age_group=age, for_child=for_child,
         keep=lambda r: faq.fits_age(r, age, for_child, q),
+        person_only=not analyzer.mentions_business(q),
     )
     names = [r["name"] for r in rows]
     return "ai", names, names[:SHOWN]

@@ -163,6 +163,17 @@ def build_user_prompt(message, history):
 CHILD_AE = re.compile(r"(?<![가-힣])애(?:가|를|\s|$)")
 
 
+# 가게·사업·농사 이야기. 이런 말이 없는 질문에는 기업·소상공인·단체만 받는 정책(for_person = false)을 찾지 않는다.
+# "어머니 돌보려고 회사를 쉬어야 해요"에 사업주가 받는 고용안정장려금이 나왔다 (2026-11-23).
+BUSINESS_WORDS = ["가게", "장사", "사업", "창업", "소상공인", "자영업", "사장", "직원을", "직원이", "직원 ", "채용",
+                  "법인", "운영", "농장", "농사", "농업", "축산", "어업", "양봉", "임업", "가맹점", "매출", "점포"]
+
+
+def mentions_business(text):
+    """가게·사업·농사 같은 사업 이야기를 하는지."""
+    return any(w in (text or "") for w in BUSINESS_WORDS)
+
+
 def mentions_child(message):
     """아이를 위한 질문인지 (data/keywords.json 의 for_child 낱말)."""
     words = [w for w in KEYWORDS["for_child"] if not w.startswith("애")]

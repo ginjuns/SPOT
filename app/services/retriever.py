@@ -110,18 +110,21 @@ EXTRA_FETCH = 12   # keep 으로 빠질 몫까지 넉넉히 가져온다
 
 
 def search_semantic(search_text, age_group=None, gender=None, region_code=None, household=None,
-                    limit=CANDIDATE_LIMIT, max_distance=None, for_child=False, keep=None):
+                    limit=CANDIDATE_LIMIT, max_distance=None, for_child=False, keep=None, person_only=False):
     """채팅 검색: 조건으로 거른 정책 중에서 질문과 뜻이 가까운 순으로 고른다.
 
     돌려주는 행에는 distance(코사인 거리, 작을수록 가까움)가 들어 있다.
     max_distance 를 주지 않으면 config.MAX_DISTANCE 를 쓴다.
     keep: 행을 받아 남길지 정하는 함수 (채팅은 나이 무리 검사 faq.fits_age 를 준다).
+    person_only: 개인·가구가 받는 지원만 찾는다 (채팅은 가게·사업 이야기가 없는 질문에 쓴다).
     사는 곳을 골랐으면 지역 정책을 LOCAL_SLOTS 건까지 꼭 넣는다. 전국 정책이 많은 주제에서
     가까운 순으로만 고르면 구청·시청 정책이 후보에 아예 들지 못했다. 이때 가장 먼 전국 정책이 빠진다.
     """
     from app.services.embedder import embed_query  # 모델은 처음 쓸 때만 불러온다
 
     where, params = build_filter(age_group, gender, region_code, household, for_child=bool(for_child))
+    if person_only:   # 개인·가구가 받는 지원만 (사업 이야기가 없는 질문)
+        where += " AND for_person"
     params["query_vec"] = embed_query(search_text)
     max_distance = config.MAX_DISTANCE if max_distance is None else max_distance
 
