@@ -80,7 +80,10 @@ def load(path):
 def text(value):
     """칸 값 정리. "해당없음", "※ 기관확인필요" 같은 값은 None."""
     value = (value or "").replace("\r\n", "\n").replace("\r", "\n").strip()
-    return None if EMPTY.match(value) else value
+    if EMPTY.match(value):
+        return None
+    # 장학금 자료는 항목을 줄바꿈 없이 "○"로만 이어 붙여 둔다 ("대상 1명 1000만원○ 최우수상 2명 …") → 항목마다 줄을 나눈다
+    return re.sub(r"\s*○\s*", "\n○ ", value).strip()
 
 
 def make_id(prefix, *parts):

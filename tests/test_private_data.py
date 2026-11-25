@@ -74,6 +74,7 @@ def test_scholarship_rows():
     assert lotte["source"] == "민간 장학금" and lotte["region_code"] is None
     assert lotte["apply_period"].startswith("지난 모집 2026-03-02 ~ 2026-03-20")
     assert lotte["url"] == "https://www.lottescholarship.or.kr"
+    assert private_data.text("대상 1명 1000만원○ 최우수상 2명") == "대상 1명 1000만원\n○ 최우수상 2명"
     assert lotte["_rule_tags"][0] == ["youth"] and "성적 좋은 대학생 장학금" in lotte["_rule_tags"][2]
     local = by_name["일반장학생"]
     assert local["source"] == "지역 장학금" and local["apply_period"] == "2026-03-02 ~ 2026-12-10"
