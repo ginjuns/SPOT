@@ -1,8 +1,10 @@
-"""GET /api/policy/{id}, GET /api/policies?ids=..."""
-from fastapi import APIRouter, HTTPException
+"""GET /api/policy/{id}, GET /api/policies?ids=..., POST /api/policy/{id}/view, GET /api/ranking"""
+import re
+
+from fastapi import APIRouter, HTTPException, Request
 
 from app import db
-from app.services import retriever
+from app.services import ranking, rate_limit, retriever
 
 router = APIRouter(prefix="/api")
 
@@ -19,6 +21,20 @@ def get_policy(policy_id: str):
     if not rows:
         raise HTTPException(404, "정책을 찾지 못했어요. 주소를 다시 확인해 주세요.")
     return rows[0]
+
+
+@router.post("/policy/{policy_id}/view")
+def view_policy(policy_id: str, request: Request):
+    """정책 상세 화면이 열렸다 (이번 달 많이 본 지원 순위용). 누가 봤는지는 저장하지 않는다."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,40}", policy_id):
+        raise HTTPException(400, "잘못된 요청이에요.")
+    return {"counted": ranking.record(policy_id, rate_limit.client_key(request))}
+
+
+@router.get("/ranking")
+def get_ranking():
+    """이번 달 많이 본 지원 5개 (시작 화면)."""
+    return ranking.top()
 
 
 @router.get("/policies")

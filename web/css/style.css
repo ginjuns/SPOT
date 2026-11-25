@@ -653,3 +653,6 @@ html[data-size="3"] { font-size: 24px; }
   .drop .muted { margin: 8px 12px 4px; white-space: normal; }
 
 }
+
+/* 이번 달 많이 본 지원: 기간 안내 (2026-11-25) */
+.ranking-period { margin: -4px 0 8px; font-size: 0.9rem; }

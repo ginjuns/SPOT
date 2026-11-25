@@ -45,6 +45,14 @@ ALTER TABLE policy ADD COLUMN IF NOT EXISTS tag_words TEXT;      -- 어르신이
 CREATE INDEX IF NOT EXISTS idx_policy_region ON policy (region_code);
 -- 벡터 인덱스(HNSW)는 만들지 않는다. 이유는 PROJECT_SPEC.md 6장 참고.
 
+-- 정책 상세 화면 조회수 (한 달 단위 순위용, 2026-11-25). 누가 봤는지는 저장하지 않고 정책별 숫자만 남긴다.
+CREATE TABLE IF NOT EXISTS policy_view_month (
+  period_start DATE NOT NULL,   -- 이 달 순위가 시작한 날 (RANKING_START 부터 한 달씩)
+  policy_id    TEXT NOT NULL,
+  views        INT  NOT NULL DEFAULT 0,
+  PRIMARY KEY (period_start, policy_id)
+);
+
 CREATE TABLE IF NOT EXISTS region (
   code     TEXT PRIMARY KEY,   -- 시·군·구 코드 5자리 (시·도는 2자리)
   sido     TEXT NOT NULL,

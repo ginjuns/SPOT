@@ -42,13 +42,16 @@
         <a class="btn tile" href="search.html?result=1&amp;category=%EB%86%8D%EB%A6%BC%EC%B6%95%EC%82%B0%EC%96%B4%EC%97%85"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20v-8M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 14c0-3 2.5-5 7-5 0 3.5-2.5 5-7 5z"/></svg>농사·어업</a>
       </div>
 
-      <h2 class="home-title">이렇게 찾아보세요</h2>
-      <!-- 낱말은 주소의 # 뒤에 담는다 (서버로 전송되지 않는다). 찾는 횟수 순위가 아니라 예시다 -->
-      <ol class="popular">
+      <h2 class="home-title">이번 달 많이 본 지원</h2>
+      <!-- 정책 상세 화면이 열린 횟수로 매달 새로 세는 순위 (js/home.js 가 /api/ranking 으로 채운다).
+           서버에 닿지 못하면 아래 예시 낱말이 그대로 보인다. 낱말은 주소의 # 뒤에 담는다 (서버로 전송되지 않는다) -->
+      <p class="muted ranking-period" id="ranking-period" hidden></p>
+      <ol class="popular" id="ranking">
         <li><a href="search.html?result=1#q=%EA%B8%B0%EC%B4%88%EC%97%B0%EA%B8%88"><span class="rank">1</span>기초연금</a></li>
         <li><a href="search.html?result=1#q=%EB%82%9C%EB%B0%A9%EB%B9%84"><span class="rank">2</span>난방비</a></li>
         <li><a href="search.html?result=1#q=%EB%85%B8%EC%9D%B8%EC%9D%BC%EC%9E%90%EB%A6%AC"><span class="rank">3</span>노인일자리</a></li>
         <li><a href="search.html?result=1#q=%EB%B3%91%EC%9B%90%EB%B9%84"><span class="rank">4</span>병원비</a></li>
+        <li><a href="search.html?result=1#q=%EB%AC%B8%ED%99%94%EB%88%84%EB%A6%AC%EC%B9%B4%EB%93%9C"><span class="rank">5</span>문화누리카드</a></li>
       </ol>
 
       <h2 class="home-title">내 조건으로 찾기</h2>

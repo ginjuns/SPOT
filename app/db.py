@@ -28,6 +28,18 @@ def close_pool():
         pool.close()
 
 
+def execute(sql, params=None):
+    """INSERT·UPDATE 실행 (돌려받는 행이 없을 때). 연결이 끊겼으면 1번 다시 시도한다."""
+    for attempt in (1, 2):
+        try:
+            with pool.connection() as conn:   # 나갈 때 저장(commit)된다
+                conn.execute(sql, params)
+                return
+        except psycopg.OperationalError:
+            if attempt == 2:
+                raise
+
+
 def query(sql, params=None):
     """SELECT 실행 후 행 목록(dict)을 돌려준다. 연결이 끊겼으면 1번 다시 시도한다."""
     for attempt in (1, 2):

@@ -53,6 +53,9 @@ NAVERTALK_WEBHOOK_SECRET = os.getenv("NAVERTALK_WEBHOOK_SECRET", "")  # 웹훅 �
 # 카카오톡 채널 챗봇. 비어 있으면 카카오 경로는 404를 돌려준다.
 KAKAO_SKILL_SECRET = os.getenv("KAKAO_SKILL_SECRET", "")   # 오픈빌더 스킬 헤더값(X-Spot-Secret)에 넣는 비밀 문자열
 
+# "이번 달 많이 본 지원" 순위가 처음 시작한 날. 이 날부터 한 달마다(매달 같은 날) 새로 센다.
+RANKING_START = os.getenv("RANKING_START", "2026-11-25")
+
 # 답변 생성에 넣는 후보 정책 글(지원 대상·지원 내용)의 최대 글자 수
 # 200자일 때 답변 1번에 3,000토큰을 써서 1분에 2번밖에 답하지 못했다. 120자로 줄였다.
 CANDIDATE_TEXT_LIMIT = 120

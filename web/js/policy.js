@@ -140,6 +140,8 @@
       const policy = await api.get("/api/policy/" + encodeURIComponent(id));
       stop();
       render(policy);
+      // 이번 달 많이 본 지원 순위에 센다. 실패해도 화면에는 상관없다.
+      api.post("/api/policy/" + encodeURIComponent(id) + "/view", {}).catch(() => {});
     } catch (e) {
       stop();
       showError(main, e.message, start);
