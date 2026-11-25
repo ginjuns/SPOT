@@ -78,6 +78,8 @@
     const card = el("article", "card");
     card.append(el("h2", "", policy.name));
     card.append(el("p", "agency", policy.agency || ""));
+    // 정부24 밖의 지원(민간 재단·기업·장학회)이면 정부 지원과 헷갈리지 않게 표시한다
+    if (policy.source) card.append(el("span", "badge badge-private", policy.source));
     if (policy.has_income_rule) card.append(el("span", "badge", "소득 기준 있음"));
     const oneLine = realText(policy.one_line);
     if (oneLine) card.append(el("p", "", oneLine));

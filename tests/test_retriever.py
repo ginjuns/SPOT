@@ -14,6 +14,8 @@ def test_search_semantic_keeps_filter_and_drops_far(monkeypatch):
     seen = {}
 
     def fake_query(sql, params):
+        if "source IS NOT NULL" in sql:   # 민간 지원 몫 (따로 본다)
+            return []
         seen["sql"], seen["params"] = sql, params
         return [{"id": "a", "distance": 0.1}, {"id": "b", "distance": 0.9}]
 
@@ -28,9 +30,11 @@ def test_search_semantic_keeps_filter_and_drops_far(monkeypatch):
     assert seen["params"]["age_lo"] == 75 and "LIMIT 20" in seen["sql"]   # 빠질 몫까지 넉넉히 가져온다
 
 
-def _fake_semantic(monkeypatch, nation, local):
-    """전체 검색은 nation + local 을 가까운 순으로, 지역만 찾는 검색은 local 을 돌려준다."""
+def _fake_semantic(monkeypatch, nation, local, private=()):
+    """전체 검색은 nation + local 을 가까운 순으로, 지역만 찾는 검색은 local 을, 민간 검색은 private 를 돌려준다."""
     def fake_query(sql, params):
+        if "source IS NOT NULL" in sql:
+            return [dict(r) for r in private]
         rows = local if "region_code IS NOT NULL" in sql else sorted(nation + local, key=lambda r: r["distance"])
         return [dict(r) for r in rows]
 
@@ -64,6 +68,16 @@ def test_keep_filters_before_cutting(monkeypatch):
     _fake_semantic(monkeypatch, nation, [])
     rows = retriever.search_semantic("병원비", keep=lambda r: r["id"] not in ("n0", "n1"))
     assert [r["id"] for r in rows] == [f"n{i}" for i in range(2, 10)]
+
+
+def test_private_support_takes_at_most_two_seats(monkeypatch):
+    """민간 지원·장학금이 아무리 가까워도 후보의 2자리까지만 (이름이 "장학금"뿐인 장학금이 국가장학금을 밀어냈다)."""
+    nation = [{"id": f"n{i}", "distance": 0.10 + i * 0.001, "region_code": None} for i in range(10)]
+    private = [{"id": f"p{i}", "distance": 0.08 + i * 0.001, "region_code": None, "source": "민간 장학금"}
+               for i in range(10)]
+    _fake_semantic(monkeypatch, nation, [], private)
+    ids = [r["id"] for r in retriever.search_semantic("대학 등록금")]
+    assert ids == ["p0", "p1"] + [f"n{i}" for i in range(6)]
 
 
 def test_no_region_means_nationwide_only():

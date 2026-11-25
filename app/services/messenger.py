@@ -183,7 +183,8 @@ def policy_text(number, policy):
     """정책 하나를 글로. 내용은 DB 값 그대로이고, AI가 쓴 것은 한 줄 요약(one_line)뿐이다."""
     lines = [f"{number}. {policy['name']}"]
     if policy.get("agency"):
-        lines.append(policy["agency"])
+        # 정부24 밖의 지원이면 출처 이름을 붙인다 ("삼성꿈장학재단 · 민간 지원")
+        lines.append(policy["agency"] + (f" · {policy['source']}" if policy.get("source") else ""))
     if policy.get("one_line"):
         lines.append(policy["one_line"])
     if policy.get("has_income_rule"):

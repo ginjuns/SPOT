@@ -8,7 +8,7 @@ CANDIDATE_LIMIT = 8  # 의미 검색으로 고르는 후보 수
 
 # 의미 검색 후보에 필요한 열 (답변 생성에 지원 대상·지원 내용을 쓴다)
 CANDIDATE_COLUMNS = ("id, name, agency, summary, target, content, has_income_rule, url, apply_period, "
-                     "collected_at, region_code, tag_ages, tag_special")
+                     "collected_at, region_code, tag_ages, tag_special, source")
 
 # 나이대 → (가장 어린 나이, 가장 많은 나이)
 AGE_RANGES = {
@@ -20,7 +20,7 @@ AGE_RANGES = {
     "75plus": (75, 120),
 }
 
-CARD_COLUMNS = "id, name, agency, summary, content, has_income_rule, url, apply_period, collected_at"
+CARD_COLUMNS = "id, name, agency, summary, content, has_income_rule, url, apply_period, collected_at, source"
 
 
 CHILD_AGE_MAX = 18
@@ -108,6 +108,8 @@ def to_card(row):
         "url": row["url"],
         "apply_period": row.get("apply_period"),   # 신청 기간 ("상시신청", "매년 1월" 등)
         "collected_at": row["collected_at"],
+        # 정부24 밖의 지원이면 "민간 지원", "민간 장학금" 같은 출처 이름 (정부 지원이면 None)
+        "source": row.get("source"),
     }
 
 
@@ -118,6 +120,7 @@ def drop_far(rows, max_distance):
 
 LOCAL_SLOTS = 3    # 사는 곳을 골랐을 때 후보에 꼭 넣을 지역(시·도, 시·군·구) 정책 수
 EXTRA_FETCH = 12   # keep 으로 빠질 몫까지 넉넉히 가져온다
+PRIVATE_SLOTS = 2  # 후보 중 민간 지원·장학금(source 가 있는 것)이 차지할 수 있는 최대 자리
 
 
 def search_semantic(search_text, age_group=None, gender=None, region_code=None, household=None,
@@ -128,6 +131,8 @@ def search_semantic(search_text, age_group=None, gender=None, region_code=None, 
     max_distance 를 주지 않으면 config.MAX_DISTANCE 를 쓴다.
     keep: 행을 받아 남길지 정하는 함수 (채팅은 나이 무리 검사 faq.fits_age 를 준다).
     person_only: 개인·가구가 받는 지원만 찾는다 (채팅은 가게·사업 이야기가 없는 질문에 쓴다).
+    민간 지원·장학금은 PRIVATE_SLOTS 건까지만 넣는다. 이름이 "장학금", "장학생"뿐인 장학금이 1,400건이 넘어서
+    "대학 등록금" 질문의 후보를 모두 차지하고 국가장학금을 밀어냈다 (2026-11-25).
     사는 곳을 골랐으면 지역 정책을 LOCAL_SLOTS 건까지 꼭 넣는다. 전국 정책이 많은 주제에서
     가까운 순으로만 고르면 구청·시청 정책이 후보에 아예 들지 못했다. 이때 가장 먼 전국 정책이 빠진다.
     """
@@ -148,14 +153,17 @@ def search_semantic(search_text, age_group=None, gender=None, region_code=None, 
         )
         return [r for r in drop_far(rows, max_distance) if keep is None or keep(r)]
 
-    rows = fetch("", limit + EXTRA_FETCH)[:limit]
+    gov = fetch(" AND source IS NULL", limit + EXTRA_FETCH)
+    private = fetch(" AND source IS NOT NULL", PRIVATE_SLOTS + EXTRA_FETCH)[:PRIVATE_SLOTS]
+    rows = sorted(gov + private, key=lambda r: (r["distance"], r["id"]))[:limit]
     if not region_code:
         return rows
     local_count = sum(r.get("region_code") is not None for r in rows)
     if local_count >= LOCAL_SLOTS:
         return rows
     ids = {r["id"] for r in rows}
-    local = [r for r in fetch(" AND region_code IS NOT NULL", LOCAL_SLOTS + EXTRA_FETCH) if r["id"] not in ids]
+    local = [r for r in fetch(" AND region_code IS NOT NULL AND source IS NULL", LOCAL_SLOTS + EXTRA_FETCH)
+             if r["id"] not in ids]
     local = local[:LOCAL_SLOTS - local_count]
     if not local:
         return rows

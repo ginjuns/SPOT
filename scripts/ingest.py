@@ -4,6 +4,8 @@
   python scripts/ingest.py --from-raw              # data/raw/ 에 받아 둔 파일로 다시 만들기
   python scripts/ingest.py --from-raw --no-embed   # 임베딩은 그대로 두고 나머지 열만 갱신
   python scripts/ingest.py --from-raw --dry-run    # DB에 쓰지 않고 통계만 출력
+
+정부24 정책과 함께 민간 복지 지원·장학금(공공데이터포털 파일 자료)도 받아서 넣는다 (scripts/private_data.py).
 """
 import argparse
 import csv
@@ -21,6 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from app import config  # noqa: E402
+from scripts import private_data  # noqa: E402
 
 BASE_URL = "https://api.odcloud.kr/api/gov24/v3/"
 OPERATIONS = ["serviceList", "serviceDetail", "supportConditions"]
@@ -83,6 +86,12 @@ def fetch_and_save():
             json.dumps({"fetched_at": date.today().isoformat(), "data": rows}, ensure_ascii=False),
             encoding="utf-8",
         )
+    for name in private_data.DATASETS:
+        try:
+            count = private_data.download(name, RAW_DIR / f"{name}.csv")
+            print(f"  {name}: {count}건")
+        except Exception as e:   # 민간 자료를 못 받아도 정부24 수집은 이어 간다 (지난번 받은 파일이 있으면 그걸 쓴다)
+            print(f"  {name} 받기 실패 ({type(e).__name__}: {e}). 지난번 파일이 있으면 그대로 씁니다.")
 
 
 def load_raw():
@@ -217,6 +226,11 @@ def add_tags(rows):
     missing = 0
     for row in rows:
         row["tag_ages"], row["tag_special"], row["tag_words"] = tags.for_row(row)
+        # 민간 지원·장학금은 자료의 생애주기·장학금 종류로 만든 꼬리표를 기본으로 쓴다 (Claude 꼬리표가 있으면 그쪽)
+        if row["tag_ages"] is None and row.get("_rule_tags"):
+            ages, special, words = row["_rule_tags"]
+            row["tag_ages"], row["tag_special"] = tags.normalize(row["name"], None, ages, special, row.get("target"))
+            row["tag_words"] = words
         # 꼬리표는 개인·가구 대상 정책에만 만들었다 (기업·단체 대상은 채팅 나이 검사와 상관없다)
         missing += row["tag_ages"] is None and row["for_person"]
     print(f"꼬리표: {len(rows)}건 중 붙인 정책 {sum(r['tag_ages'] is not None for r in rows)}건, "
@@ -353,6 +367,7 @@ def build_rows(raw):
             "for_person": for_person(s.get("사용자구분")),
             "views": int(s.get("조회수") or 0),   # 많이 찾는 정책을 먼저 보여 주는 데 쓴다
             "collected_at": collected_at,
+            "source": None,   # 정부24 정책. 민간 지원·장학금은 "민간 지원", "민간 장학금" 같은 이름 (private_data.py)
             "_agency_type": s.get("소관기관유형"),
         }
         # "발전소 주변지역 장학금"처럼 특정 지역 주민만 받는 공공기관 정책은 전국 정책으로 두지 않는다.
@@ -367,7 +382,26 @@ def build_rows(raw):
             row["age_min"], row["age_max"] = widen_for_other_groups(row["age_min"], row["age_max"], target)
         if row["name"]:
             rows.append(row)
-    return rows
+    return rows + build_private_rows(resolver, rows)
+
+
+def build_private_rows(resolver, gov_rows):
+    """민간 복지 지원과 장학금 (data/raw/private_welfare.csv, scholarship.csv). 파일이 없으면 건너뛴다."""
+    out = []
+    for name in private_data.DATASETS:
+        path = RAW_DIR / f"{name}.csv"
+        if not path.exists():
+            print(f"  {path.name} 가 없어서 {name}은 넣지 않습니다. --from-raw 없이 실행하면 받아요.")
+            continue
+        records = private_data.load(path)
+        collected_at = date.fromtimestamp(path.stat().st_mtime).isoformat()
+        if name == "private_welfare":
+            got = private_data.welfare_rows(records, resolver, collected_at)
+        else:
+            got = private_data.scholarship_rows(records, resolver, collected_at, [r["name"] for r in gov_rows])
+        print(f"  {name}: 파일 {len(records)}건 중 {len(got)}건 넣음")
+        out += got
+    return out
 
 
 def print_stats(rows):
@@ -378,6 +412,7 @@ def print_stats(rows):
             return UNKNOWN
         return "시·도" if len(code) == 2 else "시·군·구"
 
+    print("출처:", dict(Counter(r.get("source") or "정부24" for r in rows)))
     print("지역 구분:", dict(Counter(scope(r["region_code"]) for r in rows)))
     unknown = Counter(r["agency"] for r in rows if r["region_code"] == UNKNOWN)
     if unknown:
@@ -394,7 +429,7 @@ COLUMNS = [
     "id", "name", "agency", "category", "summary", "target", "criteria", "content",
     "how_to_apply", "apply_place", "apply_period", "documents", "contact", "url", "region_code", "age_min", "age_max",
     "gender", "household", "has_income_rule", "for_person", "views", "collected_at",
-    "tag_ages", "tag_special", "tag_words",
+    "tag_ages", "tag_special", "tag_words", "source",
 ]
 
 

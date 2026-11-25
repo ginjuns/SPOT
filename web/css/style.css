@@ -13,6 +13,8 @@
   --soft: #fdecdc;
   --warn-bg: #fff0d4;
   --warn-text: #6b3b00;
+  --private-bg: #e3f2f4;       /* 민간 지원 표시 (정부 지원과 구분) */
+  --private-text: #095c6b;
   --fab-bg: #2b2118;          /* 물어보기 버튼 */
   --card-line: transparent;   /* 카드는 테두리 대신 그림자 */
   --shadow: 0 6px 18px rgba(120, 80, 40, 0.10);
@@ -385,6 +387,11 @@ html[data-size="2"] .row.tiles, html[data-size="3"] .row.tiles { grid-template-c
   color: var(--warn-text);
   font-size: 0.9rem;
   font-weight: 700;
+}
+.badge-private {
+  margin-right: 6px;
+  background: var(--private-bg);
+  color: var(--private-text);
 }
 
 /* ---------- 인터넷이 끊겼을 때 ---------- */

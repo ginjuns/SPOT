@@ -41,6 +41,7 @@ ALTER TABLE policy ADD COLUMN IF NOT EXISTS documents TEXT;
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS tag_ages TEXT[];     -- 받는 사람 나이 무리: child, youth, middle, elder, pregnant, parent, all
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS tag_special TEXT[];  -- 특정 대상 전용: disabled, veteran, defector, multicultural, farmer, injured_worker
 ALTER TABLE policy ADD COLUMN IF NOT EXISTS tag_words TEXT;      -- 어르신이 평소에 할 법한 말 (의미 검색 글에 붙인다)
+ALTER TABLE policy ADD COLUMN IF NOT EXISTS source TEXT;         -- 정부24 밖의 지원이면 화면에 보일 출처 이름 ("민간 지원", "민간 장학금", "지역 장학금", "장학금"). 정부24는 NULL
 
 CREATE INDEX IF NOT EXISTS idx_policy_region ON policy (region_code);
 -- 벡터 인덱스(HNSW)는 만들지 않는다. 이유는 PROJECT_SPEC.md 6장 참고.

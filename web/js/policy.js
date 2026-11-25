@@ -87,6 +87,11 @@
     const head = el("section", "card");
     head.append(el("h1", "", policy.name));
     head.append(el("p", "agency muted", policy.agency || ""));
+    if (policy.source) {
+      head.append(el("span", "badge badge-private", policy.source));
+      head.append(el("p", "muted", "나라에서 하는 지원이 아니라 " + (policy.agency || "민간 단체") +
+        "에서 하는 지원이에요. 모집 때와 조건은 기관에 꼭 확인해 주세요."));
+    }
     if (policy.has_income_rule) {
       head.append(el("span", "badge", "소득 기준 있음"));
       head.append(el("p", "muted", "소득이나 재산에 따라 받을 수 있는지가 달라져요. 복지로 모의계산으로 미리 알아보거나, 주민센터에 물어보세요."));
@@ -115,7 +120,7 @@
     const foot = el("section", "section stack");
     const url = safeUrl(policy.url);
     if (url) {
-      const origin = el("a", "btn btn-primary", "원문 보기 (정부24)");
+      const origin = el("a", "btn btn-primary", policy.source ? "기관 홈페이지 보기" : "원문 보기 (정부24)");
       origin.href = url;
       origin.target = "_blank";
       origin.rel = "noopener";

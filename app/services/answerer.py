@@ -83,7 +83,7 @@ def build_user_prompt(situation, conditions, candidates):
     limit = config.CANDIDATE_TEXT_LIMIT
     for c in candidates:
         lines.append(
-            f"[{c['id']}] {c['name']} / 대상: {_cut_target(c['target'], limit)} / 내용: {_cut(c['content'], limit)}"
+            f"[{c['id']}] {c['name']}{' (' + c['source'] + ', 정부 지원 아님)' if c.get('source') else ''} / 대상: {_cut_target(c['target'], limit)} / 내용: {_cut(c['content'], limit)}"
         )
     lines.append("</후보 정책>")
     return "\n".join(lines)
