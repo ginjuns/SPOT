@@ -18,6 +18,7 @@ import httpx
 # 이름 → 공공데이터포털 파일 자료 번호
 DATASETS = {"private_welfare": "15116392", "scholarship": "15028252"}
 PORTAL = "https://www.data.go.kr"
+BOM = "﻿"
 
 # 민간 복지 "관심주제" → 정부24 분야 (분야 고르기 화면에서 같이 보이게)
 TOPIC_CATEGORY = {
@@ -56,7 +57,8 @@ def download(name, path):
         raw = c.get(f"{PORTAL}/cmm/cmm/fileDownload.do",
                     params={"atchFileId": info["atchFileId"], "fileDetailSn": info["fileDetailSn"]}).content
     text = decode(raw)
-    if not text.lstrip().startswith(("기관명", "번호", "﻿")):
+    # 첫 줄이 따옴표로 시작하는 파일도 있다 ("번호","운영기관명",… 2026-11-28 장학금 파일)
+    if not text.lstrip(BOM + '" \r\n').startswith(("기관명", "번호")):
         raise RuntimeError(f"{name}: 받은 파일이 CSV가 아닙니다")
     path.write_text(text, encoding="utf-8")
     return len(list(csv.DictReader(io.StringIO(text))))
