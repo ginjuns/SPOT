@@ -500,7 +500,7 @@ html[data-size="3"] { font-size: 24px; }
 /* [소리로 듣기] */
 .btn.speak { display: inline-flex; width: auto; min-height: 48px; padding: 6px 16px; }
 .chat-log > .btn.speak { align-self: flex-start; }
-.card .btn.speak, .card .btn[href*="bokjiro"] { margin-top: 10px; }
+.card .btn.speak, .card .btn[href*="mkclInsertNblgPage"] { margin-top: 10px; }  /* 복지로 모의계산 버튼 */
 
 /* 화면에는 안 보이지만 화면 읽어 주는 프로그램은 읽는 글 */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

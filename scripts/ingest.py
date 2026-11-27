@@ -5,7 +5,8 @@
   python scripts/ingest.py --from-raw --no-embed   # 임베딩은 그대로 두고 나머지 열만 갱신
   python scripts/ingest.py --from-raw --dry-run    # DB에 쓰지 않고 통계만 출력
 
-정부24 정책과 함께 민간 복지 지원·장학금(공공데이터포털 파일 자료)도 받아서 넣는다 (scripts/private_data.py).
+정부24 정책과 함께 민간 복지 지원·장학금(공공데이터포털 파일 자료, scripts/private_data.py)과
+정부24에 없는 지자체 복지(한국사회보장정보원 API, scripts/local_welfare.py)도 받아서 넣는다.
 """
 import argparse
 import csv
@@ -23,7 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from app import config  # noqa: E402
-from scripts import private_data  # noqa: E402
+from scripts import local_welfare, private_data  # noqa: E402
 
 BASE_URL = "https://api.odcloud.kr/api/gov24/v3/"
 OPERATIONS = ["serviceList", "serviceDetail", "supportConditions"]
@@ -92,6 +93,25 @@ def fetch_and_save():
             print(f"  {name}: {count}건")
         except Exception as e:   # 민간 자료를 못 받아도 정부24 수집은 이어 간다 (지난번 받은 파일이 있으면 그걸 쓴다)
             print(f"  {name} 받기 실패 ({type(e).__name__}: {e}). 지난번 파일이 있으면 그대로 씁니다.")
+    # 지자체 복지: 정부24와 겹치는지 보려면 방금 받은 정부24 목록이 필요하다
+    path = RAW_DIR / LOCAL_WELFARE_FILE
+    old = json.loads(path.read_text(encoding="utf-8")).get("details", {}) if path.exists() else {}
+    try:
+        resolver = load_resolver()
+        gov = [{"name": s["서비스명"], "region_code": resolver.resolve(s.get("소관기관명"), s.get("소관기관유형"))}
+               for s in load_raw()["serviceList"]["data"]]
+        saved = local_welfare.fetch(config.DATA_GO_KR_API_KEY, resolver, gov, old)
+        path.write_text(json.dumps(saved, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:   # 못 받아도 정부24 수집은 이어 간다
+        print(f"  지자체복지 받기 실패 ({type(e).__name__}). 지난번 파일이 있으면 그대로 씁니다.")
+
+
+LOCAL_WELFARE_FILE = "local_welfare.json"
+
+
+def load_resolver():
+    with open(config.DATA_DIR / "regions.csv", encoding="utf-8", newline="") as f:
+        return RegionResolver(list(csv.DictReader(f)))
 
 
 def load_raw():
@@ -335,8 +355,7 @@ def for_person(user_types):
 
 def build_rows(raw):
     codes = json.loads((config.DATA_DIR / "condition_codes.json").read_text(encoding="utf-8"))
-    with open(config.DATA_DIR / "regions.csv", encoding="utf-8", newline="") as f:
-        resolver = RegionResolver(list(csv.DictReader(f)))
+    resolver = load_resolver()
     collected_at = raw["serviceList"]["fetched_at"]
     details = {d["서비스ID"]: d for d in raw["serviceDetail"]["data"]}
     conditions = {c["서비스ID"]: c for c in raw["supportConditions"]["data"]}
@@ -382,7 +401,21 @@ def build_rows(raw):
             row["age_min"], row["age_max"] = widen_for_other_groups(row["age_min"], row["age_max"], target)
         if row["name"]:
             rows.append(row)
-    return rows + build_private_rows(resolver, rows)
+    return rows + build_local_rows(resolver, rows) + build_private_rows(resolver, rows)
+
+
+def build_local_rows(resolver, gov_rows):
+    """정부24에 없는 지자체 복지 (data/raw/local_welfare.json). 파일이 없으면 건너뛴다."""
+    path = RAW_DIR / LOCAL_WELFARE_FILE
+    if not path.exists():
+        print(f"  {path.name} 가 없어서 지자체 복지는 넣지 않습니다. --from-raw 없이 실행하면 받아요.")
+        return []
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    todo = local_welfare.new_items(saved["list"], resolver, gov_rows)
+    got = local_welfare.rows(todo, saved["details"], resolver, saved["fetched_at"], age_from_text)
+    print(f"  지자체복지: 목록 {len(saved['list'])}건 중 정부24에 없는 것 {len(todo)}건, 넣은 것 {len(got)}건 "
+          f"(상세가 없거나 끝난 사업은 뺌)")
+    return got
 
 
 def build_private_rows(resolver, gov_rows):
@@ -412,7 +445,7 @@ def print_stats(rows):
             return UNKNOWN
         return "시·도" if len(code) == 2 else "시·군·구"
 
-    print("출처:", dict(Counter(r.get("source") or "정부24" for r in rows)))
+    print("출처:", dict(Counter(r.get("source") or ("지자체복지" if r["id"].startswith("WLF") else "정부24") for r in rows)))
     print("지역 구분:", dict(Counter(scope(r["region_code"]) for r in rows)))
     unknown = Counter(r["agency"] for r in rows if r["region_code"] == UNKNOWN)
     if unknown:

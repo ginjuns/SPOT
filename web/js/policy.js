@@ -120,7 +120,9 @@
     const foot = el("section", "section stack");
     const url = safeUrl(policy.url);
     if (url) {
-      const origin = el("a", "btn btn-primary", policy.source ? "기관 홈페이지 보기" : "원문 보기 (정부24)");
+      // 정부24에 없는 지자체 복지는 복지로 화면으로 간다
+      const origin = el("a", "btn btn-primary", policy.source ? "기관 홈페이지 보기"
+        : url.includes("bokjiro.go.kr") ? "원문 보기 (복지로)" : "원문 보기 (정부24)");
       origin.href = url;
       origin.target = "_blank";
       origin.rel = "noopener";
